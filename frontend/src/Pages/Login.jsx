@@ -7,22 +7,30 @@ const Login =  () => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
 
   const handleSubmit = async (e) => {
 
     e.preventDefault();
+
+    if (!id || !password) {
+      return setErrorMessage('Please enter both National ID and Password.');
+    }
+
+    if (!/^\d+$/.test(id)) {
+      return setErrorMessage('ID must contain numbers only.');
+    }
+
     const data = { id, password };
     console.log(data);
 
     const loginData = { id, password };
 
     try {
-      const response = await axios.post('https://example.com/api/login', loginData);
-
-      console.log('Login success:', response.data);
-
-    } catch (error) {
-      console.error('Login error:', error);
+      await axios.post('https://example.com/api/login', loginData);
+    } catch {
+      setErrorMessage('Login failed. Please check your ID and password.');
     }
 
   };
@@ -30,7 +38,6 @@ const Login =  () => {
   return (
     <div className="bg-white" style={{ maxHeight: '100vh' }}>
       <div className="d-flex justify-content-center align-items-center max-vh-100">
-        {/* Card (same size as before) */}
         <div className="card p-4 shadow-lg" style={{ width: '20rem' }}>
           <div className="d-flex justify-content-center mb-4">
             <img
@@ -44,7 +51,7 @@ const Login =  () => {
             <div className="mb-3">
               <input
                 type="text"
-                placeholder="ID \National ID"
+                placeholder="Username"
                 value={id}
                 onChange={(e) => setId(e.target.value)}
                 className="form-control form-control-sm"
@@ -53,6 +60,7 @@ const Login =  () => {
 
             <div className="mb-3">
               <input
+                autoComplete="off"
                 type={showPassword ? 'text' : 'password'} 
                 placeholder="Password"
                 value={password}
@@ -82,6 +90,12 @@ const Login =  () => {
             <button type="submit" className="btn btn-primary btn-sm w-100 mb-3">
               Login
             </button>
+
+            {errorMessage && (
+              <div className="alert alert-danger py-1 mb-2 text-center" style={{ fontSize: '14px' }}>
+                {errorMessage}
+              </div>
+            )}
 
             <div className="text-center">
               <a href="#" className="text-decoration-none text-primary small">
