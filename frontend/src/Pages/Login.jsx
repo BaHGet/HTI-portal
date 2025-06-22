@@ -1,64 +1,95 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useState } from 'react';
-import img from '../assets/1.jpg'; // غيّر المسار حسب مكان الصورة
+import img from '../assets/1.jpg';
+import axios from 'axios';
 
-const Login = () => {
+const Login =  () => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+
     e.preventDefault();
     const data = { id, password };
     console.log(data);
+
+    const loginData = { id, password };
+
+    try {
+      const response = await axios.post('https://example.com/api/login', loginData);
+
+      console.log('Login success:', response.data);
+
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+
   };
 
   return (
-    <div className="d-flex flex-column justify-content-center align-items-center min-vh-100 bg-white">
-      
-      {/* الكارت */}
-      <div className="card p-4 shadow-lg" style={{ width: '20rem', height: '24rem' }}>
-        
-        {/* الصورة (كبرناها) */}
-        <div className="d-flex justify-content-center mb-2">
-          <img
-            src={img}
-            alt="Logo"
-            style={{ width: '150px', height: '135px' }} // ← كبرنا الصورة
-          />
+    <div className="bg-white" style={{ maxHeight: '100vh' }}>
+      <div className="d-flex justify-content-center align-items-center max-vh-100">
+        {/* Card (same size as before) */}
+        <div className="card p-4 shadow-lg" style={{ width: '20rem' }}>
+          <div className="d-flex justify-content-center mb-4">
+            <img
+              src={img}
+              alt="Logo"
+              style={{ width: '150px', height: '135px' }}
+            />
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <input
+                type="text"
+                placeholder="ID \National ID"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                className="form-control form-control-sm"
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-control form-control-sm"
+              />
+            </div>
+
+            <div className="mb-3 d-flex align-items-center gap-1">
+              <input 
+                type="checkbox"
+                className="form-check-input p-0 m-0"
+                style={{ width: '14px', height: '14px' }}
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
+                id="showPass"
+              />
+              <label 
+                htmlFor="showPass" 
+                className="form-check-label" 
+                style={{ fontSize: '13px', marginBottom: 0 }}
+              >
+                Show Password
+              </label>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-sm w-100 mb-3">
+              Login
+            </button>
+
+            <div className="text-center">
+              <a href="#" className="text-decoration-none text-primary small">
+                Forgot Password?
+              </a>
+            </div>
+          </form>
         </div>
-
-        {/* الفورم */}
-        <form onSubmit={handleSubmit}>
-          <div className="mt-5 mb-2">
-            <input
-              type="text"
-              placeholder="Id \National Id"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              className="form-control form-control-sm"
-            />
-          </div>
-
-          <div className="mb-2">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-control form-control-sm"
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-sm w-100 mb-2">
-            Login
-          </button>
-
-          <div className="text-center">
-            <a href="#" className="text-decoration-none text-primary small">
-              Forgot Password?
-            </a>
-          </div>
-        </form>
       </div>
     </div>
   );
