@@ -2,8 +2,7 @@
   "name": "hti-website",
   "private": false,
   "version": "0.0.0",
-  "homepage": "https://github.com/BaHGet/HTI-portal",
-  "type": "module",
+  "homepage": "https://bahget.github.io/HTI-portal/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
