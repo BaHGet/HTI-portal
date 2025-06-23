@@ -22,6 +22,10 @@ const Login =  () => {
       return setErrorMessage('ID must contain numbers only.');
     }
 
+    if(id.length !== 8) {
+      return setErrorMessage('ID must be 8 digits.');
+    }
+
     const data = { id, password };
     console.log(data);
 
@@ -53,7 +57,7 @@ const Login =  () => {
                 type="text"
                 placeholder="Username"
                 value={id}
-                onChange={(e) => setId(e.target.value)}
+                onChange={(e) => {setId(e.target.value); setErrorMessage('');}}
                 className="form-control form-control-sm"
               />
             </div>
@@ -64,7 +68,7 @@ const Login =  () => {
                 type={showPassword ? 'text' : 'password'} 
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {setPassword(e.target.value); setErrorMessage('');}}
                 className="form-control form-control-sm"
               />
             </div>
@@ -98,7 +102,7 @@ const Login =  () => {
             )}
 
             <div className="text-center">
-              <a href="#" className="text-decoration-none text-primary small">
+              <a href="#" className="text-decoration-none text-primary small" onClick={() => {setErrorMessage('ابلع بقي ');}}>
                 Forgot Password?
               </a>
             </div>
