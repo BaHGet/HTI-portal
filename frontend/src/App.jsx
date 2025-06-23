@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'; 
-import Login from './pages/Login.jsx' 
+import Login from './Pages/Login.jsx' 
 import './App.css';
 
 const App = () => {
