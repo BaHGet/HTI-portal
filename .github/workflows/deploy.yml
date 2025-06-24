@@ -31,8 +31,8 @@ jobs:
       - name: Deploy to GitHub Pages
         run: |
           npx gh-pages -d dist \
-            -u "github-actions[bot] <github-actions[bot]@users.noreply.github.com>" \
-            -r https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/bahget/HTI-portal.git
+            --repo="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/bahget/HTI-portal.git" \
+            --user='{"name": "github-actions[bot]", "email": "github-actions[bot]@users.noreply.github.com"}'
         working-directory: frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
