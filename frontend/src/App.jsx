@@ -3,7 +3,7 @@ import Login from './Pages/Login.jsx'
 import './App.css';
 
 const App = () => {
-  console.log('App after ci done and push to gh-pages');
+
   return (
     <div>
       <Routes>
