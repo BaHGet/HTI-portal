@@ -29,7 +29,10 @@ jobs:
         working-directory: frontend
 
       - name: Deploy to GitHub Pages
-        run: npm run deploy
+        run: |
+          npx gh-pages -d dist \
+            -u "github-actions[bot] <github-actions[bot]@users.noreply.github.com>" \
+            -r https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/bahget/HTI-portal.git
         working-directory: frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
