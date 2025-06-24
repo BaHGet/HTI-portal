@@ -28,11 +28,14 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - name: Deploy to GitHub Pages
+      - name: Configure Git identity
         run: |
-          npx gh-pages -d dist \
-            --repo="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/bahget/HTI-portal.git" \
-            --user='{"name": "github-actions[bot]", "email": "github-actions[bot]@users.noreply.github.com"}'
+          git config user.name "github-actions[bot]"
+          git config user.email "<github-actions[bot]@users.noreply.github.com>"
+        working-directory: frontend
+      
+      - name: Deploy
+        run: npm run deploy
         working-directory: frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
