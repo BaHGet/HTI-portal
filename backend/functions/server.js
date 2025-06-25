@@ -4,13 +4,17 @@ const serverless = require('serverless-http');
 
 const app = express();
 
+const dotenv = require ('dotenv')
+dotenv.config();
+
+// Import Routes
+const authRoute = require('../routes/auth');
 
 app.use(express.json());
 
-app.get("/", (req, res) =>{
-    res.send("hi")
-})
+// Route Middlewares
+app.use('/user',authRoute);
 
-app.listen(3000)
+app.listen(3000,()=>{console.log('server is runnig')})
 
 // module.exports.handler = serverless(app);
