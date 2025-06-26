@@ -1,12 +1,12 @@
 const router =require ('express').Router();
 const userModel = require ('../models/users')
-const loginValidtion = require('../validation/loginValidation')
+const loginValidation = require('../validation/loginValidation')
 const jwt = require('jsonwebtoken')
 const {comparePassword} = require('../Utils/hashPassword')
 
 router.post('/login', async(req,res)=>{
   // check if there is an error in the id or pass
-  const {error} = loginValidtion(req.body);
+  const {error} = loginValidation(req.body);
   if (error) {
     return res.status(400).send(error.details[0].message);
   }  

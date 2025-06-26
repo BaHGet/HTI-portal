@@ -1,7 +1,7 @@
 const joi = require('@hapi/joi');
 
 
-const loginValidtion = (data)=>{
+const loginValidation = (data)=>{
   const schema = joi.object({
   id: joi.number().integer().min(7).required(true),
   password: joi.string().required(true).min(6)
@@ -9,4 +9,4 @@ const loginValidtion = (data)=>{
   return schema.validate(data);
 }
 
-module.exports = loginValidtion;
+module.exports = loginValidation;
