@@ -1,18 +1,23 @@
 const jwt = require('jsonwebtoken')
 
-const secret = process.env.SECRET_TOKEN
+const secret = process.env.TOKEN_SECRET
 
 // Create Token
-exports.createToken = ( data, expireIn='1h' )=>{
-  return jwt.sign(data, secret, {expireIn})
+exports.createToken = ( data, expiresIn='1hr' )=>{
+  return jwt.sign(data, secret, {expiresIn})
 }
 
 // VerifyToken
-exports.VerifyToken = (token)=>{
-   try {
-    return jwt.verify( token, secret );
+exports.VerifyToken = (req, res, next)=>{
+  const token = req.header('token')
+  if(!token) return res.status(401).send('Access Denied');
+  
+  try {
+    const verified =  jwt.verify( token, secret );
+    req.user = verified;
+    next();
   } catch (err) {
-    return null; 
+    res.status(400).send({message:'Invalid Token', error:err}) 
   }
 }
 
