@@ -1,25 +1,25 @@
-const express = require('express');
+require('dotenv').config()
+const express = require("express");
 
-const serverless = require('serverless-http');
+const serverless = require("serverless-http");
 
 const app = express();
-
-const db = require('../config/db')
-
-const dbconnecet = db.dbConnection();
-
-
-const {userRouter} = require('../routes/user')
-
 app.use(express.json());
 
-app.use('/api/user', userRouter)
+const db = require("../config/db");
+db.dbConnection();
+
+const { authRouter } = require("../routes/auth");
+app.use("/api/login", authRouter);
+
+const { userRouter } = require("../routes/user");
+app.use("/api/user", userRouter);
 
 
-app.get("/", (req, res) =>{
-    res.send("hi")
-})
+app.get("/", (req, res) => {
+  res.send("hi");
+});
 
-app.listen(3000)
+app.listen(3000);
 
 // module.exports.handler = serverless(app);
