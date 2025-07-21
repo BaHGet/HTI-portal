@@ -10,7 +10,7 @@ const db = require("../config/db");
 db.dbConnection();
 
 const { authRouter } = require("../routes/auth");
-app.use("/api/login", authRouter);
+app.use("/api/auth", authRouter);
 
 const { userRouter } = require("../routes/user");
 app.use("/api/user", userRouter);
