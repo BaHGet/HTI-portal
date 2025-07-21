@@ -47,4 +47,3 @@ exports.addUserValidator=[
   check('phone').isMobilePhone("ar-EG").withMessage('Invalid phone number'),
   validatorMiddleware
 ]
-

@@ -1,8 +1,8 @@
 
 const crypto = require('crypto')
-
-
 const asyncHandler = require('express-async-handler');
+
+
 const User = require('../models/users');
 const { comparing } = require('../utils/hashingPass');
 const { createToken, verifyToken } = require('../middlewares/authMiddleware');

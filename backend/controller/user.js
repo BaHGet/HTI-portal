@@ -1,5 +1,12 @@
+const bcrypt = require('bcryptjs')
+const asyncHandler = require('express-async-handler')
+
+const ApiError = require('../utils/apiError');
 const userModel = require('../models/users')
 const { Hashing } = require('../utils/hashingPass')
+const { createToken } = require('../middlewares/authMiddleware');
+
+
 
 
 const getAllUsers = async (req, res) => {
@@ -39,4 +46,51 @@ const getUser = async (req, res) => {
     }
 }
 
-module.exports = {getAllUsers, addUser, getUser}
+const chandeUserRole = asyncHandler( async (req,res,next)=>{
+  const updatedUser = await userModel.findByIdAndUpdate(
+    req.user._id,
+    {
+      accountType: req.body.role,
+      phone: req.body.phone,
+    },
+    {new: true}
+  )
+
+  res.status(200).json({ data: updatedUser })
+
+})
+
+
+const getLoggedUserData = asyncHandler(async(req,res,next)=>{
+  req.params.id = req.user._id
+  next();
+})
+
+const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
+  const user = await userModel.findByIdAndUpdate(
+    req.user._id,
+    {
+      password: await bcrypt.hash(req.body.password, 12),
+      passwordChangedAt: Date.now(),
+    },
+    {new: true}
+  )
+
+
+  // 2) generate token
+  const token = createToken({ email: user.email });
+
+  res.status(200).json({data: user, token})
+
+
+})
+
+
+module.exports = {
+    getAllUsers, 
+    addUser, 
+    getUser,
+    chandeUserRole,
+    getLoggedUserData,
+    updateLoggedUserPassword
+}
