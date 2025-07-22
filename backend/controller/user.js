@@ -1,7 +1,7 @@
-const bcrypt = require('bcryptjs')
+
 const asyncHandler = require('express-async-handler')
 
-const ApiError = require('../utils/apiError');
+
 const userModel = require('../models/users')
 const { Hashing } = require('../utils/hashingPass')
 const { createToken } = require('../middlewares/authMiddleware');
@@ -70,7 +70,7 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
   const user = await userModel.findByIdAndUpdate(
     req.user._id,
     {
-      password: await bcrypt.hash(req.body.password, 12),
+      password: await Hashing(password),
       passwordChangedAt: Date.now(),
     },
     {new: true}
