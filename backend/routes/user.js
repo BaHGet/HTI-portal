@@ -6,14 +6,15 @@ const {
   getAllUsers,
   addUser, 
   getUser,
-  chandeUserRole,
+  changeUserRole,
   getLoggedUserData,
   updateLoggedUserPassword
 } = require('../controller/user');
 
 const {
   getUserValidator,
-  addUserValidator
+  addUserValidator,
+  changeUserRoleValidation
 } = require('../validations/userValidation');
 
 
@@ -26,7 +27,7 @@ userRouter.put('/changemypassword', protect, updateLoggedUserPassword)
 // Admin Routes
 userRouter.get('/getallusers', protect, restrictTo('admin'), getAllUsers)
 userRouter.get('/getuser', protect, restrictTo('admin'), getUserValidator, getUser)
-userRouter.post('/adduser', protect, restrictTo('admin'), addUserValidator,addUser)
-userRouter.delete('/changerole', protect, restrictTo('admin'), chandeUserRole)
+userRouter.post('/adduser', protect, restrictTo('admin'), addUserValidator, addUser)
+userRouter.delete('/changerole', protect, restrictTo('admin'), changeUserRoleValidation, changeUserRole)
 
 module.exports = {userRouter}; 

@@ -47,3 +47,13 @@ exports.addUserValidator=[
   check('phone').isMobilePhone("ar-EG").withMessage('Invalid phone number'),
   validatorMiddleware
 ]
+
+exports.changeUserRoleValidation=[
+  check('role')
+    .notEmpty().withMessage("New user role required")
+    .isIn(["student", "staff", "admin", "Graduate"]),
+  check('phone')
+    .optional()
+    .isMobilePhone("ar-EG").withMessage('Invalid phone number'),
+  validatorMiddleware
+]

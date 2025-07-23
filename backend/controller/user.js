@@ -46,7 +46,7 @@ const getUser = async (req, res) => {
     }
 }
 
-const chandeUserRole = asyncHandler( async (req,res,next)=>{
+const changeUserRole = asyncHandler( async (req,res,next)=>{
   const updatedUser = await userModel.findByIdAndUpdate(
     req.user._id,
     {
@@ -90,7 +90,7 @@ module.exports = {
     getAllUsers, 
     addUser, 
     getUser,
-    chandeUserRole,
+    changeUserRole,
     getLoggedUserData,
     updateLoggedUserPassword
 }
