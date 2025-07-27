@@ -28,6 +28,6 @@ userRouter.put('/changemypassword', protect, updateLoggedUserPassword)
 userRouter.get('/getallusers', protect, restrictTo('admin'), getAllUsers)
 userRouter.get('/getuser', protect, restrictTo('admin'), getUserValidator, getUser)
 userRouter.post('/adduser', protect, restrictTo('admin'), addUserValidator, addUser)
-userRouter.delete('/changerole', protect, restrictTo('admin'), changeUserRoleValidation, changeUserRole)
+userRouter.put('/changerole', protect, restrictTo('admin'), changeUserRoleValidation, changeUserRole)
 
 module.exports = {userRouter}; 
