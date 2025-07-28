@@ -15,7 +15,7 @@ exports.getUserValidator=[
 ]
 
 exports.addUserValidator=[
-  check('name').notEmpty().withMessage('User required')
+  check('fullName').notEmpty().withMessage('User required')
   .isLength({min:3}).withMessage('Name is too short')
   .custom( (val, { req }) => {
     req.body.slug = slugify(val);
@@ -32,19 +32,13 @@ exports.addUserValidator=[
   }),
   check('password')
   .notEmpty().withMessage('Password is required')
-  .isLength({min:6}).withMessage('Password must be at least 6 characters long')
-  .custom((val, { req }) => {
-    if (val !== req.body.passwordConfirm) {
-      throw new Error('PasswordConfirmation do not match');
-    }
-    return true;
-  }),
+  .isLength({min:6}).withMessage('Password must be at least 6 characters long'),
 
-  check('passwordConfirm').notEmpty().withMessage('Password confirmation is required'),
+  check('nationalId').notEmpty().withMessage('National Id must be 14 unique digits '),
 
-  check('role').optional().isIn(["student", "staff", "admin", "Graduated"]).withMessage('Role must be either user or admin'),
+  check('accountType').optional().isIn(["student", "staff", "admin", "Graduated"]).withMessage('Role must be either user or admin'),
 
-  check('phone').isMobilePhone("ar-EG").withMessage('Invalid phone number'),
+  check('phoneNumber').isMobilePhone("ar-EG").withMessage('Invalid phone number'),
   validatorMiddleware
 ]
 

@@ -22,7 +22,7 @@ const login = async (req, res) => {
     if (!validPass) return res.status(400).send('Invalid Password');
 
     const token = createToken({ email: user.email })
-    res.header('token', token);
+    res.header('token', `Bearer ${token}`);
     res.status(200).send()
   } catch (err) {
     res.status(500).json({ error: "Internal server error", message: err.message });

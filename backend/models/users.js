@@ -56,12 +56,11 @@ const userSchema = new mongoose.Schema(
     },
     nationalId: {
       type: String,
-      length: 14,
+      match: [/^\d{14}$/, 'National ID must be exactly 14 digits'],
       unique: true,
     },
     phoneNumber: {
       type: String,
-      length: 11,
     },
     gender: {
       type: String,
