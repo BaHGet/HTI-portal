@@ -14,7 +14,8 @@ const {
 const {
   getUserValidator,
   addUserValidator,
-  changeUserRoleValidation
+  changeUserRoleValidation,
+  updateLoggedUserPassValidation
 } = require('../validations/userValidation');
 
 
@@ -22,7 +23,7 @@ const {
 const userRouter = express.Router();
 // User Routes
 userRouter.get('/getme', protect, getLoggedUserData)
-userRouter.put('/changemypassword', protect, updateLoggedUserPassword)
+userRouter.put('/changemypassword', protect, updateLoggedUserPassValidation, updateLoggedUserPassword)
 
 // Admin Routes
 userRouter.get('/getallusers', protect, restrictTo('admin'), getAllUsers)

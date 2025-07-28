@@ -43,11 +43,32 @@ exports.addUserValidator=[
 ]
 
 exports.changeUserRoleValidation=[
-  check('role')
+  check('accountType')
     .notEmpty().withMessage("New user role required")
     .isIn(["student", "staff", "admin", "Graduate"]),
-  check('phone')
+  check('phoneNumber')
     .optional()
     .isMobilePhone("ar-EG").withMessage('Invalid phone number'),
   validatorMiddleware
 ]
+
+exports.updateLoggedUserPassValidation = [
+  check('currentPassword')
+    .notEmpty().withMessage('Current password is required'),
+
+  check('newPassword')
+    .notEmpty().withMessage('New password is required')
+    .isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+
+  check('confirmPassword')
+    .notEmpty().withMessage('Confirm password is required')
+    .custom((val, { req }) => {
+      if (val !== req.body.newPassword) {
+        throw new Error('Confirm password must match new password');
+      }
+      return true;
+    }),
+  validatorMiddleware
+];
+
+

@@ -1,4 +1,4 @@
-
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto')
 const asyncHandler = require('express-async-handler');
 
@@ -16,13 +16,13 @@ const login = async (req, res) => {
   const user = req.body
   try {
     const checkUser = await User.findOne({ email: user.email /* maybe the user id or whatever */ });
-    if (!checkUser) return res.status(400).send('Invalid User');
+    if (!checkUser) return res.status(400).send('Invalid email or password');
 
     const validPass = await comparing(user.password, checkUser.passwordHash);
-    if (!validPass) return res.status(400).send('Invalid Password');
+    if (!validPass) return res.status(400).send('Invalid email or password');
 
     const token = createToken({ email: user.email })
-    res.header('token', `Bearer ${token}`);
+    res.header('token',token);
     res.status(200).send()
   } catch (err) {
     res.status(500).json({ error: "Internal server error", message: err.message });
@@ -33,7 +33,7 @@ const protect = asyncHandler(async (req,res,next) => {
 
   // 1) check if token exist, if exist ==> get
   let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization  && req.headers.authorization .startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   }
   if (!token) {
@@ -41,10 +41,10 @@ const protect = asyncHandler(async (req,res,next) => {
   }
 
   // 2) verify token (nochange happens, expired token)
-  const decoded = verifyToken(token) 
+  const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
 
   // 3) check if user exists
-  const currentUser = await User.findById(decoded.userId)
+  const currentUser = await  User.findOne({ email: decoded.email });
   if (!currentUser) {
     return next(new ApiError('User that belong to that token no longer exist', 401));
   }
@@ -64,7 +64,7 @@ const restrictTo = (...roles) =>
   asyncHandler(async (req, res, next) => {
     // 1) access roles
     // 2) access registered user (req.user.role)
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.accountType)) {
       return next(new ApiError('You do not have permission to perform this action', 403))
     }
     next();

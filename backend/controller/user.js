@@ -1,8 +1,9 @@
-
+const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler')
 
 
 const userModel = require('../models/users')
+const ApiError = require('../utils/apiError');
 const { Hashing } = require('../utils/hashingPass')
 const { createToken } = require('../middlewares/authMiddleware');
 
@@ -47,10 +48,10 @@ const getUser = async (req, res) => {
 }
 
 const changeUserRole = asyncHandler( async (req,res,next)=>{
-  const updatedUser = await userModel.findByIdAndUpdate(
-    req.user._id,
+  const updatedUser = await userModel.findOneAndUpdate(
+    { email: req.body.email },
     {
-      accountType: req.body.role,
+      accountType: req.body.accountType,
       phone: req.body.phone,
     },
     {new: true}
@@ -62,27 +63,37 @@ const changeUserRole = asyncHandler( async (req,res,next)=>{
 
 
 const getLoggedUserData = asyncHandler(async(req,res,next)=>{
-  req.params.id = req.user._id
+  res.status(200).json({
+    status: 'success',
+    data: req.user
+  });
   next();
 })
 
+
 const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
-  const user = await userModel.findByIdAndUpdate(
-    req.user._id,
-    {
-      password: await Hashing(password),
-      passwordChangedAt: Date.now(),
-    },
-    {new: true}
-  )
 
+  // 1) Get user from database
+  const user = await userModel.findOne({ email: req.body.email });
+  if (!user) {
+    return next(new ApiError('User not found', 404));
+  }
 
-  // 2) generate token
+  // 2) Check Current Password is correct
+  const isCorrectPassword = await bcrypt.compare(req.body.currentPassword, user.passwordHash); 
+  if (!isCorrectPassword) {
+    return next(new ApiError('Current password is incorrect', 401));
+  }
+
+  // 3) Hash the new password and update it
+  user.passwordHash = await Hashing(req.body.newPassword);
+  user.passwordChangedAt = Date.now();
+  await user.save()
+
+  // 4) generate token and send response
   const token = createToken({ email: user.email });
-
-  res.status(200).json({data: user, token})
-
-
+  res.header('token',token);
+  res.status(200).json({data: user})
 })
 
 
