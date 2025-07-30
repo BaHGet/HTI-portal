@@ -31,7 +31,6 @@ const login = async (req, res) => {
 
 const protect = asyncHandler(async (req,res,next) => {
 
-  // 1) check if token exist, if exist ==> get
   let token;
   if (req.headers.authorization  && req.headers.authorization .startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
@@ -40,15 +39,12 @@ const protect = asyncHandler(async (req,res,next) => {
     return next(new ApiError('You are not logged in, please login to get access', 401));
   }
 
-  // 2) verify token (nochange happens, expired token)
   const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
 
-  // 3) check if user exists
   const currentUser = await  User.findOne({ email: decoded.email });
   if (!currentUser) {
     return next(new ApiError('User that belong to that token no longer exist', 401));
   }
-  // 4) check if user change his pass after token created
   if (currentUser.passwordChangedAt) {
     const passChangeTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000 , 10);
     if (passChangeTimestamp > decoded.iat ){
@@ -62,8 +58,7 @@ const protect = asyncHandler(async (req,res,next) => {
 
 const restrictTo = (...roles) => 
   asyncHandler(async (req, res, next) => {
-    // 1) access roles
-    // 2) access registered user (req.user.role)
+    
     if (!roles.includes(req.user.accountType)) {
       return next(new ApiError('You do not have permission to perform this action', 403))
     }
@@ -72,26 +67,22 @@ const restrictTo = (...roles) =>
 
 
 const forgotPassword = asyncHandler(async (req,res,next) => {
-  // 1) get user email
   const user = await User.findOne({email:req.body.email})
   if (!user) {
     return next(new ApiError('No User for this Email', 404))
   }
-  // 2) if user exist, generate hash random 6 digits and save it in db 
+  
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedResetCode = crypto
     .createHash('sha256')
     .update(resetCode)
     .digest('hex')
 
-  // save hased password reset code in db
   user.passwordResetCode = hashedResetCode;
-  // add exp time for reset code (2 min)
   user.passwordResetExpires = Date.now() + 2*60*1000
   user.passwordResetVerified = false;
 
   user.save()
-  // 3) send the reset code via email (./utils/sendEmail)
   try{
     await sendEmail({
       email: user.email,
@@ -111,7 +102,7 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
 })
 
 const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
-  // 1)get user based on reset code
+  
   const hashedResetCode = crypto
     .createHash('sha256')
     .update(req.body.resetCode)
@@ -125,38 +116,52 @@ const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
     return next(new ApiError("Reset Code Invalid", 404))
   }
 
-
-  // 2) Reset code vaild
+  
   user.passwordResetVerified = true
   await user.save()
 
+  const resetToken = createToken({ email: user.email });
+  res.header('reset-token',resetToken);
   res.status(200).json({status: "Success"})
-
 
 })
 
 const resetPassword = asyncHandler( async (req,res,next)=>{
-  // 1) check user email 
-  const user = await User.findOne({email: req.body.email})
-  if(!user){
-    return next(new ApiError(`this email ${req.body.email}  not found`, 404))
-  }
-  // 2) check reset code verified
-  if (!user.passwordResetVerified){
-    return next(new ApiError("Password Reset Code is not verified", 404))
+  // 1) Get reset-token from header
+  const resetToken = req.headers['reset-token'];
+  if (!resetToken) {
+    return next(new ApiError("Reset token is missing", 401));
   }
 
-  // 3) create new password
-  user.passwordHash = await Hashing(req.body.newPassword);
+  // 2) Verify token
+  let decoded;
+  try {
+    decoded = jwt.verify(resetToken, process.env.TOKEN_SECRET);
+  } catch (err) {
+    return next(new ApiError("Invalid or expired reset token", 401));
+  }
 
+  // 3) Find user by email inside the token
+  const user = await User.findOne({ email: decoded.email });
+  if (!user) {
+    return next(new ApiError("User not found", 404));
+  }
+
+  // 4) Check if reset code was verified
+  if (!user.passwordResetVerified) {
+    return next(new ApiError("Reset code is not verified", 403));
+  }
+
+  // 5) Hash new password and reset fields
+  user.passwordHash = await Hashing(req.body.NewPassword);
   user.passwordResetCode = undefined;
   user.passwordResetExpires = undefined;
   user.passwordResetVerified = undefined;
 
   await user.save()
 
-  // 4) generate token
-  const token = createToken({ email: user.email });
+  // 6) generate token
+  const token  = createToken({ email: user.email });
   res.header('token',token);
   res.status(200).send();
 })
