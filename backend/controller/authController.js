@@ -4,8 +4,8 @@ const asyncHandler = require('express-async-handler');
 
 
 const User = require('../models/users');
-const { comparing } = require('../utils/hashingPass');
-const { createToken, verifyToken } = require('../middlewares/authMiddleware');
+const { comparing, Hashing } = require('../utils/hashingPass');
+const { createToken } = require('../middlewares/authMiddleware');
 const ApiError = require('../utils/apiError');
 const sendEmail = require('../utils/sendEmail');
 
@@ -70,6 +70,7 @@ const restrictTo = (...roles) =>
     next();
 });
 
+
 const forgotPassword = asyncHandler(async (req,res,next) => {
   // 1) get user email
   const user = await User.findOne({email:req.body.email})
@@ -85,8 +86,8 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
 
   // save hased password reset code in db
   user.passwordResetCode = hashedResetCode;
-  // add exp time for reset code (1 min)
-  user.passwordResetExpires = Date.now() + 60*1000
+  // add exp time for reset code (2 min)
+  user.passwordResetExpires = Date.now() + 2*60*1000
   user.passwordResetVerified = false;
 
   user.save()
@@ -95,7 +96,7 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
     await sendEmail({
       email: user.email,
       subject: 'Password Reset Code',
-      message: `Your RestCode is ${resetCode}, (valid for 10 min)`
+      message: `Your RestCode is ${resetCode}, (valid for 2 min)`
     })
   }catch(err){
     user.passwordResetCode = undefined;
@@ -146,7 +147,7 @@ const resetPassword = asyncHandler( async (req,res,next)=>{
   }
 
   // 3) create new password
-  user.password = req.body.newPassword;
+  user.passwordHash = await Hashing(req.body.newPassword);
 
   user.passwordResetCode = undefined;
   user.passwordResetExpires = undefined;
@@ -156,7 +157,8 @@ const resetPassword = asyncHandler( async (req,res,next)=>{
 
   // 4) generate token
   const token = createToken({ email: user.email });
-  res.status(200).json({ token });
+  res.header('token',token);
+  res.status(200).send();
 })
 
 
