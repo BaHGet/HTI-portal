@@ -120,7 +120,7 @@ const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
   user.passwordResetVerified = true
   await user.save()
 
-  const resetToken = createToken({ email: user.email });
+  const resetToken = jwt.sign( { email: user.email } , process.env.TOKEN_SECRET, {expiresIn: '30min'} )
   res.header('reset-token',resetToken);
   res.status(200).json({status: "Success"})
 

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken')
 const secret = process.env.TOKEN_SECRET
 
 // Create Token
-exports.createToken = ( data, expiresIn='1hr' )=>{
+exports.createToken = ( data, expiresIn='3hr' )=>{
   return jwt.sign(data, secret, {expiresIn})
 }
 
