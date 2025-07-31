@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const dbConnection = async() => {
     try {
         mongoose.connect(
-            `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.ck4qxr9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+            `mongodb+srv://${process.env.USER}:${process.env.PASSWORD}@cluster0.ck4qxr9.mongodb.net/test`
         );
     } catch (error) {
         return error

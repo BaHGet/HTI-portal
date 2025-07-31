@@ -45,19 +45,23 @@ const userSchema = new mongoose.Schema(
     passwordHash: {
       type: String,
       required: true,
+      select: false
     },
+    passwordChangedAt: Date,
+    passwordResetCode: String,
+    passwordResetExpires: Date,
+    passwordResetVerified: Boolean,
     fullName: {
       type: String,
       required: true,
     },
     nationalId: {
       type: String,
-      length: 14,
+      match: [/^\d{14}$/, 'National ID must be exactly 14 digits'],
       unique: true,
     },
     phoneNumber: {
       type: String,
-      length: 11,
     },
     gender: {
       type: String,
