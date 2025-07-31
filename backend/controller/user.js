@@ -1,24 +1,26 @@
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler')
-
-
 const userModel = require('../models/users')
 const ApiError = require('../utils/apiError');
 const { Hashing } = require('../utils/hashingPass')
 const { createToken } = require('../middlewares/authMiddleware');
 
-
-
+const logger = require('../utils/logger');
 
 const getAllUsers = async (req, res) => {
-    try {
-        const users = await userModel.find({}).select(['passwordHash', 'email'])
-        res.json({success: true, users})
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`)
+  try {
+      const users = await userModel.find({}).select(['fullName', 'email'])
+      // check if the users exists
+      if(!users){
+        new Error('Intrnal Server Error')
+      }
+      res.json({success: true, users})
 
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({success: false, message: "Something went wrong", error})
-    }
+  } catch (error) {
+      logger.error(`${err.status || 500} - ${err.message}`);
+      res.status(500).json({success: false, message: "Something went wrong", error})
+  }
 }
 
 const addUser = async (req, res) => {
@@ -30,7 +32,7 @@ const addUser = async (req, res) => {
         await newUser.save();
         res.status(201).json({ success: true, message: "user added successfully" });
     } catch (error) {
-        console.error(error);
+         logger.error(`${err.status || 500} - ${err.message}`);
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
 }
@@ -41,8 +43,10 @@ const getUser = async (req, res) => {
         const user = req.body;
 
         const userData = await userModel.findOne({email:user.email});
+        delete userData.passwordHash;
         res.status(200).json({success : true, userData})
     } catch (error) {
+        logger.error(`${err.status || 500} - ${err.message}`);
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
 }
