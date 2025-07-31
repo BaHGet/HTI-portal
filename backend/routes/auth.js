@@ -10,7 +10,7 @@ const {
 const {
   loginValidator,
   forgetPasswordValidator,
-  resestPasswordValidator
+  resetPasswordValidator
 } = require('../validations/authValidator')
 
 
@@ -19,7 +19,7 @@ const authRouter = express.Router();
 authRouter.post('/login', loginValidator, login);
 authRouter.post('/forgotpassword', forgetPasswordValidator, forgotPassword);
 authRouter.post('/verifyresetcode', verifyPassResetCode);
-authRouter.put('/resetpassword', resestPasswordValidator, resetPassword);
+authRouter.put('/resetpassword', resetPasswordValidator, resetPassword);
 
 
 module.exports = { authRouter };

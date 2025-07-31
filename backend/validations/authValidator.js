@@ -29,7 +29,7 @@ exports.forgetPasswordValidator = [
 ]
 
 
-exports.resestPasswordValidator = [
+exports.resetPasswordValidator = [
   
   check('NewPassword')
   .notEmpty().withMessage('Password is required')
