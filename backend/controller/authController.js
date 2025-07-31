@@ -15,7 +15,7 @@ const login = async (req, res) => {
   // data to validate user with
   const user = req.body
   try {
-    const checkUser = await User.findOne({ email: user.email /* maybe the user id or whatever */ });
+    const checkUser = await User.findOne({ email: user.email }).select('+passwordHash');
     if (!checkUser) return res.status(400).send('Invalid email or password');
 
     const validPass = await comparing(user.password, checkUser.passwordHash);
@@ -98,7 +98,7 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
     return next(new ApiError('There is a problem in sending email', 500))
   }
 
-  res.status(200).json({status:"sucess", message:"Reset code sent to your email"})
+  res.status(200).json({status:"success", message:"Reset code sent to your email"})
 })
 
 const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
