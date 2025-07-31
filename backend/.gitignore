@@ -1,1 +1,10 @@
 node_modules/
+
+# Environment variables
+*.env
+
+# Logs directory
+logs/
+
+# Package lock file
+package-lock.json
