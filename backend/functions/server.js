@@ -5,8 +5,7 @@ const morgan = require('morgan');
 const logger = require('../utils/logger');
 const cookieParser = require('cookie-parser');
 const globalError = require('../middlewares/apiMiddleware')
-const errorLogger = require('../middlewares/errorLogger')
-const infoLogger = require('../middlewares/infoLogger') 
+
 
 
 const app = express();
@@ -47,7 +46,6 @@ app.use(morgan(customFormat, {
 }));
 
 app.use(cookieParser());
-app.use(infoLogger);
 
 const db = require("../config/db");
 db.dbConnection();
@@ -67,7 +65,6 @@ app.get("/", (req, res) => {
   res.send("hi");
 });
 
-app.use(errorLogger);
 
 // Global error handling middleware for express
 app.use(globalError);

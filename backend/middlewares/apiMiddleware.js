@@ -1,5 +1,5 @@
 const ApiError = require('../utils/apiError')
-
+const logger = require('../utils/logger');
 
 const sendError = (err,res)=> res.status(err.statusCode).json({
   status: err.status,
@@ -15,6 +15,9 @@ const globalError = (err, req, res, next) => {
   
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
+
+  logger.error(`${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
+
 
   if (err.name === "JsonWebTokenError") err = handleJwtInvalidSignature();
   if (err.name === "TokenExpiredError") err = handleJwtExpired();

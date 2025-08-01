@@ -12,6 +12,7 @@ const sendEmail = require('../utils/sendEmail');
 
 
 const login = async (req, res) => {
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.user.email.toString()}`)
   // data to validate user with
   const user = req.body
   try {
@@ -25,6 +26,7 @@ const login = async (req, res) => {
     res.header('token',token);
     res.status(200).send()
   } catch (err) {
+    logger.error(`${err.status || 500} - ${err.message}`);
     res.status(500).json({ error: "Internal server error", message: err.message });
   }
 };
@@ -67,6 +69,7 @@ const restrictTo = (...roles) =>
 
 
 const forgotPassword = asyncHandler(async (req,res,next) => {
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.user.email.toString()}`)
   const user = await User.findOne({email:req.body.email})
   if (!user) {
     return next(new ApiError('No User for this Email', 404))
@@ -102,7 +105,7 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
 })
 
 const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
-  
+  logger.info(`the endpoint ${req.route.path} has been accessed`)
   const hashedResetCode = crypto
     .createHash('sha256')
     .update(req.body.resetCode)
@@ -127,6 +130,7 @@ const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
 })
 
 const resetPassword = asyncHandler( async (req,res,next)=>{
+  logger.info(`the endpoint ${req.route.path} has been accessed`)
   // 1) Get reset-token from header
   const resetToken = req.headers['reset-token'];
   if (!resetToken) {
@@ -165,6 +169,7 @@ const resetPassword = asyncHandler( async (req,res,next)=>{
   res.header('token',token);
   res.status(200).send();
 })
+
 
 
 module.exports = { 
