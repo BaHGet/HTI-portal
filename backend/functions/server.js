@@ -4,6 +4,10 @@ const serverless = require("serverless-http");
 const morgan = require('morgan');
 const logger = require('../utils/logger');
 const cookieParser = require('cookie-parser');
+const globalError = require('../middlewares/apiMiddleware')
+
+
+
 const app = express();
 app.use(express.json());
 
@@ -53,9 +57,17 @@ const { userRouter } = require("../routes/user");
 app.use("/api/user", userRouter);
 
 
+app.all("/{*any}", (req,res,next)=>{
+  next(new ApiError(`Can't find this URL: ${req.originalUrl}`,400))
+})
+
 app.get("/", (req, res) => {
   res.send("hi");
 });
+
+
+// Global error handling middleware for express
+app.use(globalError);
 
 app.listen(3000);
 
