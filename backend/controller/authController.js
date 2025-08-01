@@ -9,10 +9,11 @@ const { createToken } = require('../middlewares/authMiddleware');
 const ApiError = require('../utils/apiError');
 const sendEmail = require('../utils/sendEmail');
 
+const logger = require('../utils/logger');
 
 
 const login = async (req, res) => {
-  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.user.email.toString()}`)
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.email.toString()}`)
   // data to validate user with
   const user = req.body
   try {
