@@ -2,6 +2,8 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./Pages/Login.jsx";
 import "./index.css";
 import NewLogin from "./Pages/NewLogin.jsx";
+import ForgotPassword from "./Pages/ForgotPassword.jsx";
+import NotFoundPage from "./Pages/NotFoundPage.jsx";
 
 const App = () => {
   return (
@@ -9,6 +11,8 @@ const App = () => {
       <Routes>
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/new-login" element={<NewLogin />} />
+        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </div>
   );

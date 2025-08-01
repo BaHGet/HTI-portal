@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; 
-import HtiLogo from "./../assets/1.jpg"; 
+import { Link } from "react-router-dom";
+import HtiLogo from "./../assets/1.jpg";
 import MailIcon from "./../assets/Icons/mail.svg";
 import LockClosedIcon from "./../assets/Icons/padlock.svg";
 import EyeIcon from "./../assets/Icons/hide.svg";
@@ -159,7 +159,7 @@ function NewLogin() {
               href="#"
               className="font-medium text-blue-600 hover:text-blue-500 text-sm"
             >
-              <Link to="/forgot-password">Forgot your password?</Link>
+              <Link to="/auth/forgot-password">Forgot your password?</Link>
             </a>
           </div>
           {/* Login Button */}
