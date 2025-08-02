@@ -4,7 +4,7 @@ import HtiLogo from "./../assets/1.jpg";
 import { removeCookie } from "../utils/cookie";
 import { useNavigate } from "react-router-dom";
 import { getMe } from "../Api/Users/usersApi";
-import Header from "../components/Header";
+import Header from "../Components/header";
 
 const Dashboard = () => {
   const navigate = useNavigate();
