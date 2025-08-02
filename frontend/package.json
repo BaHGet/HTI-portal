@@ -3,6 +3,7 @@
   "private": false,
   "version": "0.0.0",
   "homepage": "https://bahget.github.io/HTI-portal/",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -12,8 +13,8 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "axios": "^1.10.0",
-    "bootstrap": "^5.3.7",
+    "axios": "^1.11.0",
+    "dotenv": "^17.2.1",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.0.0",
@@ -21,14 +22,18 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "gh-pages": "^6.3.0",
     "globals": "^16.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
     "vite": "^6.3.1"
   }
 }

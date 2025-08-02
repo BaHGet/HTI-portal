@@ -1,116 +1,197 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
-import React, { useState } from 'react';
-import img from '../assets/1.jpg';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import HtiLogo from "./../assets/1.jpg";
+import MailIcon from "./../assets/Icons/mail.svg";
+import LockClosedIcon from "./../assets/Icons/padlock.svg";
+import EyeIcon from "./../assets/Icons/hide.svg";
+import EyeOffIcon from "./../assets/Icons/show.svg";
+import "./../index.css";
+import { login } from "../Api/auth/authApi";
 
-const Login =  () => {
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
+const NewLogin = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [sys_msg, setErrorMessage] = useState("Coded by HTI Students");
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
-    if (!id || !password) {
-      return setErrorMessage('Please enter both National ID and Password.');
+    if (!email || !password) {
+      setErrorMessage("Please fill in all fields.");
+      return;
     }
-
-    if (!/^\d+$/.test(id)) {
-      return setErrorMessage('ID must contain numbers only.');
-    }
-
-    if(id.length !== 8) {
-      return setErrorMessage('ID must be 8 digits.');
-    }
-
-    const data = { id, password };
-    console.log(data);
-
-    const loginData = { id, password };
-
     try {
-      await axios.post('https://example.com/api/login', loginData);
-    } catch {
-      setErrorMessage('Login failed. Please check your ID and password.');
+      await login(email, password);
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+      setErrorMessage("login_failed");
     }
+  };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
-    <div className="bg-white" style={{ maxHeight: '100vh' }}>
-      <div className="d-flex justify-content-center align-items-center max-vh-100">
-        <div className="card p-4 shadow-lg" style={{ width: '20rem' }}>
-          <div className="d-flex justify-content-center mb-4">
-            <img
-              src={img}
-              alt="Logo"
-              style={{ width: '150px', height: '135px' }}
-            />
-          </div>
+    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden max-w-4xl w-full mx-4 sm:mx-0">
+      {/* Left Column - Illustration/Promotional */}
+      <div className="hidden lg:block w-1/2  relative overflow-hidden rounded-r-lg">
+        {/* Placeholder for the illustration - you'd replace this with an actual SVG or image */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src={HtiLogo}
+            alt="Login Illustration"
+            className="w-2/3 h-2/3 object-contain"
+          />
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
+      {/* Right Column - Login Form */}
+      <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
+        <div className="flex items-center text-gray-800 text-lg font-semibold mb-6">
+          <span>HTI Edu Portal</span>
+        </div>
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Log in to your Account
+        </h2>
+        <div className="relative flex py-5 items-center">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="flex-shrink mx-4 text-gray-500 text-sm">
+            continue with your Edu Email
+          </span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email Input */}
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email
+            </label>
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <img
+                  src={MailIcon}
+                  alt="Mail Icon"
+                  className="w-5 h-5"
+                  style={{
+                    color: "#9ca3af",
+                    filter:
+                      "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
+                  }}
+                />
+              </div>
               <input
-                type="text"
-                placeholder="Username"
-                value={id}
-                onChange={(e) => {setId(e.target.value); setErrorMessage('');}}
-                className="form-control form-control-sm"
+                type="email"
+                name="email"
+                id="email"
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
+                placeholder="Enter your Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
-
-            <div className="mb-3">
+          </div>
+          {/* Password Input */}
+          <div>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <img
+                  src={LockClosedIcon} // This will be your lock icon image
+                  alt="Lock Icon"
+                  className="w-5 h-5"
+                  style={{
+                    color: "#9ca3af",
+                    filter:
+                      "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
+                  }}
+                />
+              </div>
               <input
+                type={showPassword ? "text" : "password"} // Dynamically set type
+                name="password"
+                id="password"
                 autoComplete="off"
-                type={showPassword ? 'text' : 'password'} 
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm" // Increased pr-10 for button
                 placeholder="Password"
                 value={password}
-                onChange={(e) => {setPassword(e.target.value); setErrorMessage('');}}
-                className="form-control form-control-sm"
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
-            </div>
-
-            <div className="mb-3 d-flex align-items-center gap-1">
-              <input 
-                type="checkbox"
-                className="form-check-input p-0 m-0"
-                style={{ width: '14px', height: '14px' }}
-                checked={showPassword}
-                onChange={() => setShowPassword(!showPassword)}
-                id="showPass"
-              />
-              <label 
-                htmlFor="showPass" 
-                className="form-check-label" 
-                style={{ fontSize: '13px', marginBottom: 0 }}
+              {/* Show/Hide Password Button using img tags */}
+              <span
+                type="button" // Important: Prevent form submission
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                title={showPassword ? "Hide password" : "Show password"}
               >
-                Show Password
+                <img
+                  src={showPassword ? EyeOffIcon : EyeIcon} // Choose icon based on state
+                  alt={showPassword ? "Hide password" : "Show password"}
+                  className="w-5 h-5"
+                  style={{
+                    color: "#9ca3af",
+                    filter:
+                      "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
+                  }}
+                />
+              </span>
+            </div>
+          </div>
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Remember me
               </label>
             </div>
-
-            <button type="submit" className="btn btn-primary btn-sm w-100 mb-3">
-              Login
-            </button>
-
-            {errorMessage && (
-              <div className="alert alert-danger py-1 mb-2 text-center" style={{ fontSize: '14px' }}>
-                {errorMessage}
-              </div>
+            <span
+              href="#"
+              className="font-medium text-blue-600 hover:text-blue-500 text-sm"
+            >
+              <Link to="/auth/forgot-password">Forgot your password?</Link>
+            </span>
+          </div>
+          {/* Login Button */}
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Login
+          </button>
+        </form>
+        <div className="relative flex py-5 items-center justify-center">
+          <span className="flex-shrink mx-4 text-sm text-center ">
+            {sys_msg === "login_failed" ? (
+              <span className="text-red-600 font-bold">
+                Login failed. Please check your ID and password.
+              </span>
+            ) : (
+              <span className="text-gray-500">{sys_msg}</span>
             )}
-
-            <div className="text-center">
-              <a href="#" className="text-decoration-none text-primary small" onClick={() => {setErrorMessage('ابلع بقي ');}}>
-                Forgot Password?
-              </a>
-            </div>
-          </form>
+          </span>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default NewLogin;
