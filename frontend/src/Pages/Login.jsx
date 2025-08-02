@@ -8,13 +8,14 @@ import EyeOffIcon from "./../assets/Icons/show.svg";
 import "./../index.css";
 import { login } from "../Api/auth/authApi";
 
-const NewLogin = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [sys_msg, setErrorMessage] = useState("Coded by HTI Students");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -194,4 +195,4 @@ const NewLogin = () => {
   );
 };
 
-export default NewLogin;
+export default Login;

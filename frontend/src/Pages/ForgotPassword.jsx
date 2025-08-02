@@ -5,6 +5,7 @@ import LockClosedIcon from "./../assets/Icons/padlock.svg"; // Assuming you have
 import EyeIcon from "./../assets/Icons/hide.svg"; // Path to your eye-open icon
 import EyeOffIcon from "./../assets/Icons/show.svg"; // Path to your eye-closed icon
 import { Link } from "react-router-dom";
+import { sendOtp, verifyOtp, resetPassword } from "../Api/auth/authApi";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -63,6 +64,7 @@ function ForgotPasswordPage() {
 
     if (step === "email_input") {
       // Stage 1: Send OTP
+      sendOtp(email);
       console.log("Requesting OTP for Email:", email);
       setSysMsg("OTP sent to your email. Please check your inbox.");
       setStep("otp_sent"); // Transition to OTP entry stage
@@ -76,7 +78,7 @@ function ForgotPasswordPage() {
         return;
       }
 
-      const isOtpValid = enteredOtp === "123456"; // Placeholder for OTP validation
+      const isOtpValid = verifyOtp(email, enteredOtp); // Placeholder for OTP validation
       if (isOtpValid) {
         setSysMsg("OTP verified. Please set your new password.");
         setCorrectOtp(true); // Set correctOtp to true
@@ -94,12 +96,13 @@ function ForgotPasswordPage() {
       if (newPassword !== confirmNewPassword) {
         setSysMsg("Error: Passwords do not match.");
         return;
-      }
-      if (newPassword.length < 6) {
+      }else if (newPassword.length < 6) {
         // Basic password length validation
         setSysMsg("Error: New password must be at least 6 characters long.");
         return;
       }
+
+      resetPassword(email, newPassword, otpDigits.join(""));
 
       setSysMsg("Password has been successfully reset!");
       // After successful reset, transition to success UI

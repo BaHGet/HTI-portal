@@ -2,7 +2,7 @@ import axios from "axios";
 
 const baseUrl = import.meta.env.VITE_BASE_API_URL;
 
-const login = async (email, password) => {
+export const login = async (email, password) => {
   try {
     const response = await axios.post(`${baseUrl}/auth/login`, {
       email,
@@ -26,4 +26,22 @@ const login = async (email, password) => {
   }
 };
 
-export { login };
+export const sendOtp = async (email) => {
+  const res = await axios.post("/auth/forgot-password", { email });
+  return res.data;
+};
+
+export const verifyOtp = async (email, otp) => {
+  const res = await axios.post("/auth/verify-otp", { email, otp });
+  return res.data;
+};
+
+export const resetPassword = async (email, newPassword, otp) => {
+  const res = await axios.post("/auth/reset-password", {
+    email,
+    newPassword,
+    otp,
+  });
+  return res.data;
+};
+
