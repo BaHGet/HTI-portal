@@ -70,8 +70,9 @@ const restrictTo = (...roles) =>
 
 
 const forgotPassword = asyncHandler(async (req,res,next) => {
-  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.user.email.toString()}`)
-  const user = await User.findOne({email:req.body.email})
+  const { email } = req.body;
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${email.toString()}`)
+  const user = await User.findOne({email})
   if (!user) {
     return next(new ApiError('No User for this Email', 404))
   }
