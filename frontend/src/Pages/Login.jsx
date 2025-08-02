@@ -1,31 +1,32 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import HtiLogo from "./../assets/1.jpg";
 import MailIcon from "./../assets/Icons/mail.svg";
 import LockClosedIcon from "./../assets/Icons/padlock.svg";
 import EyeIcon from "./../assets/Icons/hide.svg";
 import EyeOffIcon from "./../assets/Icons/show.svg";
 import "./../index.css";
+import { login } from "../Api/auth/authApi";
 
-function NewLogin() {
+const NewLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [sys_msg, setErrorMessage] = useState("Coded by HTI Students");
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const data = { email, password };
-    console.log(data);
-
-    const loginData = { email, password };
-
+    if (!email || !password) {
+      setErrorMessage("Please fill in all fields.");
+      return;
+    }
     try {
-      await axios.post("https://example.com/api/login", loginData);
-    } catch {
-      setErrorMessage("Login failed. Please check your ID and password.");
+      await login(email, password);
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+      setErrorMessage("login_failed");
     }
   };
 
@@ -117,6 +118,7 @@ function NewLogin() {
                 type={showPassword ? "text" : "password"} // Dynamically set type
                 name="password"
                 id="password"
+                autoComplete="off"
                 className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm" // Increased pr-10 for button
                 placeholder="Password"
                 value={password}
@@ -124,7 +126,7 @@ function NewLogin() {
                 required
               />
               {/* Show/Hide Password Button using img tags */}
-              <a
+              <span
                 type="button" // Important: Prevent form submission
                 onClick={togglePasswordVisibility}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
@@ -140,7 +142,7 @@ function NewLogin() {
                       "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
                   }}
                 />
-              </a>
+              </span>
             </div>
           </div>
           {/* Remember Me & Forgot Password */}
@@ -161,12 +163,12 @@ function NewLogin() {
                 Remember me
               </label>
             </div>
-            <a
+            <span
               href="#"
               className="font-medium text-blue-600 hover:text-blue-500 text-sm"
             >
               <Link to="/auth/forgot-password">Forgot your password?</Link>
-            </a>
+            </span>
           </div>
           {/* Login Button */}
           <button
@@ -176,14 +178,20 @@ function NewLogin() {
             Login
           </button>
         </form>
-        <div className="relative flex py-5 items-center">
-          <span className="flex-shrink mx-4 text-gray-500 text-sm">
-            {sys_msg}
+        <div className="relative flex py-5 items-center justify-center">
+          <span className="flex-shrink mx-4 text-sm text-center ">
+            {sys_msg === "login_failed" ? (
+              <span className="text-red-600 font-bold">
+                Login failed. Please check your ID and password.
+              </span>
+            ) : (
+              <span className="text-gray-500">{sys_msg}</span>
+            )}
           </span>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default NewLogin;
