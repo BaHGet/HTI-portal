@@ -7,6 +7,7 @@ import InternalServerErrorPage from "./Pages/InternalServerErrorPage.jsx";
 
 const App = () => {
   return (
+    
     <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
       <Routes>
         <Route path="/auth/login" element={<Login />} />
