@@ -24,6 +24,7 @@ const getAllUsers = async (req, res) => {
 }
 
 const addUser = async (req, res) => {
+    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
     const userData = req.body;
     try {
         userData.passwordHash = await Hashing(userData.password)
@@ -39,6 +40,7 @@ const addUser = async (req, res) => {
 
 
 const getUser = async (req, res) => {
+    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
     try {
         const user = req.body;
 
@@ -52,6 +54,7 @@ const getUser = async (req, res) => {
 }
 
 const changeUserRole = asyncHandler( async (req,res,next)=>{
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
   const updatedUser = await userModel.findOneAndUpdate(
     { email: req.body.email },
     {
@@ -67,6 +70,7 @@ const changeUserRole = asyncHandler( async (req,res,next)=>{
 
 
 const getLoggedUserData = asyncHandler(async(req,res,next)=>{
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
   res.status(200).json({
     status: 'success',
     data: req.user
@@ -76,6 +80,7 @@ const getLoggedUserData = asyncHandler(async(req,res,next)=>{
 
 
 const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
 
   // 1) Get user from database
   const user = await userModel.findOne({ email: req.body.email });
