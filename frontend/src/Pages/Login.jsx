@@ -167,7 +167,7 @@ const NewLogin = () => {
               href="#"
               className="font-medium text-blue-600 hover:text-blue-500 text-sm"
             >
-              <Link to="/auth/forgot-password">Forgot your password?</Link>
+              <Link to="/forgot-password">Forgot your password?</Link>
             </span>
           </div>
           {/* Login Button */}
