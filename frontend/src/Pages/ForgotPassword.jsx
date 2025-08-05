@@ -5,6 +5,7 @@ import LockClosedIcon from "./../assets/Icons/padlock.svg"; // Assuming you have
 import EyeIcon from "./../assets/Icons/hide.svg"; // Path to your eye-open icon
 import EyeOffIcon from "./../assets/Icons/show.svg"; // Path to your eye-closed icon
 import { Link } from "react-router-dom";
+import { sendOtp, verifyOtp, resetPassword } from "../Api/auth/authApi";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -63,6 +64,7 @@ function ForgotPasswordPage() {
 
     if (step === "email_input") {
       // Stage 1: Send OTP
+      sendOtp(email);
       console.log("Requesting OTP for Email:", email);
       setSysMsg("OTP sent to your email. Please check your inbox.");
       setStep("otp_sent"); // Transition to OTP entry stage
@@ -76,7 +78,7 @@ function ForgotPasswordPage() {
         return;
       }
 
-      const isOtpValid = enteredOtp === "123456"; // Placeholder for OTP validation
+      const isOtpValid = verifyOtp(enteredOtp); // Placeholder for OTP validation
       if (isOtpValid) {
         setSysMsg("OTP verified. Please set your new password.");
         setCorrectOtp(true); // Set correctOtp to true
@@ -94,12 +96,13 @@ function ForgotPasswordPage() {
       if (newPassword !== confirmNewPassword) {
         setSysMsg("Error: Passwords do not match.");
         return;
-      }
-      if (newPassword.length < 6) {
+      } else if (newPassword.length < 6) {
         // Basic password length validation
         setSysMsg("Error: New password must be at least 6 characters long.");
         return;
       }
+
+      resetPassword(newPassword);
 
       setSysMsg("Password has been successfully reset!");
       // After successful reset, transition to success UI
@@ -118,9 +121,7 @@ function ForgotPasswordPage() {
   };
 
   // Function to handle "Back to Login" from success screen
-  const handleBackToLogin = () => {
-    
-  };
+  const handleBackToLogin = () => {};
 
   // Effect to focus on the first OTP input when the step changes to otp_sent
   useEffect(() => {
@@ -330,13 +331,15 @@ function ForgotPasswordPage() {
             {/* Back to Login Link (visible before success screen) */}
             <p className="text-center text-sm text-gray-600 mt-4">
               Remember your password?{" "}
-              <a
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500"
+              <Link
+                to="/login"
+                className="font-medium text-blue-600
+                hover:text-blue-500"
                 onClick={handleBackToLogin}
               >
-                <Link to="/auth/new-login">Back to Login</Link>
-              </a>
+                {" "}
+                Back to Login
+              </Link>
             </p>
           </>
         )}
@@ -366,7 +369,7 @@ function ForgotPasswordPage() {
               with your new password.
             </p>
             <div className="mt-6">
-              <Link to="/auth/new-login">
+              <Link to="/login">
                 <button
                   type="button"
                   onClick={handleBackToLogin}
