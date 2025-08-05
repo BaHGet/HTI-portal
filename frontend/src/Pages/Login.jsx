@@ -35,7 +35,7 @@ const NewLogin = () => {
   };
 
   return (
-    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden max-w-4xl w-full mx-4 sm:mx-0">
+    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
       {/* Left Column - Illustration/Promotional */}
       <div className="hidden lg:block w-1/2  relative overflow-hidden rounded-r-lg">
         {/* Placeholder for the illustration - you'd replace this with an actual SVG or image */}
@@ -55,9 +55,7 @@ const NewLogin = () => {
 
       {/* Right Column - Login Form */}
       <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
-        <h2 className="text-2xl text-gray-900 mb-2">
-          Log in to your Account
-        </h2>
+        <h2 className="text-2xl text-gray-900 mb-2">Log in to your Account</h2>
         <div className="relative flex py-5 items-center">
           <div className="flex-grow border-t border-gray-300"></div>
           <span className="flex-shrink mx-4 text-gray-500 text-sm">
