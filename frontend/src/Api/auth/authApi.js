@@ -18,7 +18,6 @@ export const login = async (email, password) => {
     } else {
       console.warn("No token found in response headers");
     }
-
     return response.data;
   } catch (error) {
     throw error;
