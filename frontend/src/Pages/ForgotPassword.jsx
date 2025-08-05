@@ -446,6 +446,11 @@ function ForgotPasswordPage() {
                   className="font-medium text-blue-600 text-xs
                 hover:text-blue-500"
                   onClick={handleResendOTP}
+                  disabled={counter > 0} // Disable link if counter is active
+                  style={{
+                    pointerEvents: counter > 0 ? "none" : "auto",
+                    color: counter > 0 ? "#9ca3af" : "#2563eb", // Gray if disabled, blue if active
+                  }}
                 >
                   {" "}
                   {resendShape === "text" ? "Resend OTP" : `${counter}s`}
