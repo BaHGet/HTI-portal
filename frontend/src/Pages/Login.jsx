@@ -26,7 +26,7 @@ const NewLogin = () => {
       navigate("/");
     } catch (error) {
       console.log(error);
-      setErrorMessage("login_failed");
+      setErrorMessage("Invalid email or password, please try again.");
     }
   };
 
@@ -35,32 +35,31 @@ const NewLogin = () => {
   };
 
   return (
-    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden max-w-4xl w-full mx-4 sm:mx-0">
+    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
       {/* Left Column - Illustration/Promotional */}
       <div className="hidden lg:block w-1/2  relative overflow-hidden rounded-r-lg">
         {/* Placeholder for the illustration - you'd replace this with an actual SVG or image */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img
-            src={HtiLogo}
-            alt="Login Illustration"
-            className="w-2/3 h-2/3 object-contain"
-          />
+        <div className=" justify-center">
+          <div className="flex-shrink items-center text-gray-800 text-2xl text-center mt-10 font-semibold mb-6">
+            <span>HTI EDU Portal</span>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img
+              src={HtiLogo}
+              alt="Login Illustration"
+              className="w-4/7 h-4/7 object-contain"
+            />
+          </div>
         </div>
       </div>
 
       {/* Right Column - Login Form */}
       <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
-        <div className="flex items-center text-gray-800 text-lg font-semibold mb-6">
-          <span>HTI Edu Portal</span>
-        </div>
-
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Log in to your Account
-        </h2>
+        <h2 className="text-2xl text-gray-900 mb-2">Log in to your Account</h2>
         <div className="relative flex py-5 items-center">
           <div className="flex-grow border-t border-gray-300"></div>
           <span className="flex-shrink mx-4 text-gray-500 text-sm">
-            continue with your Edu Email
+            continue with your EDU Email
           </span>
           <div className="flex-grow border-t border-gray-300"></div>
         </div>
@@ -180,10 +179,8 @@ const NewLogin = () => {
         </form>
         <div className="relative flex py-5 items-center justify-center">
           <span className="flex-shrink mx-4 text-sm text-center ">
-            {sys_msg === "login_failed" ? (
-              <span className="text-red-600 font-bold">
-                Login failed. Please check your ID and password.
-              </span>
+            {sys_msg !== "Coded by HTI Students" ? (
+              <span className="text-red-600">{sys_msg}</span>
             ) : (
               <span className="text-gray-500">{sys_msg}</span>
             )}
