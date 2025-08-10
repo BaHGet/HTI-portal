@@ -30,7 +30,7 @@ const Sidebar = forwardRef(({ collapsed }, ref) => {
                         className="hidden dark:block"
                     />
                 </div>
-                {!collapsed && <p className="text-lg font-medium text-slate-900 dark:text-slate-50">بوابة الطلاب</p>}
+                {!collapsed && <p className="text-lg font-medium text-slate-900 dark:text-slate-50">بوابـة الطـلاب</p>}
             </div>
             <div className="flex w-full flex-col gap-y-4 overflow-x-hidden overflow-y-auto p-3 [scrollbar-width:_thin]">
                 {navbarLinks.map((navbarLink) => (
