@@ -1,4 +1,3 @@
-import React from 'react'
 import InternalServerError from "./../assets/InternalServerError.png";
 
 const InternalServerErrorPage = () => {
@@ -17,6 +16,6 @@ const InternalServerErrorPage = () => {
       </div>
     </div>
   );
-}
+};
 
-export default InternalServerErrorPage  
+export default InternalServerErrorPage;

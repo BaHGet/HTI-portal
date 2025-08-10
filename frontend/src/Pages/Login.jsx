@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HtiLogo from "./../assets/1.jpg";
 import MailIcon from "./../assets/Icons/mail.svg";

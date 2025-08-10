@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import HtiLogo from "./../assets/1.jpg"; // Ensure this path is correct
 import MailIcon from "./../assets/Icons/mail.svg"; // Ensure this path is correct
 import LockClosedIcon from "./../assets/Icons/padlock.svg"; // Assuming you have this icon
@@ -192,7 +192,7 @@ function ForgotPasswordPage() {
     setOtpDigits(["", "", "", "", "", ""]);
     setStep("email_input");
     setSysMsg({ msg: "Please enter your email again.", type: "info" });
-  }
+  };
 
   // Function to handle "Back to Login" from success screen
   const handleBackToLogin = () => {};
@@ -203,7 +203,7 @@ function ForgotPasswordPage() {
     });
     setOtpDigits(["", "", "", "", "", ""]);
     setnumOfResend((prev) => prev + 1);
-    setCounter(numOfResend*30);
+    setCounter(numOfResend * 30);
     await sendOtp(email);
   };
 

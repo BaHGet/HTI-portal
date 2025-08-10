@@ -1,20 +1,12 @@
-import {
-  Route,
-  Routes,
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./Pages/Login.jsx";
-import Dashboard from "./Pages/Dashboard.jsx";
 import "./index.css";
 import ForgotPassword from "./Pages/ForgotPassword.jsx";
 import NotFoundPage from "./Pages/NotFoundPage.jsx";
-import InternalServerErrorPage from "./Pages/InternalServerErrorPage.jsx";
-import DashboardPage from "./Pages/dashboard/page.jsx"
+import DashboardPage from "./Pages/dashboard/page.jsx";
 import Layout from "./Pages/Layout.jsx";
 
 const App = () => {
-
   const router = createBrowserRouter([
     {
       path: "/",

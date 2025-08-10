@@ -2,19 +2,23 @@ import {
   CreditCard,
   DollarSign,
   Package,
-  PencilLine,
-  Star,
-  Trash,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { useTheme } from "../../hooks/use-theme";
 import { overviewData, recentSalesData, topProducts } from "../../constants";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Footer } from "../../layouts/footer";
 
 const page = () => {
-    const { theme } = useTheme();
+  const { theme } = useTheme();
   return (
     <div className="flex flex-col gap-y-4">
       <h1 className="title">Dashboard</h1>
