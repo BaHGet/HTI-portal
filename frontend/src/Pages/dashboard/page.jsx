@@ -11,6 +11,7 @@ import {
 import { useTheme } from "../../hooks/use-theme";
 import { overviewData, recentSalesData, topProducts } from "../../constants";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Footer } from "../../layouts/footer";
 
 const page = () => {
     const { theme } = useTheme();
@@ -169,7 +170,7 @@ const page = () => {
           </div>
         </div>
       </div>
-      
+      <Footer />
     </div>
   );
 };
