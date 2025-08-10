@@ -1,62 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+@layer base {
+    body {
+        @apply [scrollbar-color:_#cbd5e1_transparent] dark:[scrollbar-color:_#334155_transparent] min-h-screen items-center justify-center bg-gray-100;
+    }
 }
 
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+
+
+@layer components {
+    .sidebar-groub {
+        @apply flex w-full flex-col gap-y-2;
+    }
+    .sidebar-group-title {
+        @apply overflow-hidden text-sm font-medium text-ellipsis text-slate-600 dark:text-slate-400;
+    }
+    .sidebar-item {
+        @apply flex h-[40px] w-full flex-shrink-0 items-center gap-x-3 rounded-lg p-3 text-base font-medium text-slate-900 transition-colors hover:bg-blue-50 dark:text-slate-50 dark:hover:bg-blue-950;
+        &.active {
+            @apply bg-blue-500 text-slate-50 dark:bg-blue-600;
+        }
+    }
+    .title {
+        @apply text-3xl font-semibold text-slate-900 transition-colors dark:text-slate-50;
+    }
+
+    .btn-ghost {
+        @apply flex h-[40px] w-full flex-shrink-0 items-center justify-center gap-x-2 rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-slate-500 dark:hover:bg-blue-950 dark:hover:text-slate-300;
+    }
+    .input {
+        @apply hidden h-10 flex-shrink-0 items-center gap-x-2 rounded-lg border border-slate-300 px-2 text-base text-slate-900 transition-colors has-[input:focus]:border-blue-500 md:flex md:w-auto lg:w-80 dark:border-slate-700 dark:text-slate-50 dark:focus:border-blue-600;
+    }
+    .card {
+        @apply flex flex-col gap-y-4 rounded-lg border border-slate-300 bg-white p-4 transition-colors dark:border-slate-700 dark:bg-slate-900;
+    }
+    .card-header {
+        @apply flex items-center gap-x-2;
+    }
+
+    .card-title {
+        @apply font-medium text-slate-900 transition-colors dark:text-slate-50;
+    }
+
+    .card-body {
+        @apply flex flex-col gap-y-2 rounded-lg p-4;
+    }
+
+    .table {
+        @apply h-full w-full text-slate-900 dark:text-slate-50;
+    }
+
+    .table-header {
+        @apply sticky top-0 bg-slate-200 transition-[background] dark:bg-slate-800;
+    }
+
+    .table-row {
+        @apply border-b border-slate-300 transition-colors last:border-none dark:border-slate-700;
+    }
+
+    .table-head {
+        @apply h-12 px-4 text-start;
+    }
+
+    .table-cell {
+        @apply w-fit whitespace-nowrap p-4 font-medium;
+    }
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.recharts-default-tooltip {
+    @apply !rounded-lg !border !border-slate-300 !bg-white transition-colors dark:!border-slate-700 dark:!bg-slate-900;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.recharts-tooltip-label {
+    @apply text-base font-medium text-slate-900 dark:text-slate-50;
+}
+
+.recharts-tooltip-item {
+    @apply text-base font-medium !text-blue-500 dark:!text-blue-600;
 }
