@@ -5,6 +5,7 @@ import ForgotPassword from "./Pages/ForgotPassword.jsx";
 import NotFoundPage from "./Pages/NotFoundPage.jsx";
 import DashboardPage from "./Pages/dashboard/page.jsx";
 import Layout from "./Pages/Layout.jsx";
+import Registration from "./Pages/dashboard/Registration.jsx";
 
 const App = () => {
   const router = createBrowserRouter([
@@ -30,7 +31,7 @@ const App = () => {
         },
         {
           path: "registeration",
-          element: <h1 className="title capitalize">تسجيل المقررات</h1>,
+          element: <Registration />,
         },
         {
           path: "withdrawal",

@@ -24,7 +24,7 @@ const Layout = () => {
   });
 
   return (
-    <div className="transition-color min-h-screen bg-slate-100 dark:bg-slate-950">
+    <div dir="rtl" className="transition-color min-h-screen bg-slate-100 dark:bg-slate-950">
       <div
         className={cn(
           "pointer-events-none fixed inset-0 -z-10 bg-black opacity-0 transition-opacity",
