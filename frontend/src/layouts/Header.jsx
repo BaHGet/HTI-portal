@@ -1,7 +1,8 @@
 import React from "react";
 import { useTheme } from "../hooks/use-theme";
 import { PropTypes } from "prop-types";
-import {  Menu, Moon, Search, Sun } from "lucide-react";
+import {  Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import profileImg from "../assets/profile-img.png"; // Adjust the path as necessary
 
 const Header = ({ collapsed, setCollapsed }) => {
     const { theme, setTheme } = useTheme();
@@ -45,6 +46,15 @@ const Header = ({ collapsed, setCollapsed }) => {
                         size={20}
                         className="hidden dark:block"
                     />
+                </button>
+                <button className="btn-ghost size-10">
+                    <Bell size={20} />
+                </button>
+                <button className="overflow-hidden rounded-full size-10">
+                    <img
+                        src={profileImg}
+                        alt="profile image"
+                        className="size-full object-cover"/>
                 </button>
             </div>
         </header>
