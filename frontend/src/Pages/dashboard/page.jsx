@@ -6,7 +6,7 @@ import {
   Users,
 } from "lucide-react";
 import { useTheme } from "../../hooks/use-theme";
-import { overviewData, recentSalesData, topProducts } from "../../constants";
+import { overviewData, recentSalesData } from "../../constants";
 import {
   Area,
   AreaChart,
