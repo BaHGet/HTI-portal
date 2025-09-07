@@ -48,7 +48,10 @@ app.use(morgan(customFormat, {
 app.use(cookieParser());
 
 const db = require("../config/db");
+const sql = require("../config/mysqlDB");
 db.dbConnection();
+sql.dbConnection();
+
 
 const { authRouter } = require("../routes/auth");
 app.use("/api/auth", authRouter);
