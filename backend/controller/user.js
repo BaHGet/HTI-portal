@@ -75,7 +75,6 @@ const getLoggedUserData = asyncHandler(async(req,res,next)=>{
     status: 'success',
     data: req.user
   });
-  
 })
 
 

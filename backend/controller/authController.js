@@ -133,43 +133,51 @@ const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
 
 const resetPassword = asyncHandler( async (req,res,next)=>{
   logger.info(`the endpoint ${req.route.path} has been accessed`)
-  // 1) Get reset-token from header
-  const resetToken = req.headers['reset-token'];
-  if (!resetToken) {
-    return next(new ApiError("Reset token is missing", 401));
-  }
-
-  // 2) Verify token
-  let decoded;
   try {
-    decoded = jwt.verify(resetToken, process.env.TOKEN_SECRET);
-  } catch (err) {
-    return next(new ApiError("Invalid or expired reset token", 401));
+    // 1) Get reset-token from header
+    const resetToken = req.headers['reset-token'];
+    if (!resetToken) {
+      console.log("1");
+      return next(new ApiError("Reset token is missing", 401));
+    }
+
+    // 2) Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, process.env.TOKEN_SECRET);
+    } catch (err) {
+      console.log("2");
+      return next(new ApiError("Invalid or expired reset token", 401));
+    }
+
+    // 3) Find user by email inside the token
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      console.log("3");
+      return next(new ApiError("User not found", 404));
+    }
+
+    // 4) Check if reset code was verified
+    if (!user.passwordResetVerified) {
+      console.log("4");
+      return next(new ApiError("Reset code is not verified", 403));
+    }
+
+    // 5) Hash new password and reset fields
+    user.passwordHash = await Hashing(req.body.NewPassword);
+    user.passwordResetCode = undefined;
+    user.passwordResetExpires = undefined;
+    user.passwordResetVerified = undefined;
+
+    await user.save()
+
+    // 6) generate token
+    const token  = createToken({ email: user.email });
+    res.header('token',token);
+    res.status(200).send();
+  } catch (error) {
+    res.status(500).json({message:error.message})
   }
-
-  // 3) Find user by email inside the token
-  const user = await User.findOne({ email: decoded.email });
-  if (!user) {
-    return next(new ApiError("User not found", 404));
-  }
-
-  // 4) Check if reset code was verified
-  if (!user.passwordResetVerified) {
-    return next(new ApiError("Reset code is not verified", 403));
-  }
-
-  // 5) Hash new password and reset fields
-  user.passwordHash = await Hashing(req.body.NewPassword);
-  user.passwordResetCode = undefined;
-  user.passwordResetExpires = undefined;
-  user.passwordResetVerified = undefined;
-
-  await user.save()
-
-  // 6) generate token
-  const token  = createToken({ email: user.email });
-  res.header('token',token);
-  res.status(200).send();
 })
 
 
