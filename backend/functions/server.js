@@ -60,9 +60,9 @@ app.use(
 
 app.use(cookieParser());
 
-const db = require("../config/db");
+const mongoDBConnection = require("../config/db");
 const sql = require("../config/mysqlDB");
-db.dbConnection();
+mongoDBConnection.dbConnection();
 sql.dbConnection();
 
 
