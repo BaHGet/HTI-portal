@@ -12,11 +12,11 @@ const cors = require("cors");
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"],
-    exposedHeaders: ["token"],
+    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
+    exposedHeaders: ["token", "reset-token"],
   })
 );
 
@@ -60,8 +60,11 @@ app.use(
 
 app.use(cookieParser());
 
-const db = require("../config/db");
-db.dbConnection();
+const mongoDBConnection = require("../config/db");
+const sql = require("../config/mysqlDB");
+mongoDBConnection.dbConnection();
+sql.dbConnection();
+
 
 const { authRouter } = require("../routes/auth");
 app.use("/api/auth", authRouter);
