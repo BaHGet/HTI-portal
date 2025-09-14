@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 
-// هذا المودل يمثل جدول مواعيد الجروبات الجديد
 module.exports = (sequelize) => {
   const GroupSchedule = sequelize.define('GroupSchedule', {
     ScheduleID: {
