@@ -4,16 +4,36 @@ import MailIcon from "./../assets/Icons/mail.svg"; // Ensure this path is correc
 import LockClosedIcon from "./../assets/Icons/padlock.svg"; // Assuming you have this icon
 import EyeIcon from "./../assets/Icons/hide.svg"; // Path to your eye-open icon
 import EyeOffIcon from "./../assets/Icons/show.svg"; // Path to your eye-closed icon
+import LoadingSpinner from "../Components/LoadingSpinner";
 import { Link } from "react-router-dom";
+import { sendOtp, verifyOtp, resetPassword } from "../Api/auth/authApi";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]); // State for 6 individual OTP digits
   const [newPassword, setNewPassword] = useState("");
+  const [resendShape, setresendShape] = useState("text");
+  const [counter, setCounter] = useState(0); // Countdown timer (0 = ready)
+  const [numOfResend, setnumOfResend] = useState(1);
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [sys_msg, setSysMsg] = useState("Coded by HTI Students");
+  const [sys_msg, setSysMsg] = useState({
+    msg: "Coded by HTI Students",
+    type: "info",
+  }); // System message state
   const [showPassword, setShowPassword] = useState(false);
   const [correctOtp, setCorrectOtp] = useState(false); // State to control password field visibility
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (counter > 0) {
+      timer = setInterval(() => {
+        setCounter((prev) => prev - 1);
+      }, 1000);
+    }
+    setresendShape(counter > 0 ? "timer" : "text"); // Change shape based on counter
+    return () => clearInterval(timer); // Cleanup timer on unmount or reset
+  }, [counter]);
 
   // 'email_input': User enters email
   // 'otp_sent': OTP has been sent, user enters OTP in 6 separate fields
@@ -57,34 +77,70 @@ function ForgotPasswordPage() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleOtpPaste = (e) => {
+    e.preventDefault(); // Prevent default paste behavior
+    const pastedData = e.clipboardData.getData("text").trim();
+
+    if (pastedData.length === otpDigits.length && /^\d+$/.test(pastedData)) {
+      const newOtp = pastedData.split(""); // Split digits into array
+      setOtpDigits(newOtp);
+
+      // Focus the last input after pasting
+      otpInputRefs.current[otpDigits.length - 1]?.focus();
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSysMsg(""); // Clear previous messages
+    setSysMsg({ msg: "", type: "" }); // Clear previous messages
+    setLoading(true); // Set loading state to true
 
     if (step === "email_input") {
       // Stage 1: Send OTP
+      const res = await sendOtp(email);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // make more time
+      res.status === 200
+        ? setSysMsg({
+            msg: `OTP sent to your email (${email}).\nPlease check your inbox.`,
+            type: "info",
+          })
+        : res.status === 404
+        ? setSysMsg({ msg: "Error: Invalid email address.", type: "error" })
+        : setSysMsg({
+            msg: "Error: Failed to send OTP. Please try again.",
+            type: "error",
+          });
       console.log("Requesting OTP for Email:", email);
-      setSysMsg("OTP sent to your email. Please check your inbox.");
-      setStep("otp_sent"); // Transition to OTP entry stage
+      setLoading(false);
+      res.status === 200 ? setStep("otp_sent") : setStep("email_input");
+      //setStep("otp_sent"); // Transition to OTP entry stage
     } else if (step === "otp_sent") {
       // Stage 2: Verify OTP
       const enteredOtp = otpDigits.join(""); // Combine digits to form full OTP
       console.log("Verifying OTP:", enteredOtp);
 
       if (enteredOtp.length !== 6) {
-        setSysMsg("Error: OTP must be 6 digits.");
+        setSysMsg({ msg: "Error: OTP must be 6 digits.", type: "error" });
         return;
       }
 
-      const isOtpValid = enteredOtp === "123456"; // Placeholder for OTP validation
-      if (isOtpValid) {
-        setSysMsg("OTP verified. Please set your new password.");
+      const isOtpValid = verifyOtp(enteredOtp); // Placeholder for OTP validation
+      if ((await isOtpValid).status === 200) {
+        setSysMsg({
+          msg: "OTP verified. Please set your new password.",
+          type: "success",
+        });
         setCorrectOtp(true); // Set correctOtp to true
+        setLoading(false); // Reset loading state
         setStep("password_reset"); // Transition to new password entry stage
       } else {
-        setSysMsg("Error: Invalid OTP. Please try again.");
+        setSysMsg({
+          msg: "Error: Invalid OTP. Please try again.",
+          type: "error",
+        });
         setOtpDigits(["", "", "", "", "", ""]); // Clear OTP fields on error
         otpInputRefs.current[0]?.focus(); // Focus back to the first OTP input
+        setLoading(false); // Reset loading state
       }
     } else if (step === "password_reset") {
       // Stage 3: Reset Password
@@ -92,18 +148,32 @@ function ForgotPasswordPage() {
       console.log("Confirm New Password:", confirmNewPassword);
 
       if (newPassword !== confirmNewPassword) {
-        setSysMsg("Error: Passwords do not match.");
+        setSysMsg({ msg: "Error: Passwords do not matches.", type: "error" });
+        setLoading(false); // Reset loading state
         return;
-      }
-      if (newPassword.length < 6) {
+      } else if (newPassword.length < 6) {
         // Basic password length validation
-        setSysMsg("Error: New password must be at least 6 characters long.");
+        setSysMsg({
+          msg: "Error: New password must be at least 6 characters long.",
+          type: "error",
+        });
+        setLoading(false); // Reset loading state
         return;
       }
 
-      setSysMsg("Password has been successfully reset!");
+      const res = await resetPassword(newPassword);
+      setLoading(false); // Reset loading state
+      res.status === 200
+        ? setSysMsg({
+            msg: "Password has been successfully reset!",
+            type: "success",
+          })
+        : setSysMsg({
+            msg: "Password has not been reseted!",
+            type: "error",
+          });
       // After successful reset, transition to success UI
-      setStep("reset_success");
+      res.status === 200 ? setStep("reset_success") : setStep("password_reset");
       // Clear form fields, but keep them for potential re-use if user goes back
       setEmail("");
       setOtpDigits(["", "", "", "", "", ""]);
@@ -117,9 +187,24 @@ function ForgotPasswordPage() {
     setShowPassword((prev) => !prev);
   };
 
+  const handleChangeMail = () => {
+    setEmail("");
+    setOtpDigits(["", "", "", "", "", ""]);
+    setStep("email_input");
+    setSysMsg({ msg: "Please enter your email again.", type: "info" });
+  }
+
   // Function to handle "Back to Login" from success screen
-  const handleBackToLogin = () => {
-    
+  const handleBackToLogin = () => {};
+  const handleResendOTP = async () => {
+    setSysMsg({
+      msg: `Code Has been resent to your email. ${email}`,
+      type: "success",
+    });
+    setOtpDigits(["", "", "", "", "", ""]);
+    setnumOfResend((prev) => prev + 1);
+    setCounter(numOfResend*30);
+    await sendOtp(email);
   };
 
   // Effect to focus on the first OTP input when the step changes to otp_sent
@@ -130,37 +215,55 @@ function ForgotPasswordPage() {
   }, [step]);
 
   return (
-    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden max-w-4xl w-full mx-4 sm:mx-0">
+    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
       {/* Left Column - Illustration/Promotional (Same as Login Page) */}
       <div className="hidden lg:block w-1/2 relative overflow-hidden rounded-r-lg">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img
-            src={HtiLogo}
-            alt="HTI Logo"
-            className="w-2/3 h-2/3 object-contain"
-          />
+        <div className=" justify-center">
+          <div className="flex-shrink items-center text-gray-800 text-2xl text-center mt-10 font-semibold mb-6">
+            <span>HTI EDU Portal</span>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img
+              src={HtiLogo}
+              alt="Login Illustration"
+              className="w-4/7 h-4/7 object-contain"
+            />
+          </div>
         </div>
       </div>
 
       {/* Right Column - Forgot Password Form / Success Message */}
       <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
-        <div className="flex items-center text-gray-800 text-lg font-semibold mb-6">
-          <span>HTI Edu Portal</span> {/* Keep branding consistent */}
-        </div>
-
         {step !== "reset_success" && (
           <>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Forgot Your Password?
-            </h2>
-            <p className="text-gray-600 mb-6">
               {step === "email_input"
-                ? "Enter your email address below and we'll send you a One-Time Password (OTP)."
+                ? "Forgot Password"
                 : step === "otp_sent"
-                ? "Enter the 6-digit OTP sent to your email to verify."
-                : "OTP verified. Please set your new password."}
-            </p>
-
+                ? "Enter the Code"
+                : "Reset Password"}
+            </h2>
+            <div className="mb-6">
+              <div className="text-gray-600 text-xs">
+                {step === "email_input" ? (
+                  "Enter your email address below and we'll send you a One-Time Password (OTP)."
+                ) : step === "otp_sent" ? (
+                  <>
+                    Enter the 6-digit OTP sent to {email} to verify. Please
+                    check your inbox OR{" "}
+                    <Link
+                      onClick={handleChangeMail}
+                      className="text-gray-600 text-sm"
+                    >
+                      change mail
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  "OTP verified. Please set your new password."
+                )}
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Input - Stage 1 */}
               {step === "email_input" && (
@@ -182,7 +285,7 @@ function ForgotPasswordPage() {
                       name="email"
                       id="email"
                       className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
-                      placeholder="Enter your Edu Email"
+                      placeholder="Enter your EDU Email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -209,6 +312,7 @@ function ForgotPasswordPage() {
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        onPaste={handleOtpPaste}
                         ref={(el) => (otpInputRefs.current[index] = el)}
                         className="w-10 h-10 text-center text-lg font-bold border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                         required
@@ -317,27 +421,55 @@ function ForgotPasswordPage() {
               {/* Submit Button */}
               <button
                 type="submit"
+                disabled={loading} // Disable button while loading
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                {step === "email_input"
-                  ? "Send OTP"
-                  : step === "otp_sent"
-                  ? "Verify OTP"
-                  : "Reset Password"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner /> {/* Show spinner when loading */}
+                  </>
+                ) : step === "email_input" ? (
+                  "Send OTP"
+                ) : step === "otp_sent" ? (
+                  "Verify OTP"
+                ) : (
+                  "Reset Password"
+                )}
               </button>
             </form>
 
             {/* Back to Login Link (visible before success screen) */}
-            <p className="text-center text-sm text-gray-600 mt-4">
-              Remember your password?{" "}
-              <a
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500"
-                onClick={handleBackToLogin}
-              >
-                <Link to="/auth/new-login">Back to Login</Link>
-              </a>
-            </p>
+            {step === "otp_sent" ? (
+              <p className="text-center text-sm text-gray-600 mt-4">
+                didn't recived code?{" "}
+                <Link
+                  className="font-medium text-blue-600 text-xs
+                hover:text-blue-500"
+                  onClick={handleResendOTP}
+                  disabled={counter > 0} // Disable link if counter is active
+                  style={{
+                    pointerEvents: counter > 0 ? "none" : "auto",
+                    color: counter > 0 ? "#9ca3af" : "#2563eb", // Gray if disabled, blue if active
+                  }}
+                >
+                  {" "}
+                  {resendShape === "text" ? "Resend OTP" : `${counter}s`}
+                </Link>
+              </p>
+            ) : (
+              <p className="text-center text-sm text-gray-600 mt-4 text-xs">
+                Remember your password?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium text-blue-600
+                hover:text-blue-500"
+                  onClick={handleBackToLogin}
+                >
+                  {" "}
+                  Back to Login
+                </Link>
+              </p>
+            )}
           </>
         )}
 
@@ -366,7 +498,7 @@ function ForgotPasswordPage() {
               with your new password.
             </p>
             <div className="mt-6">
-              <Link to="/auth/new-login">
+              <Link to="/login">
                 <button
                   type="button"
                   onClick={handleBackToLogin}
@@ -380,9 +512,21 @@ function ForgotPasswordPage() {
         )}
 
         {/* System Message (always visible) */}
-        <div className="relative flex py-5 items-center">
-          <span className="flex-shrink mx-4 text-gray-500 text-sm">
-            {sys_msg}
+
+        <div className="relative pt-5 items-center">
+          <div className="flex-shrink  text-gray-500 text-xs">
+            Server Message:
+          </div>
+          <span
+            className={
+              sys_msg.type === "info"
+                ? "flex-shrink text-gray-500 text-xs"
+                : sys_msg.type === "success"
+                ? "flex-shrink text-green-500 text-xs"
+                : "flex-shrink text-red-500 text-xs"
+            }
+          >
+            {sys_msg.msg}
           </span>
         </div>
       </div>
