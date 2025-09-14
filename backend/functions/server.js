@@ -60,8 +60,11 @@ app.use(
 
 app.use(cookieParser());
 
-const db = require("../config/db");
-db.dbConnection();
+const mongoDBConnection = require("../config/db");
+const sql = require("../config/mysqlDB");
+mongoDBConnection.dbConnection();
+sql.dbConnection();
+
 
 const { authRouter } = require("../routes/auth");
 app.use("/api/auth", authRouter);
