@@ -28,6 +28,10 @@ module.exports =  (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    RegulationID: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     gpa: {
       type: DataTypes.DECIMAL(3, 2), 
       allowNull: false,

@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const { startSession } = require('./users');
 
 module.exports = (sequelize) => {
   return sequelize.define('SemesterCourse', {
@@ -14,7 +15,7 @@ module.exports = (sequelize) => {
     CourseID: {
       type: DataTypes.INTEGER,
       allowNull: false
-    }
+    },
   }, {
     tableName: 'SemesterCourses',
     timestamps: false

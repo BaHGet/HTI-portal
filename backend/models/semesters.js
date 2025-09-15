@@ -13,11 +13,11 @@ module.exports =  (sequelize) => {
     },
     StartDate: {
       type: DataTypes.DATEONLY,
-      allowNull: true
+      allowNull: false
     },
     EndDate: {
       type: DataTypes.DATEONLY,
-      allowNull: true
+      allowNull: false
     },
     AcademicYear: {
       type: DataTypes.STRING(9),

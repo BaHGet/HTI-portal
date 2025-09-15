@@ -118,6 +118,13 @@ Semester.hasMany(StudentCompletedCourse, { foreignKey: 'SemesterID' });
 StudentCompletedCourse.belongsTo(Grade, { foreignKey: 'GradeID' });
 Grade.hasMany(StudentCompletedCourse, { foreignKey: 'GradeID' });
 
+// Relation between AcademicRegulation and ( Student & Department)
+Department.hasMany(AcademicRegulation, { foreignKey: 'DepartmentID' });
+AcademicRegulation.belongsTo(Department, { foreignKey: 'DepartmentID' });
+
+AcademicRegulation.hasMany(Student, { foreignKey: 'RegulationID' });
+Student.belongsTo(AcademicRegulation, { foreignKey: 'RegulationID' });
+
 
 const db = {
   sequelize, 

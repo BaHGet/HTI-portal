@@ -1,0 +1,131 @@
+
+const asyncHandler = require('express-async-handler');
+const { Op } = require("sequelize");
+
+
+
+const db = require("../models/index");
+
+
+// @desc    Get Avialable Subjects for specific student
+// @route   GET /api/registration/available-subjects
+// @access  Private (Student)
+exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
+  const today = new Date();
+
+  // Step 0: GetStudentInfo (including finished courses)
+  const student = await db.Student.findOne({
+    where: { UserID: req.user.id },
+    include: [{
+        model: db.Course, 
+        include: [{
+          model: db.CourseCategory
+        }] 
+    }]
+  });
+  if(!student){
+    return next(new ApiError('User not found', 404));
+  }
+
+  /////////////////// step 1: Find Semester Available Courses and student Regulation ///////////////////
+  // step 1.1: find the current semester
+  const currentSemester = await db.Semester.findOne({
+    where: {
+      StartDate: { [Op.lte]: today },
+      EndDate: { [Op.gte]: today }
+    }
+  });
+  if(!currentSemester){
+    return next(new ApiError('No active semester found', 404));
+  }
+  // step 1.2: Fetch all courses offered in this semester
+  const semesterCourses = await db.Course.findAll({
+    include: [
+      { 
+        model: db.Semester, 
+        where: { SemesterID: currentSemester.SemesterID } 
+      },
+      { 
+        model: db.Prerequisite, 
+        as: 'Prerequisites'
+      },
+      {
+        model: db.CourseCategory 
+      }
+    ]
+  });
+  if (!semesterCourses.length) {
+    return next(new ApiError('No courses found for the current semester', 404));
+  }
+  // step 1.3: find Student AcademicRegulations
+  const studentRegulation = await student.getAcademicRegulation();
+  if (!studentRegulation) {
+    return next(new ApiError('Could not find the academic regulation for this student', 404));
+  }
+
+  //////////////// step 2: filter semesterCourses based on studentRegulation ////////////////
+  const studentCourses = semesterCourses
+    .filter(course => course.RegulationID === studentRegulation.RegulationID);
+
+  //////////////// step 3: filter studentCourses based on student completed course ////////////////
+  // step 3.1: get completed course
+  const completedCourses = student.Courses;
+  const completedCourseIds = student.Courses
+    .map(sc => sc.CourseID);
+
+  // step 3.2: filtration process
+  const unFinishedCourses = studentCourses
+    .filter(course => !completedCourseIds.includes(course.id));
+
+  //////////////// step 4: filter studentCourses based on prerequisites ////////////////
+  const finishedPrerequisiteCourses = unFinishedCourses
+    .filter(course =>{
+      if(!course.prerequisite || course.Prerequisites.length === 0) return true;
+      return course.Prerequisites
+        .every(prerequisite => completedCourseIds.includes(prerequisite.PrerequisiteCourseID));
+    })
+  
+  //////////////// step 5: filter based on category ////////////////
+  const availableCourses = finishedPrerequisiteCourses
+    .filter(course => {
+      const requiredCredits = course.CourseCategory.RequiredCredits;
+      const categoryId = course.CourseCategory.CourseCategoryID;
+
+      if ( requiredCredits === null || requiredCredits === 0) return true;
+
+      const completedCreditsInCategory = completedCourses.reduce((total, completed) => {
+        if (completed.CourseCategory && completed.CourseCategory.CourseCategoryID === categoryId) {
+            return total + completed.CreditHours; 
+        }
+        return total;
+      }, 0);
+      return completedCreditsInCategory < requiredCredits;
+    })
+
+  /////////////// step 6: return the available courses ////////////////
+  res.status(200).json({
+        success: true,
+        count: availableCourses.length,
+        data: availableCourses
+  });
+});
+
+
+
+
+exports.registerSubject = async (req, res, next) => {
+
+};
+
+
+exports.dropSubject = async (req, res, next) => {
+ 
+};
+
+
+exports.getRegisteredSchedule = async (req, res, next) => {
+
+};
+
+
+
