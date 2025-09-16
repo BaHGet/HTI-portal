@@ -229,7 +229,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     }, { transaction });
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
-    await Enrollment.decrement('AttemptNumber',{ by: 1, transaction });
+    await Enrollment.increment('AttemptNumber',{ by: 1, transaction });
     await transaction.commit();
 
   }catch (error) {
