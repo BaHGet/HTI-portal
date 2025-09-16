@@ -14,7 +14,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   const today = new Date();
 
   // Step 0: GetStudentInfo (including finished courses)
-  const student = await db.Student.findOne({
+  let student = await db.Student.findOne({
     where: { UserID: req.user.id },
     include: [{
         model: db.Course, 
@@ -51,6 +51,12 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       },
       {
         model: db.CourseCategory 
+      },
+      {
+        model: db.CourseGroup,
+        include: [{
+          model:db.GroupSchedule
+        }]
       }
     ]
   });
@@ -63,18 +69,18 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
     return next(new ApiError('Could not find the academic regulation for this student', 404));
   }
 
-  //////////////// step 2: filter semesterCourses based on studentRegulation ////////////////
-  const studentCourses = semesterCourses
+  //////////////// step 2: filter(1) semesterCourses based on studentRegulation ////////////////
+  const studentAllCourses = semesterCourses
     .filter(course => course.RegulationID === studentRegulation.RegulationID);
 
-  //////////////// step 3: filter studentCourses based on student completed course ////////////////
+  //////////////// step 3: filter(2) studentAllCourses based on student completed courses ////////////////
   // step 3.1: get completed course
   const completedCourses = student.Courses;
-  const completedCourseIds = student.Courses
-    .map(sc => sc.CourseID);
+  const completedCourseIds = completedCourses
+    .map(id => id.CourseID);
 
   // step 3.2: filtration process
-  const unFinishedCourses = studentCourses
+  const unFinishedCourses = studentAllCourses
     .filter(course => !completedCourseIds.includes(course.id));
 
   //////////////// step 4: filter studentCourses based on prerequisites ////////////////
@@ -101,12 +107,30 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       }, 0);
       return completedCreditsInCategory < requiredCredits;
     })
+  
+  /////////////// step 6: Appling Search based on Course Id ///////////////
+  const { search } = req.query;
 
-  /////////////// step 6: return the available courses ////////////////
+  let finalResult = availableCourses;
+
+  if (search) {
+    const searchTerm = search.toLowerCase(); 
+    
+    finalResult = availableCourses.filter(course => {
+        const codeMatch = course.CourseCode.toLowerCase().includes(searchTerm); 
+        return codeMatch ;
+    });
+  }
+  if(finalResult.length === 0){
+    return next(new ApiError('No available courses found', 404));
+  }
+
+  /////////////// step 7: return the available courses ////////////////
+  
   res.status(200).json({
         success: true,
-        count: availableCourses.length,
-        data: availableCourses
+        count: finalResult.length,
+        data: finalResult
   });
 });
 
