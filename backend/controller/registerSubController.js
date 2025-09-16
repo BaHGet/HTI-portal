@@ -5,6 +5,8 @@ const { Op } = require("sequelize");
 
 
 const db = require("../models/index");
+const { model } = require('mongoose');
+const enrollment = require('../models/enrollment');
 
 
 // @desc    Get Avialable Subjects for specific student
@@ -136,20 +138,111 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
 
 
 
+// @desc    Register specific subject for specific student
+// @route   POST /api/registration/register-subjects
+// @access  Private (Student)
+exports.registerSubject = asyncHandler (async (req, res, next) => {
 
-exports.registerSubject = async (req, res, next) => {
+  const transaction = await db.sequelize.transaction();
+  try {
+    /////////////////// Step 1: Seat Availability Check ///////////////////
+    const courseGroupId = req.body.GroupID;
+    const courseGroup = await db.CourseGroup.findByPk(courseGroupId,{
+      include:[{
+        model: db.Course,
+        attributes: ['CreditHours']
+      },
+      {
+        model: db.GroupSchedule,
+        attributes: ['DayOfWeek'],
+        include:[{
+          model: db.TimePeriod
+        }],
+      }],
+      transaction 
+    });
+    if(!courseGroup){
+      throw new ApiError("Course group not found",404);
+    }
+    if (courseGroup.CurrentEnrolled >= courseGroup.Capacity){
+      throw new ApiError("No seates available",400);
+    }
+      
 
-};
+    /////////////////// step 2: Credit Hour Limit Check ///////////////////
+    const totalStudentCredits = await db.Course.sum('CreditHours', {
+      include: [{
+          model: db.CourseGroup,
+          attributes: [], 
+          required: true,
+          include: [{
+              model: db.Enrollment,
+              attributes: [], 
+              required: true,
+              where: {
+                  StudentID: req.user.id,
+                  status: "Registered"
+              }
+          }]
+      }],
+      transaction
+    });
+
+    const currentCredits = totalStudentCredits || 0;
+    const newCourseCredits = courseGroup.Course.CreditHours;
+    const studentMaxCredits = 18;
+
+    if ((currentCredits + newCourseCredits) > studentMaxCredits){
+      throw new ApiError("Credit hour limit exceeded",400);
+    }
+      
+
+    /////////////////// step 3: Time Conflict Check ///////////////////
+    const newGroupAppointments = courseGroup.GroupSchedules || [];
+
+    const currentUserAppointments = await db.GroupSchedule.findAll({
+      include: [{
+          model: db.TimePeriod
+      }, {
+          model: db.CourseGroup, 
+          attributes: [], 
+          required: true,
+          include: [{
+              model: db.Enrollment, attributes: [], required: true,
+              where: { StudentID: req.user.id, status: "Registered" }
+          }]
+      }],
+      transaction
+    });
+
+    const hasConflict = checkTimeConflict(newGroupAppointments, currentUserAppointments);
+    if (hasConflict) {
+      throw new ApiError ("Time Conflict",400)
+    }
+
+    /////////////////// step 4: Add course to student Schedule ///////////////////
+    await db.Enrollment.create({
+      StudentID: req.user.id,
+      GroupID: courseGroupId,
+      status: "Registered",
+
+    }, { transaction });
+
+    await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
+    await Enrollment.decrement('AttemptNumber',{ by: 1, transaction });
+    await transaction.commit();
+
+  }catch (error) {
+    await transaction.rollback();
+    next(error);
+  }
+
+});
 
 
-exports.dropSubject = async (req, res, next) => {
- 
-};
+// exports.dropSubject = async (req, res, next) => {};
 
 
-exports.getRegisteredSchedule = async (req, res, next) => {
-
-};
-
+// exports.getRegisteredSchedule = async (req, res, next) => {};
 
 
