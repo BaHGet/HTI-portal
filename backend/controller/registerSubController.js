@@ -208,7 +208,9 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
           attributes: [], 
           required: true,
           include: [{
-              model: db.Enrollment, attributes: [], required: true,
+              model: db.Enrollment, 
+              attributes: [], 
+              required: true,
               where: { StudentID: req.user.id, status: "Registered" }
           }]
       }],
@@ -220,16 +222,54 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 4: Add course to student Schedule ///////////////////
+    /////////////////// step 4: Calculate Attempt Number ///////////////////
+    const courseId = courseGroup.CourseID;
+    const existingEnrollment = await db.Enrollment.findOne({
+      where: {
+          StudentID: req.user.id,
+          status: 'Registered' 
+      },
+      include: [{
+          model: db.CourseGroup,
+          required: true,
+          attributes: [],
+          where: {
+            CourseID: courseId 
+          }
+      }],
+      transaction
+    });
+
+    if (existingEnrollment) {
+        throw new ApiError('You are already registered for this course in another group.', 400);
+    }
+
+    /////////////////// step 5: Calculate Attempt Number ///////////////////
+    const previousAttemptsCount = await db.Enrollment.count({
+      include: [{
+          model: db.CourseGroup,
+          attributes: [], 
+          required: true,
+          where: {
+            CourseID: courseId 
+          }
+      }],
+      where: {
+          StudentID: req.user.id 
+      },
+      transaction
+    });
+    const newAttemptNumber = previousAttemptsCount + 1;
+
+    /////////////////// step 6: Add course to student Schedule ///////////////////
     await db.Enrollment.create({
       StudentID: req.user.id,
       GroupID: courseGroupId,
       status: "Registered",
-
+      AttemptNumber: newAttemptNumber
     }, { transaction });
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
-    await Enrollment.increment('AttemptNumber',{ by: 1, transaction });
     await transaction.commit();
 
   }catch (error) {
