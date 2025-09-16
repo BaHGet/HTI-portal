@@ -222,7 +222,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 4: Calculate Attempt Number ///////////////////
+    /////////////////// step 4: Subject Enrolled Conflict Check ///////////////////
     const courseId = courseGroup.CourseID;
     const existingEnrollment = await db.Enrollment.findOne({
       where: {
