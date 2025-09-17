@@ -1,12 +1,12 @@
 
 const asyncHandler = require('express-async-handler');
 const { Op } = require("sequelize");
-
+const ApiError = require('../utils/apiError');
 
 
 const db = require("../models/index");
-const { model } = require('mongoose');
-const enrollment = require('../models/enrollment');
+
+
 
 
 // @desc    Get Avialable Subjects for specific student
@@ -272,6 +272,18 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
 
+    /////////////////// step 7: Sending Response ///////////////////
+    res.status(201).json({
+      success: true,
+      message: "Course registered successfully",
+      data: {
+          enrollment: {
+              GroupID: courseGroupId,
+              AttemptNumber: newAttemptNumber
+          }
+      }
+    });
+
   }catch (error) {
     await transaction.rollback();
     next(error);
@@ -280,9 +292,84 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 });
 
 
-// exports.dropSubject = async (req, res, next) => {};
+
+// @desc    Drop specific subject for student
+// @route   Delte /api/registration/drop-Enrollment
+// @access  Private (Student)
+exports.dropEnrollment = asyncHandler(async (req, res, next) => {
+  /////////////////// step 1: Get studentID, GroupID ///////////////////
+  const studentId = req.user.id;
+  const { groupId } = req.params;
+  /////////////////// step 2: find matched data and destroy it ///////////////////
+  const matchedRows = await db.Enrollment.destroy({
+    where: {
+      StudentID: studentId,
+      GroupID: groupId
+    }
+  });
+  if ( matchedRows === 0 ){
+    return next(new ApiError("No Matched Found",404))
+  }
+  /////////////////// step 3: return Response ///////////////////
+
+  res.status(200).json({
+    status:"Success",
+    message:"Droped Enrollment Successfully"
+
+  })
+});
 
 
-// exports.getRegisteredSchedule = async (req, res, next) => {};
+
+// @desc    Get Student Schedule 
+// @route   Get /api/registration/registeredschedule
+// @access  Private (Student)
+exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
+  ///////////////////////////// step 1: get student id /////////////////////////////
+  const studentId = req.user.id;
+
+  ///////////////////// step 2: get all student enrollments data ///////////////////
+  const studentEnrollments = await db.Enrollment.findAll({
+    where: { StudentID: studentId},
+    attributes:[],
+    include:[{
+      model: db.CourseGroup,
+      attributes: ['GroupNumber'],
+      incude:[
+        {
+        model: db.Course,
+        attributes:['CourseName','CourseCode','CreditHours'],
+        },
+        {
+          model: db.Professor,
+          attributes: ['ProfessorID'],
+          include: [{
+            model: db.User,
+            attributes:['FullName']
+          }]
+        },
+        {
+          model: db.GroupSchedule,
+          attributes: ['DayOfWeek','Room','SessionType'],
+          include: {
+            model: db.TimePeriod,
+            attributes: ['StartTime','EndTime']
+          }
+        }
+      ]
+    }]
+  })
+
+  if(!studentEnrollments) {
+    return next (new ApiError("Student Schedule Not Found",404))
+  }
+
+  ///////////////////// step 3: Sendind Response ///////////////////
+  res.status(200).json({
+    success: true,
+    count: enrollments.length,
+    data: enrollments
+  });
+});
 
 

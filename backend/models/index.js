@@ -1,10 +1,10 @@
-const { Sequelize } = require('sequelize');
+const  Sequelize  = require('sequelize');
 
-const sequelize = require('../config/mysqlDB');
+const {sequelize} = require('../config/mysqlDB');
 
 const College = require('./colleges')(sequelize);
 const Department = require('./departments')(sequelize);
-const User = require('./userSql')(sequelize);
+const User = require('./userSql')(sequelize,Sequelize);
 const Student = require('./students')(sequelize);
 const Professor = require('./professors')(sequelize);
 const AcademicRegulation = require('./academicRegulations')(sequelize);
@@ -14,10 +14,10 @@ const Semester = require('./semesters')(sequelize);
 const SemesterCourse = require('./semesterCourses')(sequelize);
 const CoursePrerequisite = require('./coursePrerequisites')(sequelize);
 const CourseGroup = require('./courseGroups')(sequelize);
-const Enrollment = require('./enrollments')(sequelize); 
+const Enrollment = require('./enrollment')(sequelize); 
 const Exam = require('./exams')(sequelize);
-const TimePeriod = require('./timePeriods')(sequelize); 
-const GroupSchedule = require('./groupSchedules')(sequelize); 
+const TimePeriod = require('./timePeriod')(sequelize); 
+const GroupSchedule = require('./groupSchedule')(sequelize); 
 const Grade = require('./grades')(sequelize);
 const StudentCompletedCourse = require('./studentCompletedCourses')(sequelize);
 

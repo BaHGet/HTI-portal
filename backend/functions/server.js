@@ -69,8 +69,8 @@ sql.dbConnection();
 const { authRouter } = require("../routes/auth");
 app.use("/api/auth", authRouter);
 
-// const { registerSubRouter } = require("../routes/registerSubRouter");
-// app.use("/api/registration",registerSubRouter);
+const { registerSubRouter } = require("../routes/registerSubRouter");
+app.use("/api/registration",registerSubRouter);
 
 const { userRouter } = require("../routes/user");
 app.use("/api/user", userRouter);

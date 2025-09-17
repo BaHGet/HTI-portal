@@ -3,7 +3,7 @@ const express = require('express');
 const {
   getAvailableSubjects,
   registerSubject,
-  dropSubject,
+  dropEnrollment,
   getRegisteredSchedule
 } = require('../controller/registerSubController');
 
@@ -15,8 +15,8 @@ const registerSubRouter = express.Router();
 
 registerSubRouter.get('/available-subjects', getAvailableSubjects);
 registerSubRouter.post('/register-subjects', registerSubject);
-registerSubRouter.get('/dropsub', );
-registerSubRouter.get('/registerschedule', );
+registerSubRouter.get('/drop-enrollment', dropEnrollment);
+registerSubRouter.get('/registeredschedule', getRegisteredSchedule);
 
 
 
