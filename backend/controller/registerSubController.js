@@ -167,9 +167,31 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     if (courseGroup.CurrentEnrolled >= courseGroup.Capacity){
       throw new ApiError("No seates available",400);
     }
-      
-
+    
     /////////////////// step 2: Credit Hour Limit Check ///////////////////
+    // step 2.1: get student max credits
+    const studentGrade = await db.Student.findByPk(
+      req.user.id,
+      {
+        attributes:['gpa'],
+        transaction
+      }
+    )
+    if (!student){
+      throw new ApiError('Student Not Found',404)
+    }
+
+    let studentMaxCredits;
+    if (studentGrade.gpa > 3){
+      studentMaxCredits = 21;
+    }else if ( 2 < studentGrade.gpa < 3){
+      studentMaxCredits = 18;
+    }else{
+      studentMaxCredits = 14
+    }
+
+
+    // step 2.2: get student current credits
     const totalStudentCredits = await db.Course.sum('CreditHours', {
       include: [{
           model: db.CourseGroup,
@@ -190,7 +212,6 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
     const currentCredits = totalStudentCredits || 0;
     const newCourseCredits = courseGroup.Course.CreditHours;
-    const studentMaxCredits = 18;
 
     if ((currentCredits + newCourseCredits) > studentMaxCredits){
       throw new ApiError("Credit hour limit exceeded",400);
@@ -244,42 +265,24 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
         throw new ApiError('You are already registered for this course in another group.', 400);
     }
 
-    /////////////////// step 5: Calculate Attempt Number ///////////////////
-    const previousAttemptsCount = await db.Enrollment.count({
-      include: [{
-          model: db.CourseGroup,
-          attributes: [], 
-          required: true,
-          where: {
-            CourseID: courseId 
-          }
-      }],
-      where: {
-          StudentID: req.user.id 
-      },
-      transaction
-    });
-    const newAttemptNumber = previousAttemptsCount + 1;
-
-    /////////////////// step 6: Add course to student Schedule ///////////////////
+    /////////////////// step 5: Add course to student Schedule ///////////////////
     await db.Enrollment.create({
       StudentID: req.user.id,
       GroupID: courseGroupId,
       status: "Registered",
-      AttemptNumber: newAttemptNumber
     }, { transaction });
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
 
-    /////////////////// step 7: Sending Response ///////////////////
+    /////////////////// step 6: Sending Response ///////////////////
+    const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
     res.status(201).json({
       success: true,
       message: "Course registered successfully",
       data: {
           enrollment: {
-              GroupID: courseGroupId,
-              AttemptNumber: newAttemptNumber
+            GroupID: courseGroupId,
           }
       }
     });
