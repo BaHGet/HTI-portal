@@ -2,28 +2,29 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto')
 const asyncHandler = require('express-async-handler');
 
-
-const User = require('../models/users');
+const db = require('../models/index')
 const { comparing, Hashing } = require('../utils/hashingPass');
 const { createToken } = require('../middlewares/authMiddleware');
 const ApiError = require('../utils/apiError');
 const sendEmail = require('../utils/sendEmail');
-
+const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
 
 const login = async (req, res) => {
   logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.email.toString()}`)
   // data to validate user with
-  const user = req.body
+  const {email, password} = req.body
   try {
-    const checkUser = await User.findOne({ email: user.email }).select('+passwordHash');
+    const checkUser = await db.User.scope('withPassword').findOne({
+      where: { Email : email }
+    })
     if (!checkUser) return res.status(400).send('Invalid email or password');
 
-    const validPass = await comparing(user.password, checkUser.passwordHash);
+    const validPass = await comparing(password, checkUser.PasswordHash);
     if (!validPass) return res.status(400).send('Invalid email or password');
 
-    const token = createToken({ email: user.email })
+    const token = createToken({ id: checkUser.UserID, email: checkUser.Email })
     res.header('token',token);
     res.status(200).send()
   } catch (err) {
@@ -44,12 +45,12 @@ const protect = asyncHandler(async (req,res,next) => {
 
   const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
 
-  const currentUser = await  User.findOne({ email: decoded.email });
+  const currentUser = await  db.User.findByPK(decoded.id)
   if (!currentUser) {
     return next(new ApiError('User that belong to that token no longer exist', 401));
   }
-  if (currentUser.passwordChangedAt) {
-    const passChangeTimestamp = parseInt(currentUser.passwordChangedAt.getTime() / 1000 , 10);
+  if (currentUser.PasswordChangedAt) {
+    const passChangeTimestamp = parseInt(currentUser.PasswordChangedAt.getTime() / 1000 , 10);
     if (passChangeTimestamp > decoded.iat ){
       return next(new ApiError("User changed password recently",401))
     }
@@ -62,7 +63,7 @@ const protect = asyncHandler(async (req,res,next) => {
 const restrictTo = (...roles) => 
   asyncHandler(async (req, res, next) => {
     
-    if (!roles.includes(req.user.accountType)) {
+    if (!roles.includes(req.user.AccountType)) {
       return next(new ApiError('You do not have permission to perform this action', 403))
     }
     next();
@@ -72,7 +73,7 @@ const restrictTo = (...roles) =>
 const forgotPassword = asyncHandler(async (req,res,next) => {
   const { email } = req.body;
   logger.info(`the endpoint ${req.route.path} was called from user with email ${email.toString()}`)
-  const user = await User.findOne({email})
+  const user = await db.User.findOne({ where: { Email: email } });
   if (!user) {
     return next(new ApiError('No User for this Email', 404))
   }
@@ -83,21 +84,21 @@ const forgotPassword = asyncHandler(async (req,res,next) => {
     .update(resetCode)
     .digest('hex')
 
-  user.passwordResetCode = hashedResetCode;
-  user.passwordResetExpires = Date.now() + 2*60*1000
-  user.passwordResetVerified = false;
+  user.PasswordResetCode = hashedResetCode;
+  user.PasswordResetExpires = Date.now() + 2*60*1000
+  user.PasswordResetVerified = false;
 
-  user.save()
+  await user.save()
   try{
     await sendEmail({
-      email: user.email,
+      email: user.Email,
       subject: 'Password Reset Code',
       message: `Your RestCode is ${resetCode}, (valid for 2 min)`
     })
   }catch(err){
-    user.passwordResetCode = undefined;
-    user.passwordResetExpires = undefined;
-    user.passwordResetVerified = undefined;
+    user.PasswordResetCode = null;
+    user.PasswordResetExpires = null;
+    user.PasswordResetVerified = null;
 
     await user.save()
     return next(new ApiError('There is a problem in sending email', 500))
@@ -113,19 +114,24 @@ const verifyPassResetCode = asyncHandler( async (req,res,next)=>{
     .update(req.body.resetCode)
     .digest('hex')
   
-  const user = await User.findOne({
-    passwordResetCode: hashedResetCode,
-    passwordResetExpires: {$gt:Date.now()}})
+  const user = await db.User.findOne({
+    where: {
+      PasswordResetCode: hashedResetCode,
+      PasswordResetExpires: {
+        [Op.gt]: Date.now() 
+      }
+    }
+  })
 
   if (!user) {
     return next(new ApiError("Reset Code Invalid", 404))
   }
 
   
-  user.passwordResetVerified = true
+  user.PasswordResetVerified  = true
   await user.save()
 
-  const resetToken = jwt.sign( { email: user.email } , process.env.TOKEN_SECRET, {expiresIn: '30min'} )
+  const resetToken = jwt.sign( { id: user.UserID } , process.env.TOKEN_SECRET, {expiresIn: '30min'} )
   res.header('reset-token',resetToken);
   res.status(200).json({status: "Success"})
 
@@ -151,28 +157,28 @@ const resetPassword = asyncHandler( async (req,res,next)=>{
     }
 
     // 3) Find user by email inside the token
-    const user = await User.findOne({ email: decoded.email });
+    const user = await db.User.findByPk(decoded.id);
     if (!user) {
       console.log("3");
       return next(new ApiError("User not found", 404));
     }
 
     // 4) Check if reset code was verified
-    if (!user.passwordResetVerified) {
+    if (!user.PasswordResetVerified) {
       console.log("4");
       return next(new ApiError("Reset code is not verified", 403));
     }
 
     // 5) Hash new password and reset fields
-    user.passwordHash = await Hashing(req.body.NewPassword);
-    user.passwordResetCode = undefined;
-    user.passwordResetExpires = undefined;
-    user.passwordResetVerified = undefined;
+    user.PasswordHash  = await Hashing(req.body.NewPassword);
+    user.PasswordResetCode  = null;
+    user.PasswordResetExpires = null;
+    user.PasswordResetVerified = null;
 
     await user.save()
 
     // 6) generate token
-    const token  = createToken({ email: user.email });
+    const token  = createToken({ id: user.UserID, email: user.Email });
     res.header('token',token);
     res.status(200).send();
   } catch (error) {

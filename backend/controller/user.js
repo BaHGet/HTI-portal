@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler')
-const userModel = require('../models/users')
+const db = require('../models/index')
 const ApiError = require('../utils/apiError');
 const { Hashing } = require('../utils/hashingPass')
 const { createToken } = require('../middlewares/authMiddleware');
@@ -10,7 +10,9 @@ const logger = require('../utils/logger');
 const getAllUsers = async (req, res) => {
   logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`)
   try {
-      const users = await userModel.find({}).select(['fullName', 'email'])
+      const users = await db.User.findAll({
+        attributes: ['FullName', 'Email']
+      });
       // check if the users exists
       if(!users){
         new Error('Intrnal Server Error')
@@ -29,7 +31,7 @@ const addUser = async (req, res) => {
     try {
         userData.passwordHash = await Hashing(userData.password)
         delete userData.password
-        const newUser = new userModel(userData);
+        const newUser = await db.User.create(userData);
         await newUser.save();
         res.status(201).json({ success: true, message: "user added successfully" });
     } catch (error) {
@@ -44,8 +46,11 @@ const getUser = async (req, res) => {
     try {
         const user = req.body;
 
-        const userData = await userModel.findOne({email:user.email});
-        delete userData.passwordHash;
+        const userData = await db.User.findOne({ where: { Email: user.email } });
+        if (!userData) {
+          return res.status(404).json({ success: false, message: "User not found" });
+        }
+        // delete userData.passwordHash;
         res.status(200).json({success : true, userData})
     } catch (error) {
         logger.error(`${err.status || 500} - ${err.message}`);
@@ -55,14 +60,13 @@ const getUser = async (req, res) => {
 
 const changeUserRole = asyncHandler( async (req,res,next)=>{
   logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
-  const updatedUser = await userModel.findOneAndUpdate(
-    { email: req.body.email },
-    {
-      accountType: req.body.accountType,
-      phone: req.body.phone,
-    },
-    {new: true}
-  )
+
+  const userToUpdate = await db.User.findOne({ where: { Email: req.body.email } }); 
+
+  userToUpdate.AccountType = req.body.accountType;
+  userToUpdate.PhoneNumber = req.body.phone; 
+
+  const updatedUser = await userToUpdate.save();
 
   res.status(200).json({ data: updatedUser })
 
@@ -82,7 +86,7 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
   logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
 
   // 1) Get user from database
-  const user = await userModel.findOne({ email: req.body.email });
+  const user = await db.User.scope('withPassword').findByPk(req.user.UserID);
   if (!user) {
     return next(new ApiError('User not found', 404));
   }
@@ -94,12 +98,12 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
   }
 
   // 3) Hash the new password and update it
-  user.passwordHash = await Hashing(req.body.newPassword);
-  user.passwordChangedAt = Date.now();
+  user.PasswordHash = await Hashing(req.body.newPassword);
+  user.PasswordChangedAt = Date.now();
   await user.save()
 
   // 4) generate token and send response
-  const token = createToken({ email: user.email });
+  const token = createToken({ id: user.UserID, email: user.Email });
   res.header('token',token);
   res.status(200).json({data: user})
 })

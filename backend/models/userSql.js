@@ -72,7 +72,10 @@ module.exports = (sequelize, Sequelize) => {
     tableName: 'Users',
     timestamps: true,
     createdAt: 'CreatedAt',
-    updatedAt: 'UpdatedAt' 
+    updatedAt: 'UpdatedAt',
+    defaultScope: { 
+      attributes: { exclude: ['PasswordHash'] },
+    }
   });
 
   return User;
