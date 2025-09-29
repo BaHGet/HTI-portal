@@ -145,7 +145,18 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    /////////////////// Step 1: Seat Availability Check ///////////////////
+    /////////////////// Step 1: Get Student (GPA,isLastTerm) Data //////////////////
+    const student = await db.Student.findByPk(
+      req.user.id,
+      {
+        attributes:['gpa','isLastTerm'],
+        transaction
+      }
+    )
+    if (!student){
+      throw new ApiError('Student Not Found',404)
+    }
+    /////////////////// Step 2: Seat Availability & Group Data Fetching ///////////////////
     const courseGroupId = req.body.GroupID;
     const courseGroup = await db.CourseGroup.findByPk(courseGroupId,{
       include:[{
@@ -164,34 +175,11 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     if(!courseGroup){
       throw new ApiError("Course group not found",404);
     }
-    if (courseGroup.CurrentEnrolled >= courseGroup.Capacity){
-      throw new ApiError("No seates available",400);
+    if (student.isLastTerm === false && courseGroup.CurrentEnrolled >= courseGroup.Capacity) {
+      throw new ApiError("No seats available in this group", 400);
     }
     
-    /////////////////// step 2: Credit Hour Limit Check ///////////////////
-    // step 2.1: get student max credits
-    const studentGrade = await db.Student.findByPk(
-      req.user.id,
-      {
-        attributes:['gpa'],
-        transaction
-      }
-    )
-    if (!student){
-      throw new ApiError('Student Not Found',404)
-    }
-
-    let studentMaxCredits;
-    if (studentGrade.gpa > 3){
-      studentMaxCredits = 21;
-    }else if ( 2 < studentGrade.gpa < 3){
-      studentMaxCredits = 18;
-    }else{
-      studentMaxCredits = 14
-    }
-
-
-    // step 2.2: get student current credits
+    /////////////////// step 3: Student Credit Hours Limit Check ///////////////////
     const totalStudentCredits = await db.Course.sum('CreditHours', {
       include: [{
           model: db.CourseGroup,
@@ -213,12 +201,34 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     const currentCredits = totalStudentCredits || 0;
     const newCourseCredits = courseGroup.Course.CreditHours;
 
-    if ((currentCredits + newCourseCredits) > studentMaxCredits){
-      throw new ApiError("Credit hour limit exceeded",400);
+    let baseMaxCredits;
+    if (student.gpa >= 3) {
+      baseMaxCredits = 21;
+    } else if (student.gpa >= 2) {
+      baseMaxCredits = 18;
+    } else {
+      baseMaxCredits = 14;
+    }
+    
+
+    if (student.isLastTerm === true) {
+      const proposedTotal = currentCredits + newCourseCredits;
+      if (proposedTotal > baseMaxCredits) {
+          const isWithinExtendedLimit = proposedTotal <= (baseMaxCredits + 3);
+          const isFirstCourseOverLimit = currentCredits <= baseMaxCredits;
+
+          if (!isWithinExtendedLimit && !isFirstCourseOverLimit) {
+              throw new ApiError(`Credit hour limit exceeded. As a graduating student, you can only exceed your limit by one course or up to 3 extra credits.`, 400);
+          }
+      }
+    } else {
+      if ((currentCredits + newCourseCredits) > baseMaxCredits) {
+          throw new ApiError(`Credit hour limit exceeded. Your GPA allows a maximum of ${baseMaxCredits} hours.`, 400);
+      }
     }
       
 
-    /////////////////// step 3: Time Conflict Check ///////////////////
+    /////////////////// step 4: Time Conflict Check ///////////////////
     const newGroupAppointments = courseGroup.GroupSchedules || [];
 
     const currentUserAppointments = await db.GroupSchedule.findAll({
@@ -243,7 +253,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 4: Subject Enrolled Conflict Check ///////////////////
+    /////////////////// step 5: Subject Enrolled Conflict Check ///////////////////
     const courseId = courseGroup.CourseID;
     const existingEnrollment = await db.Enrollment.findOne({
       where: {
@@ -265,7 +275,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
         throw new ApiError('You are already registered for this course in another group.', 400);
     }
 
-    /////////////////// step 5: Add course to student Schedule ///////////////////
+    /////////////////// step 6: Add course to student Schedule ///////////////////
     await db.Enrollment.create({
       StudentID: req.user.id,
       GroupID: courseGroupId,
@@ -275,7 +285,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
 
-    /////////////////// step 6: Sending Response ///////////////////
+    /////////////////// step 7: Sending Response ///////////////////
     const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
     res.status(201).json({
       success: true,

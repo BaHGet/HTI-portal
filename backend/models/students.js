@@ -39,6 +39,10 @@ module.exports =  (sequelize) => {
         min: 0,
         max: 4
       }
+    },
+    isLastTerm: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false
     }
   }, {
     
