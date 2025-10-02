@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-const { startSession } = require('./users');
 
 module.exports = (sequelize) => {
   return sequelize.define('SemesterCourse', {

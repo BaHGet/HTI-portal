@@ -8,7 +8,7 @@ const { createToken } = require('../middlewares/authMiddleware');
 const logger = require('../utils/logger');
 
 const getAllUsers = async (req, res) => {
-  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`)
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`)
   try {
       const users = await db.User.findAll({
         attributes: ['FullName', 'Email']
@@ -26,23 +26,28 @@ const getAllUsers = async (req, res) => {
 }
 
 const addUser = async (req, res) => {
-    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
-    const userData = req.body;
+    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
+    const { email, password, fullName, nationalId, phoneNumber, accountType } = req.body;
     try {
-        userData.passwordHash = await Hashing(userData.password)
-        delete userData.password
-        const newUser = await db.User.create(userData);
-        await newUser.save();
+        const hashedPassword = await Hashing(password);
+        const newUser = await db.User.create({
+          Email: email,
+          PasswordHash: hashedPassword,   
+          FullName: fullName,
+          NationalID: nationalId,
+          PhoneNumber: phoneNumber,
+          AccountType: accountType
+        });
         res.status(201).json({ success: true, message: "user added successfully" });
     } catch (error) {
-         logger.error(`${err.status || 500} - ${err.message}`);
+        logger.error(`${error.status || 500} - ${error.message}`);
         res.status(500).json({ success: false, message: "Internal server error", error: error.message });
     }
 }
 
 
 const getUser = async (req, res) => {
-    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
+    logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
     try {
         const user = req.body;
 
@@ -59,7 +64,7 @@ const getUser = async (req, res) => {
 }
 
 const changeUserRole = asyncHandler( async (req,res,next)=>{
-  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
 
   const userToUpdate = await db.User.findOne({ where: { Email: req.body.email } }); 
 
@@ -74,7 +79,7 @@ const changeUserRole = asyncHandler( async (req,res,next)=>{
 
 
 const getLoggedUserData = asyncHandler(async(req,res,next)=>{
-  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
   res.status(200).json({
     status: 'success',
     data: req.user
@@ -83,16 +88,21 @@ const getLoggedUserData = asyncHandler(async(req,res,next)=>{
 
 
 const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
-  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user._id.toString()}`);
+  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
+
 
   // 1) Get user from database
-  const user = await db.User.scope('withPassword').findByPk(req.user.UserID);
+  const user = await db.User.findByPk(req.user.UserID,
+    {
+    attributes: ['UserID', 'Email', 'PasswordHash']
+    }
+  );
   if (!user) {
     return next(new ApiError('User not found', 404));
   }
 
   // 2) Check Current Password is correct
-  const isCorrectPassword = await bcrypt.compare(req.body.currentPassword, user.passwordHash); 
+  const isCorrectPassword = await bcrypt.compare(req.body.currentPassword, user.PasswordHash); 
   if (!isCorrectPassword) {
     return next(new ApiError('Current password is incorrect', 401));
   }

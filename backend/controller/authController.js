@@ -12,12 +12,13 @@ const logger = require('../utils/logger');
 
 
 const login = async (req, res) => {
-  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.email.toString()}`)
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.Email}`)
   // data to validate user with
   const {email, password} = req.body
   try {
-    const checkUser = await db.User.scope('withPassword').findOne({
-      where: { Email : email }
+    const checkUser = await db.User.findOne({
+      where: { Email : email },
+      attributes: [ 'UserID', 'Email', 'PasswordHash']
     })
     if (!checkUser) return res.status(400).send('Invalid email or password');
 
@@ -44,8 +45,9 @@ const protect = asyncHandler(async (req,res,next) => {
   }
 
   const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
+  console.log("Decoded:", decoded);
 
-  const currentUser = await  db.User.findByPK(decoded.id)
+  const currentUser = await  db.User.findByPk(decoded.id)
   if (!currentUser) {
     return next(new ApiError('User that belong to that token no longer exist', 401));
   }
@@ -72,7 +74,7 @@ const restrictTo = (...roles) =>
 
 const forgotPassword = asyncHandler(async (req,res,next) => {
   const { email } = req.body;
-  logger.info(`the endpoint ${req.route.path} was called from user with email ${email.toString()}`)
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${email}`)
   const user = await db.User.findOne({ where: { Email: email } });
   if (!user) {
     return next(new ApiError('No User for this Email', 404))

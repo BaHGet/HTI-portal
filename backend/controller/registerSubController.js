@@ -145,6 +145,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
   const transaction = await db.sequelize.transaction();
   try {
+    const currentSemesterId = req.currentSemester.id;
     /////////////////// Step 1: Get Student (GPA,isLastTerm) Data //////////////////
     const student = await db.Student.findByPk(
       req.user.id,
@@ -185,6 +186,9 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
           model: db.CourseGroup,
           attributes: [], 
           required: true,
+          where: {
+            SemesterID: currentSemesterId // <-- تمت الإضافة هنا
+          },
           include: [{
               model: db.Enrollment,
               attributes: [], 
@@ -236,8 +240,10 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
           model: db.TimePeriod
       }, {
           model: db.CourseGroup, 
-          attributes: [], 
           required: true,
+          where: {
+            SemesterID: currentSemesterId 
+          },
           include: [{
               model: db.Enrollment, 
               attributes: [], 
@@ -263,9 +269,8 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       include: [{
           model: db.CourseGroup,
           required: true,
-          attributes: [],
           where: {
-            CourseID: courseId 
+            CourseID: courseId, SemesterID: currentSemesterId
           }
       }],
       transaction

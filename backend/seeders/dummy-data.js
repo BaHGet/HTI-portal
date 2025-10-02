@@ -10,20 +10,20 @@ const NUM_GROUPS_PER_COURSE_SEMESTER = 2;
 // ==========================================================
 
 // --- توليد بيانات أساسية ---
-const colleges = [{ CollegeID: 1, CollegeName: 'كلية الحاسبات والذكاء الاصطناعي' }];
+const colleges = [{ CollegeID: 1, CollegeName: 'كلية الهندسه' }];
 
 const departments = [
-  { DepartmentID: 1, DepartmentName: 'علوم الحاسب', CollegeID: 1 },
-  { DepartmentID: 2, DepartmentName: 'نظم المعلومات', CollegeID: 1 },
-  { DepartmentID: 3, DepartmentName: 'تكنولوجيا المعلومات', CollegeID: 1 },
-  { DepartmentID: 4, DepartmentName: 'الذكاء الاصطناعي', CollegeID: 1 },
+  { DepartmentID: 1, DepartmentName: 'ميكاترونكس', CollegeID: 1 },
+  { DepartmentID: 2, DepartmentName: 'ميكانيكا', CollegeID: 1 },
+  { DepartmentID: 3, DepartmentName: 'اتصالات و الكترونيات', CollegeID: 1 },
+  { DepartmentID: 4, DepartmentName: 'طبيه', CollegeID: 1 },
 ];
 
 const academicRegulations = [
-  { RegulationID: 1, RegulationName: 'لائحة 2024 - علوم الحاسب', DepartmentID: 1, TotalRequiredCredits: 172 },
-  { RegulationID: 2, RegulationName: 'لائحة 2024 - نظم المعلومات', DepartmentID: 2, TotalRequiredCredits: 170 },
-  { RegulationID: 3, RegulationName: 'لائحة 2024 - تكنولوجيا المعلومات', DepartmentID: 3, TotalRequiredCredits: 168 },
-  { RegulationID: 4, RegulationName: 'لائحة 2024 - الذكاء الاصطناعي', DepartmentID: 4, TotalRequiredCredits: 175 },
+  { RegulationID: 1, RegulationName: 'لائحة 2024 - ميكاترونكس ', DepartmentID: 1, TotalRequiredCredits: 160 },
+  { RegulationID: 2, RegulationName: 'لائحة 2024 -  ميكانيكا', DepartmentID: 2, TotalRequiredCredits: 170 },
+  { RegulationID: 3, RegulationName: 'لائحة 2024 - اتصالات و الكترونيات', DepartmentID: 3, TotalRequiredCredits: 180 },
+  { RegulationID: 4, RegulationName: 'لائحة 2024 -  طبيه', DepartmentID: 4, TotalRequiredCredits: 150 },
 ];
 
 const courseCategories = [

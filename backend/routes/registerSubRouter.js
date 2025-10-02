@@ -7,16 +7,21 @@ const {
   getRegisteredSchedule
 } = require('../controller/registerSubController');
 
+const {
+  setCurrentSemester
+} = require('../middlewares/registerSubMiddleware')
+
+
 
 const registerSubRouter = express.Router();
+const router = express.Router();
 
-
-
+router.use(setCurrentSemester);
 
 registerSubRouter.get('/available-subjects', getAvailableSubjects);
-registerSubRouter.post('/register-subjects', registerSubject);
+registerSubRouter.post('/register-subject', registerSubject);
 registerSubRouter.get('/drop-enrollment', dropEnrollment);
-registerSubRouter.get('/registeredschedule', getRegisteredSchedule);
+registerSubRouter.get('/registered-schedule', getRegisteredSchedule);
 
 
 

@@ -1,9 +1,8 @@
 const  {check}  = require('express-validator');
 const slugify = require('slugify');
 const validatorMiddleware = require ('../middlewares/validatorMiddleware')
-const User = require('../models/users');
-
-
+const db = require('../models/index.js')
+const { User } = db; 
 
 exports.getUserValidator=[
   // 1- rules
@@ -21,22 +20,24 @@ exports.addUserValidator=[
     req.body.slug = slugify(val);
     return true;
   }),
+
   check('email')
   .notEmpty().withMessage('Email is required')
   .isEmail().withMessage('Invalid email format')
  .custom(async (val) => {
-    const user = await User.findOne({ email: val });
+    const user = await User.findOne({ where: { Email: val } });
     if (user) {
       throw new Error('Email already in use');
     }
   }),
+
   check('password')
   .notEmpty().withMessage('Password is required')
   .isLength({min:6}).withMessage('Password must be at least 6 characters long'),
 
   check('nationalId').notEmpty().withMessage('National Id must be 14 unique digits '),
 
-  check('accountType').optional().isIn(["student", "staff", "admin", "Graduated"]).withMessage('Role must be either user or admin'),
+  check('accountType').optional().isIn(['student', 'professor', 'admin', 'Graduated']).withMessage('Role must be either student, professor, admin or Graduated'),
 
   check('phoneNumber').isMobilePhone("ar-EG").withMessage('Invalid phone number'),
   validatorMiddleware
