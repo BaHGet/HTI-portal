@@ -15,7 +15,7 @@ exports.setCurrentSemester = asyncHandler(async (req, res, next) => {
         [Op.gte]: today
       }
     },
-    attributes: ['id'] 
+    attributes: ['SemesterID'] 
   });
 
   if (!currentSemester) {

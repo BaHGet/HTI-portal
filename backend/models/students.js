@@ -11,10 +11,6 @@ module.exports =  (sequelize) => {
       allowNull: false,
       unique: true
     },
-    StudentName: {
-      type: DataTypes.STRING(100),
-      allowNull: false 
-    },
     StudentAddress: {
       type: DataTypes.STRING(200),
       allowNull: true

@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const logger = require("../utils/logger");
 const cookieParser = require("cookie-parser");
 const globalError = require("../middlewares/apiMiddleware");
+const ApiError = require("../utils/apiError");
 
 const app = express();
 const cors = require("cors");

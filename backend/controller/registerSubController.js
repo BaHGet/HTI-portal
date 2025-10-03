@@ -1,8 +1,7 @@
 
 const asyncHandler = require('express-async-handler');
-const { Op } = require("sequelize");
 const ApiError = require('../utils/apiError');
-
+const checkTimeConflict = require('../utils/timeConflict')
 
 const db = require("../models/index");
 
@@ -13,13 +12,12 @@ const db = require("../models/index");
 // @route   GET /api/registration/available-subjects
 // @access  Private (Student)
 exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
-  const today = new Date();
-
   // Step 0: GetStudentInfo (including finished courses)
   let student = await db.Student.findOne({
-    where: { UserID: req.user.id },
+    where: { UserID: req.user.UserID },
     include: [{
-        model: db.Course, 
+        model: db.Course,
+        through: { model: db.StudentCompletedCourse },
         include: [{
           model: db.CourseCategory
         }] 
@@ -30,25 +28,15 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   }
 
   /////////////////// step 1: Find Semester Available Courses and student Regulation ///////////////////
-  // step 1.1: find the current semester
-  const currentSemester = await db.Semester.findOne({
-    where: {
-      StartDate: { [Op.lte]: today },
-      EndDate: { [Op.gte]: today }
-    }
-  });
-  if(!currentSemester){
-    return next(new ApiError('No active semester found', 404));
-  }
-  // step 1.2: Fetch all courses offered in this semester
+  // step 1.1: Fetch all courses offered in this semester
   const semesterCourses = await db.Course.findAll({
     include: [
       { 
         model: db.Semester, 
-        where: { SemesterID: currentSemester.SemesterID } 
+        where: { SemesterID: req.currentSemester.SemesterID } 
       },
       { 
-        model: db.Prerequisite, 
+        model: db.Course, 
         as: 'Prerequisites'
       },
       {
@@ -65,7 +53,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   if (!semesterCourses.length) {
     return next(new ApiError('No courses found for the current semester', 404));
   }
-  // step 1.3: find Student AcademicRegulations
+  // step 1.2: find Student AcademicRegulations
   const studentRegulation = await student.getAcademicRegulation();
   if (!studentRegulation) {
     return next(new ApiError('Could not find the academic regulation for this student', 404));
@@ -79,16 +67,16 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   // step 3.1: get completed course
   const completedCourses = student.Courses;
   const completedCourseIds = completedCourses
-    .map(id => id.CourseID);
+    .map(course => course.CourseID);
 
   // step 3.2: filtration process
   const unFinishedCourses = studentAllCourses
-    .filter(course => !completedCourseIds.includes(course.id));
+    .filter(course => !completedCourseIds.includes(course.CourseID));
 
   //////////////// step 4: filter studentCourses based on prerequisites ////////////////
   const finishedPrerequisiteCourses = unFinishedCourses
     .filter(course =>{
-      if(!course.prerequisite || course.Prerequisites.length === 0) return true;
+      if(!course.Prerequisites || course.Prerequisites.length === 0) return true;
       return course.Prerequisites
         .every(prerequisite => completedCourseIds.includes(prerequisite.PrerequisiteCourseID));
     })
@@ -145,15 +133,13 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    const currentSemesterId = req.currentSemester.id;
+    const currentSemesterId = req.currentSemester.SemesterID;
     /////////////////// Step 1: Get Student (GPA,isLastTerm) Data //////////////////
-    const student = await db.Student.findByPk(
-      req.user.id,
-      {
-        attributes:['gpa','isLastTerm'],
-        transaction
-      }
-    )
+    const student = await db.Student.findOne({
+      where: { UserID: req.user.UserID },
+      attributes:['StudentID','gpa','isLastTerm'],
+      transaction
+    })
     if (!student){
       throw new ApiError('Student Not Found',404)
     }
@@ -187,14 +173,14 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
           attributes: [], 
           required: true,
           where: {
-            SemesterID: currentSemesterId // <-- تمت الإضافة هنا
+            SemesterID: currentSemesterId 
           },
           include: [{
               model: db.Enrollment,
               attributes: [], 
               required: true,
               where: {
-                  StudentID: req.user.id,
+                  StudentID: student.StudentID,
                   status: "Registered"
               }
           }]
@@ -248,7 +234,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
               model: db.Enrollment, 
               attributes: [], 
               required: true,
-              where: { StudentID: req.user.id, status: "Registered" }
+              where: { StudentID: student.StudentID, status: "Registered" }
           }]
       }],
       transaction
@@ -263,7 +249,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     const courseId = courseGroup.CourseID;
     const existingEnrollment = await db.Enrollment.findOne({
       where: {
-          StudentID: req.user.id,
+          StudentID: student.StudentID,
           status: 'Registered' 
       },
       include: [{
@@ -282,7 +268,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
     /////////////////// step 6: Add course to student Schedule ///////////////////
     await db.Enrollment.create({
-      StudentID: req.user.id,
+      StudentID: student.StudentID,
       GroupID: courseGroupId,
       status: "Registered",
     }, { transaction });
@@ -298,6 +284,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       data: {
           enrollment: {
             GroupID: courseGroupId,
+            availableSeats: availableSeats
           }
       }
     });
@@ -316,25 +303,48 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 // @access  Private (Student)
 exports.dropEnrollment = asyncHandler(async (req, res, next) => {
   /////////////////// step 1: Get studentID, GroupID ///////////////////
-  const studentId = req.user.id;
-  const { groupId } = req.params;
-  /////////////////// step 2: find matched data and destroy it ///////////////////
-  const matchedRows = await db.Enrollment.destroy({
-    where: {
-      StudentID: studentId,
-      GroupID: groupId
-    }
+  const student = await db.Student.findOne({
+    where: { UserID: req.user.UserID },
+    attributes: ['StudentID']
   });
-  if ( matchedRows === 0 ){
-    return next(new ApiError("No Matched Found",404))
+
+  if (!student) {
+    return next (new ApiError("Student not found", 404));
   }
-  /////////////////// step 3: return Response ///////////////////
 
-  res.status(200).json({
-    status:"Success",
-    message:"Droped Enrollment Successfully"
+  const groupId = req.body.GroupID;
+  const semesterId = req.currentSemester.SemesterID;
+  /////////////////// step 2: find matched data and destroy it ///////////////////
+  const enrollment  = await db.Enrollment.findOne({
+    where: {
+      StudentID: student.StudentID,
+      GroupID: groupId
+    },
+     include: [{
+      model: db.CourseGroup,
+      where: { SemesterID: semesterId }, 
+    }],
+  });
+  if (!enrollment) {
+    return next(new ApiError("This enrollment was not found in the current semester.", 404));
+  }
+  /////////////////// step 3: Updating Seats & Sending Response ///////////////////
+  try{
+    await db.sequelize.transaction(async (t) => {
 
-  })
+      await enrollment.CourseGroup.decrement('CurrentEnrolled', { by: 1, transaction: t });
+      await enrollment.destroy({ transaction: t });
+
+      res.status(200).json({
+        status: "Success",
+        message: "Enrollment dropped successfully and the seat has been made available."
+      });
+
+    });
+  } catch (error) {
+    throw new ApiError("Failed to drop enrollment. Please try again.", 500);
+  }
+  
 });
 
 
@@ -344,14 +354,23 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
 // @access  Private (Student)
 exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
   ///////////////////////////// step 1: get student id /////////////////////////////
-  const studentId = req.user.id;
+  const student = await db.Student.findOne({
+    where: { UserID: req.user.UserID },
+    attributes: ['StudentID']
+  });
 
+  if (!student) {
+    return next (new ApiError("Student not found", 404))
+  }
+
+  const semesterId = req.currentSemester.SemesterID;
   ///////////////////// step 2: get all student enrollments data ///////////////////
   const studentEnrollments = await db.Enrollment.findAll({
-    where: { StudentID: studentId},
+    where: { StudentID: student.StudentID},
     attributes:[],
     include:[{
       model: db.CourseGroup,
+      where: { SemesterID: semesterId },
       attributes: ['GroupNumber'],
       incude:[
         {
@@ -385,8 +404,8 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
   ///////////////////// step 3: Sendind Response ///////////////////
   res.status(200).json({
     success: true,
-    count: enrollments.length,
-    data: enrollments
+    count: studentEnrollments.length,
+    data: studentEnrollments
   });
 });
 
