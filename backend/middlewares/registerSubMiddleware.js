@@ -25,5 +25,16 @@ exports.setCurrentSemester = asyncHandler(async (req, res, next) => {
   next();
 });
 
+exports.getStudentId = asyncHandler(async(req,res,next)=>{
+  const student = await db.Student.findOne({
+    where: { UserID: req.user.UserID }
+  });
 
+  if (!student) {
+    return next(new ApiError('Forbidden: This user does not have a student profile.', 403));
+  }
+
+  req.student = student;
+  next();
+})
 

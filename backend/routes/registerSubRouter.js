@@ -8,7 +8,8 @@ const {
 } = require('../controller/registerSubController');
 
 const {
-  setCurrentSemester
+  setCurrentSemester,
+  getStudentId
 } = require('../middlewares/registerSubMiddleware')
 
 const { 
@@ -19,10 +20,38 @@ const {
 const registerSubRouter = express.Router();
 
 
-registerSubRouter.get('/available-subjects', protect, restrictTo("student"), setCurrentSemester, getAvailableSubjects);
-registerSubRouter.post('/register-subject', protect, restrictTo("student"), setCurrentSemester, registerSubject);
-registerSubRouter.delete('/drop-enrollment', protect, restrictTo("student"), setCurrentSemester, dropEnrollment);
-registerSubRouter.get('/registered-schedule', protect, restrictTo("student"), setCurrentSemester, getRegisteredSchedule);
+registerSubRouter
+  .get('/available-subjects', 
+    protect, 
+    restrictTo("student"), 
+    getStudentId, 
+    setCurrentSemester, 
+    getAvailableSubjects
+  );
+registerSubRouter
+  .post('/register-subject', 
+    protect, 
+    restrictTo("student"),
+    getStudentId, 
+    setCurrentSemester, 
+    registerSubject
+  );
+registerSubRouter
+  .delete('/drop-enrollment', 
+    protect, 
+    restrictTo("student"), 
+    getStudentId,
+    setCurrentSemester, 
+    dropEnrollment
+  );
+registerSubRouter
+  .get('/registered-schedule', 
+    protect, 
+    restrictTo("student"),
+    getStudentId, 
+    setCurrentSemester, 
+    getRegisteredSchedule
+  );
 
 
 

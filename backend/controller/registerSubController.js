@@ -13,20 +13,10 @@ const db = require("../models/index");
 // @access  Private (Student)
 exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   // Step 0: GetStudentInfo (including finished courses)
-  let student = await db.Student.findOne({
-    where: { UserID: req.user.UserID },
-    include: [{
-        model: db.Course,
-        through: { model: db.StudentCompletedCourse },
-        include: [{
-          model: db.CourseCategory
-        }] 
-    }]
+  const student = req.student;
+  const completedCourses = await student.getCourses({
+    include: [{ model: db.CourseCategory }]
   });
-  if(!student){
-    return next(new ApiError('User not found', 404));
-  }
-
   /////////////////// step 1: Find Semester Available Courses and student Regulation ///////////////////
   // step 1.1: Fetch all courses offered in this semester
   const semesterCourses = await db.Course.findAll({
@@ -65,7 +55,6 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
 
   //////////////// step 3: filter(2) studentAllCourses based on student completed courses ////////////////
   // step 3.1: get completed course
-  const completedCourses = student.Courses;
   const completedCourseIds = completedCourses
     .map(course => course.CourseID);
 
@@ -134,16 +123,8 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
   const transaction = await db.sequelize.transaction();
   try {
     const currentSemesterId = req.currentSemester.SemesterID;
-    /////////////////// Step 1: Get Student (GPA,isLastTerm) Data //////////////////
-    const student = await db.Student.findOne({
-      where: { UserID: req.user.UserID },
-      attributes:['StudentID','gpa','isLastTerm'],
-      transaction
-    })
-    if (!student){
-      throw new ApiError('Student Not Found',404)
-    }
-    /////////////////// Step 2: Seat Availability & Group Data Fetching ///////////////////
+    const student = req.student
+    /////////////////// Step 1: Seat Availability & Group Data Fetching ///////////////////
     const courseGroupId = req.body.GroupID;
     const courseGroup = await db.CourseGroup.findByPk(courseGroupId,{
       include:[{
@@ -165,8 +146,8 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     if (student.isLastTerm === false && courseGroup.CurrentEnrolled >= courseGroup.Capacity) {
       throw new ApiError("No seats available in this group", 400);
     }
-    
-    /////////////////// step 3: Student Credit Hours Limit Check ///////////////////
+    const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
+    /////////////////// step 2: Student Credit Hours Limit Check ///////////////////
     const totalStudentCredits = await db.Course.sum('CreditHours', {
       include: [{
           model: db.CourseGroup,
@@ -218,7 +199,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     }
       
 
-    /////////////////// step 4: Time Conflict Check ///////////////////
+    /////////////////// step 3: Time Conflict Check ///////////////////
     const newGroupAppointments = courseGroup.GroupSchedules || [];
 
     const currentUserAppointments = await db.GroupSchedule.findAll({
@@ -245,7 +226,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 5: Subject Enrolled Conflict Check ///////////////////
+    /////////////////// step 4: Subject Enrolled Conflict Check ///////////////////
     const courseId = courseGroup.CourseID;
     const existingEnrollment = await db.Enrollment.findOne({
       where: {
@@ -266,7 +247,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
         throw new ApiError('You are already registered for this course in another group.', 400);
     }
 
-    /////////////////// step 6: Add course to student Schedule ///////////////////
+    /////////////////// step 5: Add course to student Schedule ///////////////////
     await db.Enrollment.create({
       StudentID: student.StudentID,
       GroupID: courseGroupId,
@@ -276,8 +257,8 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
 
-    /////////////////// step 7: Sending Response ///////////////////
-    const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
+    /////////////////// step 6: Sending Response ///////////////////
+    
     res.status(201).json({
       success: true,
       message: "Course registered successfully",
@@ -299,19 +280,11 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
 
 // @desc    Drop specific subject for student
-// @route   Delte /api/registration/drop-Enrollment
+// @route   Delete /api/registration/drop-Enrollment
 // @access  Private (Student)
 exports.dropEnrollment = asyncHandler(async (req, res, next) => {
   /////////////////// step 1: Get studentID, GroupID ///////////////////
-  const student = await db.Student.findOne({
-    where: { UserID: req.user.UserID },
-    attributes: ['StudentID']
-  });
-
-  if (!student) {
-    return next (new ApiError("Student not found", 404));
-  }
-
+  const student = req.student
   const groupId = req.body.GroupID;
   const semesterId = req.currentSemester.SemesterID;
   /////////////////// step 2: find matched data and destroy it ///////////////////
@@ -353,18 +326,10 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
 // @route   Get /api/registration/registeredschedule
 // @access  Private (Student)
 exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
-  ///////////////////////////// step 1: get student id /////////////////////////////
-  const student = await db.Student.findOne({
-    where: { UserID: req.user.UserID },
-    attributes: ['StudentID']
-  });
 
-  if (!student) {
-    return next (new ApiError("Student not found", 404))
-  }
-
+  const student = req.student
   const semesterId = req.currentSemester.SemesterID;
-  ///////////////////// step 2: get all student enrollments data ///////////////////
+  ///////////////////// step 1: get all student enrollments data ///////////////////
   const studentEnrollments = await db.Enrollment.findAll({
     where: { StudentID: student.StudentID},
     attributes:[],
@@ -401,7 +366,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
     return next (new ApiError("Student Schedule Not Found",404))
   }
 
-  ///////////////////// step 3: Sendind Response ///////////////////
+  ///////////////////// step 2: Sendind Response ///////////////////
   res.status(200).json({
     success: true,
     count: studentEnrollments.length,
