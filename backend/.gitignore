@@ -8,3 +8,5 @@ logs/
 
 # Package lock file
 package-lock.json
+
+seeders/

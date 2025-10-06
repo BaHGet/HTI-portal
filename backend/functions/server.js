@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const logger = require("../utils/logger");
 const cookieParser = require("cookie-parser");
 const globalError = require("../middlewares/apiMiddleware");
+const ApiError = require("../utils/apiError");
 
 const app = express();
 const cors = require("cors");
@@ -60,14 +61,14 @@ app.use(
 
 app.use(cookieParser());
 
-const mongoDBConnection = require("../config/db");
 const sql = require("../config/mysqlDB");
-mongoDBConnection.dbConnection();
 sql.dbConnection();
-
 
 const { authRouter } = require("../routes/auth");
 app.use("/api/auth", authRouter);
+
+const { registerSubRouter } = require("../routes/registerSubRouter");
+app.use("/api/registration",registerSubRouter);
 
 const { userRouter } = require("../routes/user");
 app.use("/api/user", userRouter);
