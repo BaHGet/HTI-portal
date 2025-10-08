@@ -1,9 +1,6 @@
 import {
   BrowserRouter,
-  createBrowserRouter,
   Route,
-  Router,
-  RouterProvider,
   Routes,
 } from "react-router-dom";
 import Login from "./Pages/Login.jsx";
@@ -13,6 +10,7 @@ import NotFoundPage from "./Pages/NotFoundPage.jsx";
 import DashboardPage from "./Pages/dashboard/page.jsx";
 import Layout from "./Pages/Layout.jsx";
 import Registration from "./Pages/dashboard/Registration.jsx";
+import Withdrawal from "./Pages/dashboard/withdrawal.jsx";
 
 const App = () => {
   return (
@@ -35,7 +33,7 @@ const App = () => {
           <Route path="registeration" element={<Registration />} />
           <Route
             path="withdrawal"
-            element={<h1 className="title capitalize">الانسحاب من المقررات</h1>}
+            element={<Withdrawal />}
           />
           <Route
             path="Petitions"

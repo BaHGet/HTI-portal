@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { registableCourses } from "../../constants";
-import { PlusCircle, Trash, RefreshCcw } from "lucide-react";
+import { PlusCircle, Trash, RefreshCcw, Download } from "lucide-react";
+import { Table, Grid, Button, Modal } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 
 const Registration = () => {
-  const allowedCreditHours = 18;
+  const allowedCreditHours = 21;
 
   const allGroups = useMemo(() => {
     return registableCourses.flatMap((course) =>
@@ -15,6 +17,7 @@ const Registration = () => {
   }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
   const [registeredCourses, setRegisteredCourses] = useState([]);
   const [availableGroups, setAvailableGroups] = useState(allGroups);
   const [visibleColumns, setVisibleColumns] = useState({
@@ -26,6 +29,26 @@ const Registration = () => {
     seats: true,
     credit: true,
   });
+  const [opened, { open, close }] = useDisclosure(false);
+
+  const slots = [
+    { id: 1, label: "", colour: "red" },
+    { id: 2, label: "", colour: "green" },
+    { id: 3, label: "", colour: "blue" },
+    { id: 4, label: "", colour: "yellow" },
+    { id: 5, label: "", colour: "purple" },
+    { id: 6, label: "", colour: "red" },
+    { id: 7, label: "", colour: "red" },
+    { id: 8, label: "", colour: "red" },
+  ];
+
+  const [days, setdays] = useState([
+    { id: 1, name: "السبت", slot: slots },
+    { id: 2, name: "الأحد", slot: slots },
+    { id: 3, name: "الإثنين", slot: slots },
+    { id: 4, name: "الثلاثاء", slot: slots },
+    { id: 5, name: "الأربعاء", slot: slots },
+  ]);
 
   const filteredGroups = availableGroups.filter(
     (g) =>
@@ -43,14 +66,17 @@ const Registration = () => {
     const sameCourseOtherGroup = registeredCourses.some(
       (c) => c.code === group.code && c.groupNumber !== group.groupNumber
     );
-    if (sameCourseOtherGroup) {
-      alert("لا يمكن إضافة نفس المادة في مجموعة أخرى");
-      return;
-    }
 
     // check credit hours limit
     if (totalRegisteredCredits + group.creditHours > allowedCreditHours) {
-      alert("لقد تخطيت الحد المسموح به للتسجيل");
+      setModalMessage("لقد تخطيت الحد الأقصي لعدد الساعات المسموح به للتسجيل");
+      open();
+      return;
+    }
+
+    if (sameCourseOtherGroup) {
+      setModalMessage("لقد قمت بإضافة هذه المادة في مجموعة أخرى مسبقاً.");
+      open();
       return;
     }
 
@@ -77,31 +103,108 @@ const Registration = () => {
 
   const renderDays = (days) => days.join(" - ");
 
+  // New Table component
+  const registerTableRows = filteredGroups.map((element, idx) => (
+    <Table.Tr key={idx}>
+      <Table.Td className="text-center">
+        <button
+          className="text-gray-600 hover:text-green-500 cursor-pointer"
+          onClick={() => handleAdd(element)}
+        >
+          <PlusCircle size={20} />
+        </button>
+      </Table.Td>
+      {visibleColumns.code && (
+        <Table.Td className="text-center">{element.code}</Table.Td>
+      )}
+      {visibleColumns.name && (
+        <Table.Td className="text-center">{element.name}</Table.Td>
+      )}
+      {visibleColumns.group && (
+        <Table.Td className="text-center">{element.groupNumber}</Table.Td>
+      )}
+      {visibleColumns.days && (
+        <Table.Td className="text-center">{element.days}</Table.Td>
+      )}
+      {visibleColumns.time && (
+        <Table.Td className="text-center">
+          {element.timeStart} - {element.timeEnd}
+        </Table.Td>
+      )}
+      {visibleColumns.seats && (
+        <Table.Td className="text-center">{element.availableSeats}</Table.Td>
+      )}
+      {visibleColumns.credit && (
+        <Table.Td className="text-center">{element.creditHours}</Table.Td>
+      )}
+    </Table.Tr>
+  ));
+
+  const registeredSubjectsRows = registeredCourses.map((element, idx) => (
+    <Table.Tr key={idx}>
+      <Table.Td className="text-center">
+        <button
+          className="text-gray-600 hover:text-red-500 cursor-pointer"
+          onClick={() => handleRemove(element)}
+        >
+          <Trash size={20} />
+        </button>
+      </Table.Td>
+      <Table.Td className="text-center">{element.code}</Table.Td>
+      <Table.Td className="text-center">{element.name}</Table.Td>
+      <Table.Td className="text-center">{element.groupNumber}</Table.Td>
+    </Table.Tr>
+  ));
+
   return (
     <>
-      <div className="text-xl font-bold mb-2">تسجيل المقررات</div>
+      {/* Modal */}
+      <Modal opened={opened} onClose={close} withCloseButton={false}>
+        <div className="text-center">{modalMessage}</div>
+      </Modal>
 
-      <div className="grid grid-cols-2 h-[85vh] gap-4">
+      {/* Main Content */}
+
+      <div className="text-xl font-bold mb-1">تسجيل المقررات</div>
+
+      <div className="felx flex-col h-[85vh] gap-4">
         {/* الجدول الأول */}
-        <div className="card p-0 rounded-xl flex flex-col">
-          <div className="flex justify-between pt-4 px-4">
-            <button className="btn btn-primary gap-2 cursor-pointer">
-              <p>تحديث</p>
-              <RefreshCcw />
-            </button>
-            <div className="input w-40">
-              <input
-                type="text"
-                placeholder="بحث ..."
-                className="w-full bg-transparent text-slate-900 outline-0 placeholder:text-slate-500 dark:text-slate-50"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        <div className="card p-0 rounded-xl h-[65%] flex flex-col">
+          <div className="flex pt-4 px-4 justify-between">
+            <div className="flex">
+              <Button
+                rightSection={<RefreshCcw />}
+                className="ml-2 px-0"
+                color="blue"
+              >
+                {" "}
+                <p>تحديث</p>
+              </Button>
+              <div className="mx-10 input w-60">
+                <input
+                  type="text"
+                  placeholder="بحث ..."
+                  className="w-full bg-transparent text-slate-900 outline-0 placeholder:text-slate-500 dark:text-slate-50"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex pt-2">
+              <div className="mx-5">
+                عدد الساعات المسموح به: {allowedCreditHours}
+              </div>
+              <div className="mx-5">
+                عدد الساعات المسجلة: {totalRegisteredCredits}
+              </div>
+              <div className="mx-5">
+                الساعات المتاحة: {allowedCreditHours - totalRegisteredCredits}
+              </div>
             </div>
           </div>
 
           {/* Checkbox التحكم في الأعمدة */}
-          <div className="flex flex-wrap gap-3 px-4 py-2 border-b">
+          <div className="flex flex-wrap gap-3 px-4 py-1 border-t">
             {Object.keys(visibleColumns).map((col) => (
               <label key={col} className="flex items-center gap-1 text-sm">
                 <input
@@ -127,151 +230,189 @@ const Registration = () => {
           </div>
 
           {/* جدول المواد */}
-          <div className="overflow-x-auto flex-1">
-            <div className="max-h-[calc(85vh-140px)] overflow-y-auto">
-              <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-slate-200">
-                  <tr>
-                    <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                      إضافة
-                    </th>
-                    {visibleColumns.code && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        كود المادة
-                      </th>
-                    )}
-                    {visibleColumns.name && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        اسم المادة
-                      </th>
-                    )}
-                    {visibleColumns.group && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        مجموعة
-                      </th>
-                    )}
-                    {visibleColumns.days && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        الأيام
-                      </th>
-                    )}
-                    {visibleColumns.time && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        التوقيت
-                      </th>
-                    )}
-                    {visibleColumns.seats && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        المقاعد
-                      </th>
-                    )}
-                    {visibleColumns.credit && (
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        Cr.Hrs
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredGroups.map((group, idx) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-gray-50 items-center text-center"
-                    >
-                      <td className="px-1 border-b">
-                        <button
-                          className="text-gray-600 hover:text-green-500"
-                          onClick={() => handleAdd(group)}
-                        >
-                          <PlusCircle size={20} />
-                        </button>
-                      </td>
-                      {visibleColumns.code && (
-                        <td className="px-1 border-b">{group.code}</td>
-                      )}
-                      {visibleColumns.name && (
-                        <td className="px-1 border-b">{group.name}</td>
-                      )}
-                      {visibleColumns.group && (
-                        <td className="px-1 border-b">{group.groupNumber}</td>
-                      )}
-                      {visibleColumns.days && (
-                        <td className="px-1 border-b">
-                          {renderDays(group.days)}
-                        </td>
-                      )}
-                      {visibleColumns.time && (
-                        <td className="px-1 border-b">
-                          {group.timeStart} - {group.timeEnd}
-                        </td>
-                      )}
-                      {visibleColumns.seats && (
-                        <td className="px-1 border-b">
-                          {group.availableSeats}
-                        </td>
-                      )}
-                      {visibleColumns.credit && (
-                        <td className="px-1 border-b">{group.creditHours}</td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="max-h-[calc(50vh-70px)] overflow-y-auto">
+            <Table
+              stickyHeader
+              striped
+              highlightOnHover
+              withColumnBorders
+              styles={{
+                th: { textAlign: "center", verticalAlign: "middle" },
+                td: { textAlign: "center", verticalAlign: "middle" }, // كمان يخلي الـ rows في النص
+              }}
+            >
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>إضافة</Table.Th>
+                  {visibleColumns.code && <Table.Th>كود المادة</Table.Th>}
+                  {visibleColumns.name && <Table.Th>اسم المادة</Table.Th>}
+                  {visibleColumns.group && <Table.Th>المجموعة</Table.Th>}
+                  {visibleColumns.days && <Table.Th>الأيام</Table.Th>}
+                  {visibleColumns.time && <Table.Th>التوقيت</Table.Th>}
+                  {visibleColumns.seats && <Table.Th>المقاعد</Table.Th>}
+                  {visibleColumns.credit && <Table.Th>Cr.Hrs</Table.Th>}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{registerTableRows}</Table.Tbody>
+            </Table>
           </div>
         </div>
 
         {/* الجدول الثاني */}
-        <div className="grid grid-rows-2 gap-4">
-          <div className="card p-0 rounded-xl flex flex-col">
-            <div className="p-4 font-bold border-b">المواد المسجلة</div>
+        <div className="grid grid-cols-2 gap-4 gap-y-0 mt-3 h-[35%]">
+          <div className="card p-0 rounded-xl flex flex-col overflow-y-auto">
+            <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">
+              <div className="pr-4">المواد المسجلة</div>
+              <Button
+                rightSection={<Download />}
+                className="ml-2 px-0"
+                variant="outline"
+                color="red"
+                size="xs"
+              >
+                {" "}
+                <p>كارت التسجيل</p>
+              </Button>
+            </div>
             <div className="overflow-x-auto flex-1">
-              <div className="max-h-[calc(85vh/2-60px)] overflow-y-auto">
-                <table className="min-w-full border border-gray-200 text-sm">
-                  <thead className="bg-slate-200">
-                    <tr>
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        حذف
-                      </th>
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        كود المادة
-                      </th>
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        اسم المادة
-                      </th>
-                      <th className="sticky top-0 border-b text-center py-2 bg-slate-200 z-10">
-                        مجموعة
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {registeredCourses.map((group, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 text-center">
-                        <td className="px-1 border-b">
-                          <button
-                            className="text-gray-600 hover:text-red-500"
-                            onClick={() => handleRemove(group)}
-                          >
-                            <Trash size={20} />
-                          </button>
-                        </td>
-                        <td className="px-1 border-b">{group.code}</td>
-                        <td className="px-1 border-b">{group.name}</td>
-                        <td className="px-1 border-b">{group.groupNumber}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="max-h-[calc(85vh/2-60px)] ">
+                <Table
+                  stickyHeader
+                  striped
+                  highlightOnHover
+                  withColumnBorders
+                  styles={{
+                    th: { textAlign: "center", verticalAlign: "middle" },
+                    td: { textAlign: "center", verticalAlign: "middle" },
+                  }}
+                >
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>حذف</Table.Th>
+                      {<Table.Th>كود المادة</Table.Th>}
+                      {<Table.Th>اسم المادة</Table.Th>}
+                      {<Table.Th>المجموعة</Table.Th>}
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>{registeredSubjectsRows}</Table.Tbody>
+                </Table>
               </div>
             </div>
           </div>
 
           {/* معلومات الساعات */}
-          <div className="card p-4 rounded-xl flex flex-col justify-center items-center gap-2">
-            <div>عدد الساعات المسموح به: {allowedCreditHours}</div>
-            <div>عدد الساعات المسجلة: {totalRegisteredCredits}</div>
-            <div>
-              الساعات المتاحة: {allowedCreditHours - totalRegisteredCredits}
+          <div className="card p-0 rounded-xl flex flex-col  gap-2">
+            <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">
+              <div className="pr-4">جدول الطالب</div>
+              <Button
+                rightSection={<Download />}
+                className="ml-2 px-0"
+                color="green"
+                variant="outline"
+                size="xs"
+              >
+                {" "}
+                <p>جدول الطالب</p>
+              </Button>
+            </div>
+            <div className="p-0 pt-0 overflow-x-auto flex-1">
+              <Table variant="vertical" layout="auto" withTableBorder>
+                <Table.Tbody>
+                  <Table.Tr>
+                    <Table.Th w={70}></Table.Th>
+                    <Table.Td>
+                      <Grid columns={32} align="flex-start">
+                        <Grid.Col
+                          className=" border-r border-b p-0 m-0"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P1</p>
+                            <p className="p-0 m-0 text-xs">09:45-09:00</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P2</p>
+                            <p className="p-0 m-0 text-xs">10:30-09:45</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P3</p>
+                            <p className="p-0 m-0 text-xs">11:25-10:40</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P4</p>
+                            <p className="p-0 m-0 text-xs">12:10-11:25</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P5</p>
+                            <p className="p-0 m-0 text-xs">01:05-12:10</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P6</p>
+                            <p className="p-0 m-0 text-xs">01:50-01:05</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P</p>
+                            <p className="p-0 m-0 text-xs">02:45-02:00</p>
+                          </div>
+                        </Grid.Col>
+                        <Grid.Col
+                          className="text-center border-r border-b"
+                          span={4}
+                        >
+                          <div className="p-0 m-0">
+                            <p className="text-center border-b text-xs">P8</p>
+                            <p className="p-0 m-0 text-xs">03:30-02:45</p>
+                          </div>
+                        </Grid.Col>
+                      </Grid>
+                    </Table.Td>
+                  </Table.Tr>
+                  {days.map((day) => (
+                    <Table.Tr>
+                      <Table.Th>{day.name}</Table.Th>
+                      <Table.Td>
+                        <Grid columns={32} align="flex-start">
+                          {day.slot.map((slot) => (
+                            <Grid.Col className="border-r border-b" span={4}>
+                              {slot.label}
+                            </Grid.Col>
+                          ))}
+                        </Grid>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
             </div>
           </div>
         </div>
