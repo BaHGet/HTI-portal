@@ -9,7 +9,8 @@ const {
 
 const {
   setCurrentSemester,
-  getStudentId
+  getStudent,
+  loadCurrentEnrollments
 } = require('../middlewares/registerSubMiddleware')
 
 const { 
@@ -24,7 +25,7 @@ registerSubRouter
   .get('/available-subjects', 
     protect, 
     restrictTo("student"), 
-    getStudentId, 
+    getStudent, 
     setCurrentSemester, 
     getAvailableSubjects
   );
@@ -32,15 +33,16 @@ registerSubRouter
   .post('/register-subject', 
     protect, 
     restrictTo("student"),
-    getStudentId, 
-    setCurrentSemester, 
+    getStudent, 
+    setCurrentSemester,
+    loadCurrentEnrollments,
     registerSubject
   );
 registerSubRouter
   .delete('/drop-enrollment', 
     protect, 
     restrictTo("student"), 
-    getStudentId,
+    getStudent,
     setCurrentSemester, 
     dropEnrollment
   );
@@ -48,12 +50,10 @@ registerSubRouter
   .get('/registered-schedule', 
     protect, 
     restrictTo("student"),
-    getStudentId, 
+    getStudent, 
     setCurrentSemester, 
     getRegisteredSchedule
   );
-
-
 
 
 
