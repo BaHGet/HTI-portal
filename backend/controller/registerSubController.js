@@ -43,12 +43,21 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       {
         model: db.CourseGroup,
         attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
-        include: [{
-          model:db.GroupSchedule,
+        include: [
+        {
+          model: db.Professor,
+          attributes: ['ProfessorID'], 
+          include: [{ 
+            model: db.User,
+            attributes: ['FullName']
+          }]
+        },
+        {
+          model: db.GroupSchedule,
           attributes: ['DayOfWeek', 'Room'],
           include:[{
             model: db.TimePeriod,
-            attributes: ['PeriodName','StartTime', 'EndTime']
+            attributes: ['PeriodName']
           }]
         }]
       }
@@ -101,35 +110,55 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       }, 0);
       return completedCreditsInCategory < requiredCredits;
     })
-  
-  ///////////// step 6: Format the final result ///////////////
+
+  ///////////// step 6: GroupIDs the student is currently enrolled in for this semester ///////////////
+  const currentEnrollments = await db.Enrollment.findAll({
+    where: {
+      StudentID: student.StudentID, 
+    },
+    attributes: ['GroupID'],
+    include: [{
+      model: db.CourseGroup,
+      attributes:[],
+      where: {SemesterID: req.currentSemester.SemesterID}
+    }]
+  });
+  const enrolledGroupIdsSet = new Set(currentEnrollments.map(enrollment => enrollment.GroupID));
+  ///////////// step 7: Format the final result ///////////////
   const formattedResult = availableCourses.flatMap(course => {
-    return course.CourseGroups.map(group => {
-      const availableSeats = group.Capacity - group.CurrentEnrolled;
-      const scheduleObjects = group.GroupSchedules.map(schedule => {
-          
-        let timeString = '';
-        if (schedule.TimePeriod) {
-          timeString = `${schedule.TimePeriod.PeriodName} - ${schedule.TimePeriod.StartTime} - ${schedule.TimePeriod.EndTime}`;
+    return course.CourseGroups
+      .filter(group => !enrolledGroupIdsSet.has(group.GroupID))
+      .map(group => {
+        const availableSeats = group.Capacity - group.CurrentEnrolled;
+        const scheduleObjects = group.GroupSchedules
+          .map(schedule => {
+            let timeString = '';
+            if (schedule.TimePeriod) {
+              timeString = `${schedule.TimePeriod.PeriodName}`;
+            }
+            return {
+              day: schedule.DayOfWeek,
+              time: timeString,
+              room: schedule.Room
+            };
+        });
+        let professorName;
+        if (group.Professor && group.Professor.User) {
+          professorName = group.Professor.User.FullName;
         }
+
         return {
-          day: schedule.DayOfWeek,
-          time: timeString,
-          room: schedule.Room
+          courseCode: course.CourseCode,
+          courseName: course.CourseName,
+          creditHours: course.CreditHours,
+          groupNumber: group.GroupNumber,
+          professorName: professorName,
+          availableSeats: availableSeats,
+          schedule: scheduleObjects,
+          groupId: group.GroupID,
+          courseId: course.CourseID,
         };
       });
-
-      return {
-        courseCode: course.CourseCode,
-        courseName: course.CourseName,
-        creditHours: course.CreditHours,
-        groupNumber: group.GroupNumber,
-        availableSeats: availableSeats,
-        schedule: scheduleObjects,
-        groupId: group.GroupID,
-        courseId: course.CourseID,
-      };
-    });
   });
 
   /////////////// step 7: return the available courses ////////////////
@@ -343,7 +372,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
           attributes: ['DayOfWeek','Room','SessionType'],
           include: {
             model: db.TimePeriod,
-            attributes: ['PeriodName', 'StartTime','EndTime']
+            attributes: ['PeriodName']
           }
         }
       ]
