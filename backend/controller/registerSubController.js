@@ -326,7 +326,7 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
       await enrollment.destroy({ transaction: t });
 
       res.status(200).json({
-        status: "Success",
+        Success: true,
         message: "Enrollment dropped successfully and the seat has been made available."
       });
 
