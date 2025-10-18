@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import HtiLogo from "./../assets/1.jpg"; // Ensure this path is correct
 import MailIcon from "./../assets/Icons/mail.svg"; // Ensure this path is correct
 import LockClosedIcon from "./../assets/Icons/padlock.svg"; // Assuming you have this icon
@@ -192,7 +192,7 @@ function ForgotPasswordPage() {
     setOtpDigits(["", "", "", "", "", ""]);
     setStep("email_input");
     setSysMsg({ msg: "Please enter your email again.", type: "info" });
-  }
+  };
 
   // Function to handle "Back to Login" from success screen
   const handleBackToLogin = () => {};
@@ -203,7 +203,7 @@ function ForgotPasswordPage() {
     });
     setOtpDigits(["", "", "", "", "", ""]);
     setnumOfResend((prev) => prev + 1);
-    setCounter(numOfResend*30);
+    setCounter(numOfResend * 30);
     await sendOtp(email);
   };
 
@@ -215,319 +215,326 @@ function ForgotPasswordPage() {
   }, [step]);
 
   return (
-    <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
-      {/* Left Column - Illustration/Promotional (Same as Login Page) */}
-      <div className="hidden lg:block w-1/2 relative overflow-hidden rounded-r-lg">
-        <div className=" justify-center">
-          <div className="flex-shrink items-center text-gray-800 text-2xl text-center mt-10 font-semibold mb-6">
-            <span>HTI EDU Portal</span>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <img
-              src={HtiLogo}
-              alt="Login Illustration"
-              className="w-4/7 h-4/7 object-contain"
-            />
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
+      <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
+        {/* Left Column - Illustration/Promotional (Same as Login Page) */}
+        <div className="hidden lg:block w-1/2 relative overflow-hidden rounded-r-lg">
+          <div className=" justify-center">
+            <div className="flex-shrink items-center text-gray-800 text-2xl text-center mt-10 font-semibold mb-6">
+              <span>HTI EDU Portal</span>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                src={HtiLogo}
+                alt="Login Illustration"
+                className="w-4/7 h-4/7 object-contain"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Column - Forgot Password Form / Success Message */}
-      <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
-        {step !== "reset_success" && (
-          <>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {step === "email_input"
-                ? "Forgot Password"
-                : step === "otp_sent"
-                ? "Enter the Code"
-                : "Reset Password"}
-            </h2>
-            <div className="mb-6">
-              <div className="text-gray-600 text-xs">
-                {step === "email_input" ? (
-                  "Enter your email address below and we'll send you a One-Time Password (OTP)."
-                ) : step === "otp_sent" ? (
-                  <>
-                    Enter the 6-digit OTP sent to {email} to verify. Please
-                    check your inbox OR{" "}
-                    <Link
-                      onClick={handleChangeMail}
-                      className="text-gray-600 text-sm"
-                    >
-                      change mail
-                    </Link>
-                    .
-                  </>
-                ) : (
-                  "OTP verified. Please set your new password."
-                )}
-              </div>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email Input - Stage 1 */}
-              {step === "email_input" && (
-                <div>
-                  <label htmlFor="email" className="sr-only">
-                    Email
-                  </label>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <img
-                        src={MailIcon}
-                        alt="Mail Icon"
-                        className="w-5 h-5"
-                        style={iconStyle}
-                      />
-                    </div>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
-                      placeholder="Enter your EDU Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
+        {/* Right Column - Forgot Password Form / Success Message */}
+        <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
+          {step !== "reset_success" && (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {step === "email_input"
+                  ? "Forgot Password"
+                  : step === "otp_sent"
+                  ? "Enter the Code"
+                  : "Reset Password"}
+              </h2>
+              <div className="mb-6">
+                <div className="text-gray-600 text-xs">
+                  {step === "email_input" ? (
+                    "Enter your email address below and we'll send you a One-Time Password (OTP)."
+                  ) : step === "otp_sent" ? (
+                    <>
+                      Enter the 6-digit OTP sent to {email} to verify. Please
+                      check your inbox OR{" "}
+                      <Link
+                        onClick={handleChangeMail}
+                        className="text-gray-600 text-sm"
+                      >
+                        change mail
+                      </Link>
+                      .
+                    </>
+                  ) : (
+                    "OTP verified. Please set your new password."
+                  )}
                 </div>
-              )}
-
-              {/* OTP Input Fields - Stage 2 */}
-              {step === "otp_sent" && (
-                <div>
-                  <label htmlFor="otp-inputs" className="sr-only">
-                    OTP
-                  </label>
-                  <div
-                    id="otp-inputs"
-                    className="flex justify-between space-x-2"
-                  >
-                    {otpDigits.map((digit, index) => (
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email Input - Stage 1 */}
+                {step === "email_input" && (
+                  <div>
+                    <label htmlFor="email" className="sr-only">
+                      Email
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <img
+                          src={MailIcon}
+                          alt="Mail Icon"
+                          className="w-5 h-5"
+                          style={iconStyle}
+                        />
+                      </div>
                       <input
-                        key={index}
-                        type="text"
-                        maxLength="1"
-                        value={digit}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        onPaste={handleOtpPaste}
-                        ref={(el) => (otpInputRefs.current[index] = el)}
-                        className="w-10 h-10 text-center text-lg font-bold border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        type="email"
+                        name="email"
+                        id="email"
+                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
+                        placeholder="Enter your EDU Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
-                    ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* New Password & Confirm Password Inputs - Stage 3 */}
-              {correctOtp &&
-                step === "password_reset" && ( // Only show if correctOtp is true AND step is password_reset
-                  <>
-                    <div>
-                      <label htmlFor="new-password" className="sr-only">
-                        New Password
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <img
-                            src={LockClosedIcon}
-                            alt="Lock Icon"
-                            className="w-5 h-5"
-                            style={iconStyle}
-                          />
-                        </div>
+                {/* OTP Input Fields - Stage 2 */}
+                {step === "otp_sent" && (
+                  <div>
+                    <label htmlFor="otp-inputs" className="sr-only">
+                      OTP
+                    </label>
+                    <div
+                      id="otp-inputs"
+                      className="flex justify-between space-x-2"
+                    >
+                      {otpDigits.map((digit, index) => (
                         <input
-                          type={showPassword ? "text" : "password"}
-                          name="new-password"
-                          id="new-password"
-                          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
-                          placeholder="New Password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          required
-                        />
-                        {/* Show/Hide Password Link */}
-                        <a
-                          href="#"
-                          onClick={togglePasswordVisibility}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                          title={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                        >
-                          <img
-                            src={showPassword ? EyeOffIcon : EyeIcon}
-                            alt={
-                              showPassword ? "Hide password" : "Show password"
-                            }
-                            className="w-5 h-5"
-                            style={iconStyle}
-                          />
-                        </a>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="confirm-new-password" className="sr-only">
-                        Confirm New Password
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <img
-                            src={LockClosedIcon}
-                            alt="Lock Icon"
-                            className="w-5 h-5"
-                            style={iconStyle}
-                          />
-                        </div>
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          name="confirm-new-password"
-                          id="confirm-new-password"
-                          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
-                          placeholder="Confirm New Password"
-                          value={confirmNewPassword}
+                          key={index}
+                          type="text"
+                          maxLength="1"
+                          value={digit}
                           onChange={(e) =>
-                            setConfirmNewPassword(e.target.value)
+                            handleOtpChange(index, e.target.value)
                           }
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          onPaste={handleOtpPaste}
+                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          className="w-10 h-10 text-center text-lg font-bold border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                           required
                         />
-                        {/* Show/Hide Password Link */}
-                        <a
-                          href="#"
-                          onClick={togglePasswordVisibility}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                          title={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                        >
-                          <img
-                            src={showPassword ? EyeOffIcon : EyeIcon}
-                            alt={
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Password & Confirm Password Inputs - Stage 3 */}
+                {correctOtp &&
+                  step === "password_reset" && ( // Only show if correctOtp is true AND step is password_reset
+                    <>
+                      <div>
+                        <label htmlFor="new-password" className="sr-only">
+                          New Password
+                        </label>
+                        <div className="relative rounded-md shadow-sm">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <img
+                              src={LockClosedIcon}
+                              alt="Lock Icon"
+                              className="w-5 h-5"
+                              style={iconStyle}
+                            />
+                          </div>
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            name="new-password"
+                            id="new-password"
+                            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
+                            placeholder="New Password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                          />
+                          {/* Show/Hide Password Link */}
+                          <a
+                            href="#"
+                            onClick={togglePasswordVisibility}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                            title={
                               showPassword ? "Hide password" : "Show password"
                             }
-                            className="w-5 h-5"
-                            style={iconStyle}
-                          />
-                        </a>
+                          >
+                            <img
+                              src={showPassword ? EyeOffIcon : EyeIcon}
+                              alt={
+                                showPassword ? "Hide password" : "Show password"
+                              }
+                              className="w-5 h-5"
+                              style={iconStyle}
+                            />
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </>
-                )}
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading} // Disable button while loading
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {loading ? (
-                  <>
-                    <LoadingSpinner /> {/* Show spinner when loading */}
-                  </>
-                ) : step === "email_input" ? (
-                  "Send OTP"
-                ) : step === "otp_sent" ? (
-                  "Verify OTP"
-                ) : (
-                  "Reset Password"
-                )}
-              </button>
-            </form>
+                      <div>
+                        <label
+                          htmlFor="confirm-new-password"
+                          className="sr-only"
+                        >
+                          Confirm New Password
+                        </label>
+                        <div className="relative rounded-md shadow-sm">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <img
+                              src={LockClosedIcon}
+                              alt="Lock Icon"
+                              className="w-5 h-5"
+                              style={iconStyle}
+                            />
+                          </div>
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            name="confirm-new-password"
+                            id="confirm-new-password"
+                            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
+                            placeholder="Confirm New Password"
+                            value={confirmNewPassword}
+                            onChange={(e) =>
+                              setConfirmNewPassword(e.target.value)
+                            }
+                            required
+                          />
+                          {/* Show/Hide Password Link */}
+                          <a
+                            href="#"
+                            onClick={togglePasswordVisibility}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                            title={
+                              showPassword ? "Hide password" : "Show password"
+                            }
+                          >
+                            <img
+                              src={showPassword ? EyeOffIcon : EyeIcon}
+                              alt={
+                                showPassword ? "Hide password" : "Show password"
+                              }
+                              className="w-5 h-5"
+                              style={iconStyle}
+                            />
+                          </a>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
-            {/* Back to Login Link (visible before success screen) */}
-            {step === "otp_sent" ? (
-              <p className="text-center text-sm text-gray-600 mt-4">
-                didn't recived code?{" "}
-                <Link
-                  className="font-medium text-blue-600 text-xs
-                hover:text-blue-500"
-                  onClick={handleResendOTP}
-                  disabled={counter > 0} // Disable link if counter is active
-                  style={{
-                    pointerEvents: counter > 0 ? "none" : "auto",
-                    color: counter > 0 ? "#9ca3af" : "#2563eb", // Gray if disabled, blue if active
-                  }}
-                >
-                  {" "}
-                  {resendShape === "text" ? "Resend OTP" : `${counter}s`}
-                </Link>
-              </p>
-            ) : (
-              <p className="text-center text-sm text-gray-600 mt-4 text-xs">
-                Remember your password?{" "}
-                <Link
-                  to="/login"
-                  className="font-medium text-blue-600
-                hover:text-blue-500"
-                  onClick={handleBackToLogin}
-                >
-                  {" "}
-                  Back to Login
-                </Link>
-              </p>
-            )}
-          </>
-        )}
-
-        {/* Password Reset Success UI */}
-        {step === "reset_success" && (
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-16 w-16 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-4 text-xl font-medium text-gray-900">
-              Password Has Been Reset!
-            </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Your password has been successfully updated. You can now log in
-              with your new password.
-            </p>
-            <div className="mt-6">
-              <Link to="/login">
+                {/* Submit Button */}
                 <button
-                  type="button"
-                  onClick={handleBackToLogin}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  type="submit"
+                  disabled={loading} // Disable button while loading
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-950 focus:ring-slate-800 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 "
                 >
-                  Back to Login
+                  {loading ? (
+                    <>
+                      <LoadingSpinner /> {/* Show spinner when loading */}
+                    </>
+                  ) : step === "email_input" ? (
+                    "Send OTP"
+                  ) : step === "otp_sent" ? (
+                    "Verify OTP"
+                  ) : (
+                    "Reset Password"
+                  )}
                 </button>
-              </Link>
+              </form>
+
+              {/* Back to Login Link (visible before success screen) */}
+              {step === "otp_sent" ? (
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  didn't recived code?{" "}
+                  <Link
+                    className="font-medium text-blue-600 text-xs
+                hover:text-blue-500"
+                    onClick={handleResendOTP}
+                    disabled={counter > 0} // Disable link if counter is active
+                    style={{
+                      pointerEvents: counter > 0 ? "none" : "auto",
+                      color: counter > 0 ? "#9ca3af" : "#2563eb", // Gray if disabled, blue if active
+                    }}
+                  >
+                    {" "}
+                    {resendShape === "text" ? "Resend OTP" : `${counter}s`}
+                  </Link>
+                </p>
+              ) : (
+                <p className="text-center text-gray-600 mt-4 text-xs">
+                  Remember your password?{" "}
+                  <Link
+                    to="/login"
+                    className="font-medium text-blue-600
+                hover:text-blue-500"
+                    onClick={handleBackToLogin}
+                  >
+                    {" "}
+                    Back to Login
+                  </Link>
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Password Reset Success UI */}
+          {step === "reset_success" && (
+            <div className="text-center py-12">
+              <svg
+                className="mx-auto h-16 w-16 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">
+                Password Has Been Reset!
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Your password has been successfully updated. You can now log in
+                with your new password.
+              </p>
+              <div className="mt-6">
+                <Link to="/login">
+                  <button
+                    type="button"
+                    onClick={handleBackToLogin}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-950 focus:ring-slate-800 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 "
+                  >
+                    Back to Login
+                  </button>
+                </Link>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* System Message (always visible) */}
+          {/* System Message (always visible) */}
 
-        <div className="relative pt-5 items-center">
-          <div className="flex-shrink  text-gray-500 text-xs">
-            Server Message:
+          <div className="relative pt-5 items-center">
+            <div className="flex-shrink  text-gray-500 text-xs">
+              Server Message:
+            </div>
+            <span
+              className={
+                sys_msg.type === "info"
+                  ? "flex-shrink text-gray-500 text-xs"
+                  : sys_msg.type === "success"
+                  ? "flex-shrink text-green-500 text-xs"
+                  : "flex-shrink text-red-500 text-xs"
+              }
+            >
+              {sys_msg.msg}
+            </span>
           </div>
-          <span
-            className={
-              sys_msg.type === "info"
-                ? "flex-shrink text-gray-500 text-xs"
-                : sys_msg.type === "success"
-                ? "flex-shrink text-green-500 text-xs"
-                : "flex-shrink text-red-500 text-xs"
-            }
-          >
-            {sys_msg.msg}
-          </span>
         </div>
       </div>
     </div>
