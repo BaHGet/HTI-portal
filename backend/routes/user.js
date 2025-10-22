@@ -27,7 +27,7 @@ userRouter.put('/changemypassword', protect, updateLoggedUserPassValidation, upd
 
 // Admin Routes
 userRouter.get('/getallusers', protect, restrictTo('admin'), getAllUsers)
-userRouter.get('/getuser', protect, restrictTo('admin'), getUserValidator, getUser)
+userRouter.get('/getuser', protect, restrictTo('admin'),  getUserValidator, getUser)
 userRouter.post('/adduser', protect, restrictTo('admin'), addUserValidator, addUser)
 userRouter.put('/changerole', protect, restrictTo('admin'), changeUserRoleValidation, changeUserRole)
 

@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
     CourseID: {
       type: DataTypes.INTEGER,
       allowNull: false
-    }
+    },
   }, {
     tableName: 'SemesterCourses',
     timestamps: false

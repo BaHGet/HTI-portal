@@ -11,10 +11,6 @@ module.exports =  (sequelize) => {
       allowNull: false,
       unique: true
     },
-    StudentName: {
-      type: DataTypes.STRING(100),
-      allowNull: false 
-    },
     StudentAddress: {
       type: DataTypes.STRING(200),
       allowNull: true
@@ -28,6 +24,10 @@ module.exports =  (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    RegulationID: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     gpa: {
       type: DataTypes.DECIMAL(3, 2), 
       allowNull: false,
@@ -35,6 +35,10 @@ module.exports =  (sequelize) => {
         min: 0,
         max: 4
       }
+    },
+    isLastTerm: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false
     }
   }, {
     

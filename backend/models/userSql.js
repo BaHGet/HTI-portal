@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, Sequelize) => {
   const User = sequelize.define('User', {
     UserID: {
       type: DataTypes.INTEGER,
@@ -72,7 +72,10 @@ module.exports = (sequelize) => {
     tableName: 'Users',
     timestamps: true,
     createdAt: 'CreatedAt',
-    updatedAt: 'UpdatedAt' 
+    updatedAt: 'UpdatedAt',
+    defaultScope: { 
+      attributes: { exclude: ['PasswordHash'] },
+    }
   });
 
   return User;

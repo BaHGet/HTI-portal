@@ -14,6 +14,10 @@ module.exports = (sequelize) => {
     RegulationDescription: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    DepartmentID: {
+      type: DataTypes.INTEGER,
+      allowNull: false 
     }
   }, {
     tableName: 'AcademicRegulations',
