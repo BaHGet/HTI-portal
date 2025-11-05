@@ -15,7 +15,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   // Step 0: GetStudentInfo (including finished courses)
   const student = req.student;
   const completedCourses = await student.getCourses({
-    attributes: ['CourseID'],
+    attributes: ['CourseID','CreditHours'],
     include: [{ 
       model: db.CourseCategory,
       attributes: ['CourseCategoryID', 'RequiredCredits']
@@ -46,11 +46,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
         include: [
         {
           model: db.Professor,
-          attributes: ['ProfessorID'], 
-          include: [{ 
-            model: db.User,
-            attributes: ['FullName']
-          }]
+          attributes: ['ProfessorName'], 
         },
         {
           model: db.GroupSchedule,
@@ -324,7 +320,8 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
 
       await enrollment.CourseGroup.decrement('CurrentEnrolled', { by: 1, transaction: t });
       await enrollment.destroy({ transaction: t });
-
+      await transaction.commit();
+      
       res.status(200).json({
         Success: true,
         message: "Enrollment dropped successfully and the seat has been made available."
@@ -332,7 +329,8 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
 
     });
   } catch (error) {
-    throw new ApiError("Failed to drop enrollment. Please try again.", 500);
+    await transaction.rollback()
+    next(error);
   }
   
 });
@@ -361,11 +359,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
         },
         {
           model: db.Professor,
-          attributes: ['ProfessorID'],
-          include: [{
-            model: db.User,
-            attributes:['FullName']
-          }]
+          attributes: ['ProfessorName'],
         },
         {
           model: db.GroupSchedule,
