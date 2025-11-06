@@ -320,16 +320,14 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
 
       await enrollment.CourseGroup.decrement('CurrentEnrolled', { by: 1, transaction: t });
       await enrollment.destroy({ transaction: t });
-      await transaction.commit();
-      
-      res.status(200).json({
-        Success: true,
-        message: "Enrollment dropped successfully and the seat has been made available."
-      });
 
     });
+
+    res.status(200).json({
+      Success: true,
+      message: "Enrollment dropped successfully and the seat has been made available."
+    });
   } catch (error) {
-    await transaction.rollback()
     next(error);
   }
   
