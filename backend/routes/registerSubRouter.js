@@ -13,6 +13,10 @@ const {
   loadCurrentEnrollments
 } = require('../middlewares/registerSubMiddleware')
 
+const {
+  GroupSubValidator,
+} = require('../validations/registerSubValidator')
+
 const { 
   protect,
   restrictTo, 
@@ -33,6 +37,7 @@ registerSubRouter
   .post('/register-subject', 
     protect, 
     restrictTo("student"),
+    GroupSubValidator,
     getStudent, 
     setCurrentSemester,
     loadCurrentEnrollments,
@@ -42,6 +47,7 @@ registerSubRouter
   .delete('/drop-enrollment', 
     protect, 
     restrictTo("student"), 
+    GroupSubValidator,
     getStudent,
     setCurrentSemester, 
     dropEnrollment

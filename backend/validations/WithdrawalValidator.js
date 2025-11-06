@@ -4,8 +4,8 @@ const validatorMiddleware = require ('../middlewares/validatorMiddleware')
 
 
 
-exports.GroupSubValidator = [
-  check('GroupID')
+exports.EnrollmentValidator = [
+  check('EnrollmentID')
     .notEmpty()
     .withMessage('GroupID is required')
     .isInt()
