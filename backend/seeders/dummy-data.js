@@ -17,6 +17,7 @@ const departments = [
 ];
 
 const academicRegulations = [
+  // -->> (تم التحديث) إضافة TotalRequiredCredits
   { RegulationID: 1, RegulationName: 'لائحة 2024 - ميكاترونكس', DepartmentID: 1, TotalRequiredCredits: 160 },
   { RegulationID: 2, RegulationName: 'لائحة 2024 - اتصالات', DepartmentID: 2, TotalRequiredCredits: 170 },
   { RegulationID: 3, RegulationName: 'لائحة 2024 - طبية', DepartmentID: 3, TotalRequiredCredits: 180 },
@@ -58,7 +59,8 @@ let studentIdCounter = 2021000;
 
 // إنشاء 2 Admin
 for (let i = 1; i <= 2; i++) {
-    users.push({ UserID: userIdCounter, FullName: `مسؤول ${i}`, Email: `admin${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'admin' });
+    const fullName = `مسؤول ${i}`;
+    users.push({ UserID: userIdCounter, FullName: fullName, Email: `admin${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'admin' });
     userIdCounter++;
 }
 
@@ -66,10 +68,12 @@ for (let i = 1; i <= 2; i++) {
 departments.forEach(dept => {
     for (let i = 1; i <= 3; i++) {
         const isLastTermStudent = (i === 1); // أول طالب في كل قسم سيكون في الترم الأخير
-        users.push({ UserID: userIdCounter, FullName: `طالب ${dept.DepartmentName} ${i}`, Email: `student_${dept.DepartmentName.slice(0,3)}${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'student' });
+        const fullName = `طالب ${dept.DepartmentName} ${i}`;
+        users.push({ UserID: userIdCounter, FullName: fullName, Email: `student_${dept.DepartmentName.slice(0,3)}${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'student' });
         students.push({ 
             StudentID: studentIdCounter++, 
-            UserID: userIdCounter, 
+            UserID: userIdCounter,
+            StudentName: fullName, // -->> (تم التحديث) إضافة اسم الطالب
             DepartmentID: dept.DepartmentID, 
             RegulationID: dept.DepartmentID, // ربط الطالب بلائحة قسمه
             gpa: isLastTermStudent ? 3.5 : faker.number.float({ min: 2.1, max: 3.4, precision: 0.01 }),
@@ -81,8 +85,14 @@ departments.forEach(dept => {
 
 // إنشاء 3 أساتذة
 for (let i = 1; i <= 3; i++) {
-    users.push({ UserID: userIdCounter, FullName: `د. أستاذ ${i}`, Email: `prof${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'professor' });
-    professors.push({ ProfessorID: 1000 + i, UserID: userIdCounter, DepartmentID: departments[i-1].DepartmentID }); // كل أستاذ في قسم مختلف
+    const fullName = `د. أستاذ ${i}`;
+    users.push({ UserID: userIdCounter, FullName: fullName, Email: `prof${i}@test.com`, PasswordHash: bcrypt.hashSync('123456', 10), AccountType: 'professor' });
+    professors.push({ 
+        ProfessorID: 1000 + i, 
+        UserID: userIdCounter, 
+        ProfessorName: fullName, // -->> (تم التحديث) إضافة اسم الأستاذ
+        DepartmentID: departments[i-1].DepartmentID // كل أستاذ في قسم مختلف
+    });
     userIdCounter++;
 }
 
@@ -136,16 +146,16 @@ courses.forEach(course => {
 });
 
 // ===================================================================================
-// --- 5. توليد الجروبات والجداول (للترم الحالي فقط) ---
+// --- 5. توليد الجروبات والجداول (للترم الحالي والماضي) ---
 // ===================================================================================
 
 const courseGroups = []; 
 const groupSchedules = [];
 let groupIdCounter = 1;
-const currentSemesterCourseIds = semesterCourses.filter(sc => sc.SemesterID === CURRENT_SEMESTER_ID).map(sc => sc.CourseID);
 
+// --- إنشاء جروبات للترم الحالي (مع تعارض ومكان واحد) ---
+const currentSemesterCourseIds = semesterCourses.filter(sc => sc.SemesterID === CURRENT_SEMESTER_ID).map(sc => sc.CourseID);
 currentSemesterCourseIds.forEach(courseId => {
-    // إنشاء 3 جروبات لكل مادة في الترم الحالي
     const capacity = 30;
     const enrolled = 29; // مكان واحد فقط متاح
     
@@ -163,6 +173,19 @@ currentSemesterCourseIds.forEach(courseId => {
     const group3Id = groupIdCounter++;
     courseGroups.push({ GroupID: group3Id, CourseID: courseId, SemesterID: CURRENT_SEMESTER_ID, GroupNumber: `G3`, Capacity: capacity, CurrentEnrolled: enrolled, ProfessorID: faker.helpers.arrayElement(professors).ProfessorID });
     groupSchedules.push({ GroupID: group3Id, DayOfWeek: 'D3', PeriodID: 2, Room: `R201` }); // الثلاثاء - الفترة الثانية
+});
+
+// --- إنشاء جروبات للترم الماضي (للتاريخ الدراسي) ---
+const pastSemesterCourseIds = semesterCourses.filter(sc => sc.SemesterID === PAST_SEMESTER_ID).map(sc => sc.CourseID);
+pastSemesterCourseIds.forEach(courseId => {
+    courseGroups.push({ 
+        GroupID: groupIdCounter++, 
+        CourseID: courseId, 
+        SemesterID: PAST_SEMESTER_ID, 
+        GroupNumber: 'G1', 
+        Capacity: 50, 
+        ProfessorID: faker.helpers.arrayElement(professors).ProfessorID 
+    });
 });
 
 
@@ -184,11 +207,6 @@ studentsWithHistory.forEach(student => {
     const studentDeptCourses = courses.filter(c => c.DepartmentID === student.DepartmentID).slice(0, 2);
 
     studentDeptCourses.forEach(course => {
-        const relevantGroupInPast = courseGroups.find(g => g.CourseID === course.CourseID && g.SemesterID === PAST_SEMESTER_ID);
-        // هذا الجزء لم نكن ننشئ له جروبات، سنضيفها الآن
-        if (!relevantGroupInPast) {
-            courseGroups.push({ GroupID: groupIdCounter++, CourseID: course.CourseID, SemesterID: PAST_SEMESTER_ID, GroupNumber: 'G1', Capacity: 50, ProfessorID: faker.helpers.arrayElement(professors).ProfessorID });
-        }
         const groupForHistory = courseGroups.find(g => g.CourseID === course.CourseID && g.SemesterID === PAST_SEMESTER_ID);
 
         if (groupForHistory) {
@@ -235,4 +253,3 @@ module.exports = {
     studentCompletedCourses, courseGroups, groupSchedules,
     enrollments, grades, exams
 };
-

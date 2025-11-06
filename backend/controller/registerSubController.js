@@ -139,8 +139,8 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
             };
         });
         let professorName;
-        if (group.Professor && group.Professor.User) {
-          professorName = group.Professor.User.FullName;
+        if (group.Professor) {
+          professorName = group.Professor.ProfessorName;
         }
 
         return {
