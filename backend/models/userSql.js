@@ -35,10 +35,6 @@ module.exports = (sequelize, Sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    FullName: {
-      type: DataTypes.STRING(100),
-      allowNull: false
-    },
     NationalID: {
       type: DataTypes.CHAR(14), 
       unique: true,

@@ -65,13 +65,16 @@ const sql = require("../config/mysqlDB");
 sql.dbConnection();
 
 const { authRouter } = require("../routes/auth");
-app.use("/api/auth", authRouter);
+app.use("/api/v1/auth", authRouter);
 
 const { registerSubRouter } = require("../routes/registerSubRouter");
-app.use("/api/registration",registerSubRouter);
+app.use("/api/v1/registration",registerSubRouter);
 
 const { userRouter } = require("../routes/user");
-app.use("/api/user", userRouter);
+app.use("/api/v1/user", userRouter);
+
+const { withdrawalSubRouter } = require("../routes/withdrawalRoute");
+app.use("/api/v1/withdrawal", withdrawalSubRouter);
 
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));

@@ -45,7 +45,6 @@ const protect = asyncHandler(async (req,res,next) => {
   }
 
   const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
-  console.log("Decoded:", decoded);
 
   const currentUser = await  db.User.findByPk(decoded.id)
   if (!currentUser) {

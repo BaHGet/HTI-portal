@@ -13,6 +13,10 @@ module.exports =  (sequelize) => {
       allowNull: false,
       unique: true
     },
+    ProfessorName: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
     JobCode: {
       type: DataTypes.STRING(20),
       allowNull: true
