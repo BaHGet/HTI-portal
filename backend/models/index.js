@@ -19,6 +19,7 @@ const Exam = require('./exams')(sequelize);
 const TimePeriod = require('./timePeriod')(sequelize); 
 const GroupSchedule = require('./groupSchedule')(sequelize); 
 const Grade = require('./grades')(sequelize);
+const GradeAppeal = require('./gradeAppeals')(sequelize);
 const StudentCompletedCourse = require('./studentCompletedCourses')(sequelize);
 
 //////////////////////////// Define Relationships between models ///////////////////////////////
@@ -125,6 +126,12 @@ AcademicRegulation.belongsTo(Department, { foreignKey: 'DepartmentID' });
 AcademicRegulation.hasMany(Student, { foreignKey: 'RegulationID' });
 Student.belongsTo(AcademicRegulation, { foreignKey: 'RegulationID' });
 
+// Relation between GradeAppeal and ( Student & Grades)
+Grade.hasOne(GradeAppeal, { foreignKey: 'GradeID' });
+GradeAppeal.belongsTo(Grade, { foreignKey: 'GradeID' });
+
+Student.hasMany(GradeAppeal, { foreignKey: 'StudentID' });
+GradeAppeal.belongsTo(Student, { foreignKey: 'StudentID' });
 
 const db = {
   sequelize, 
@@ -146,6 +153,7 @@ const db = {
   TimePeriod,
   GroupSchedule,
   Grade, 
+  GradeAppeal,
   StudentCompletedCourse,
 };
 

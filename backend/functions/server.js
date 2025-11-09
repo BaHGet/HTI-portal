@@ -76,6 +76,9 @@ app.use("/api/v1/user", userRouter);
 const { withdrawalSubRouter } = require("../routes/withdrawalRoute");
 app.use("/api/v1/withdrawal", withdrawalSubRouter);
 
+const { GradeAppealRouter } = require("../routes/gradeAppealRoute");
+app.use("/api/v1/appeals", GradeAppealRouter);
+
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));
 });
