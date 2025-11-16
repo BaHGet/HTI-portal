@@ -1,6 +1,6 @@
 const { check  } = require('express-validator');
 const validatorMiddleware = require ('../middlewares/validatorMiddleware')
-const ApiError = require('../utils/apiError');
+
 
 exports.createAppealValidator=[
   check('gradeId')

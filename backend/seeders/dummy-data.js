@@ -240,16 +240,51 @@ studentsWithHistory.forEach(student => {
     });
 });
 
-// بيانات فارغة للجداول التي لم نحدد لها بيانات
-const exams = [];
+// exams will be generated later in section 7, so do not redeclare it here
 
 // ===================================================================================
 // --- 7. تصدير كل البيانات ---
+// ===================================================================================
+// --- (جديد) 7. توليد الامتحانات (بناءً على طلبك) ---
+// ===================================================================================
+
+const exams = [];
+let examIdCounter = 1;
+
+semesterCourses.forEach(sc => {
+    const isPastSemester = sc.SemesterID === PAST_SEMESTER_ID;
+    
+    // 1. إنشاء امتحان Midterm
+    exams.push({
+        ExamID: examIdCounter++,
+        SemesterCourseID: sc.SemesterCourseID,
+        ExamType: 'Midterm',
+        ExamDate: isPastSemester ? '2025-03-15' : '2025-10-15', // تاريخ منطقي للترم الماضي والحالي
+        StartTime: '10:00:00',
+        EndTime: '12:00:00',
+        Room: `M-${faker.number.int({ min: 101, max: 200 })}`
+    });
+
+    // 2. إنشاء امتحان Final
+    exams.push({
+        ExamID: examIdCounter++,
+        SemesterCourseID: sc.SemesterCourseID,
+        ExamType: 'Final',
+        ExamDate: isPastSemester ? '2025-05-20' : '2025-12-10', // تاريخ منطقي للترم الماضي والحالي
+        StartTime: '09:00:00',
+        EndTime: '12:00:00',
+        Room: `F-${faker.number.int({ min: 301, max: 400 })}`
+    });
+});
+
+
+// ===================================================================================
+// --- 8. تصدير كل البيانات ---
 // ===================================================================================
 
 module.exports = {
     colleges, departments, academicRegulations, courseCategories, semesters, timePeriods, users,
     students, professors, courses, coursePrerequisites, semesterCourses,
     studentCompletedCourses, courseGroups, groupSchedules,
-    enrollments, grades, exams
+    enrollments, grades, exams // <-- تأكدنا من تصدير الامتحانات
 };

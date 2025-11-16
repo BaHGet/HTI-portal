@@ -74,6 +74,12 @@ Course.belongsToMany(Course, {
 Course.belongsToMany(Semester, { through: SemesterCourse, foreignKey: 'CourseID' });
 Semester.belongsToMany(Course, { through: SemesterCourse, foreignKey: 'SemesterID' });
 
+SemesterCourse.belongsTo(Course, { foreignKey: 'CourseID' });
+Course.hasMany(SemesterCourse, { foreignKey: 'CourseID' });
+
+SemesterCourse.belongsTo(Semester, { foreignKey: 'SemesterID' });
+Semester.hasMany(SemesterCourse, { foreignKey: 'SemesterID' });
+
 // Relation between CourseGroups and (Semester & Courses & Professors) 
 CourseGroup.belongsTo(Course, { foreignKey: 'CourseID' });
 Course.hasMany(CourseGroup, { foreignKey: 'CourseID' });
