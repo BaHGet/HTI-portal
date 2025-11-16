@@ -17,6 +17,10 @@ const {
   restrictTo, 
 } = require('../controller/authController')
 
+const {
+  EnrollmentValidator
+} = require('../validations/WithdrawalValidator.js')
+
 const withdrawalSubRouter = express.Router();
 
 withdrawalSubRouter
@@ -32,7 +36,8 @@ withdrawalSubRouter
 withdrawalSubRouter
   .put('/withdrawal-subject', 
     protect, 
-    restrictTo("student"), 
+    restrictTo("student"),
+    EnrollmentValidator, 
     getStudent, 
     setCurrentSemester, 
     withdrawalSub
@@ -41,7 +46,8 @@ withdrawalSubRouter
 withdrawalSubRouter
 .put('/restoring-subject', 
   protect, 
-  restrictTo("student"), 
+  restrictTo("student"),
+  EnrollmentValidator, 
   getStudent, 
   setCurrentSemester, 
   restoringSub
