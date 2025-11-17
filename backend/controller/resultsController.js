@@ -44,7 +44,7 @@ exports.getStudentSemester = asyncHandler(async(req,res,next)=>{
 
 
 exports.getStudentResults = asyncHandler(async(req,res,next)=>{
-  const studentId = req.student.StudentID;
+  const student = req.student;
   const { semester_id } = req.params;
 
   const semester = {};
@@ -64,7 +64,7 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
       {
         model: db.Enrollment,
         attributes: ['GroupID'], 
-        where: { StudentID: studentId }, 
+        where: { StudentID: student.StudentID }, 
         required: true, 
         include: [{
           model: db.CourseGroup,
@@ -120,6 +120,7 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
   res.status(200).json({
     success: true,
     type: semester_id === 'all' ? 'transcript' : 'single_semester',
+    GPA: student.gpa,
     data: responseData
   });
 })
