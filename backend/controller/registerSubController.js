@@ -345,7 +345,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
   ///////////////////// step 1: get all student enrollments data ///////////////////
   const studentEnrollments = await db.Enrollment.findAll({
     where: { StudentID: student.StudentID},
-    attributes:[],
+    attributes:['GroupID'],
     include:[{
       model: db.CourseGroup,
       where: { SemesterID: semesterId },
