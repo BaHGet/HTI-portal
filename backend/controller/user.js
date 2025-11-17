@@ -79,11 +79,67 @@ const changeUserRole = asyncHandler( async (req,res,next)=>{
 
 
 const getLoggedUserData = asyncHandler(async(req,res,next)=>{
-  logger.info(`the endpoint ${req.route.path} was called from user with id ${req.user.UserID}`);
+  const userId = req.user.UserID;
+  const accountType = req.user.AccountType;
+
+  let profileData = null;
+
+  if (accountType === 'student' || accountType === 'Graduated') {
+    profileData = await db.Student.findOne({
+      where: { UserID: userId },
+      attributes: ['StudentID','StudentName','StudentAddress','CreditHours','gpa'], 
+      include: [
+        { 
+          model: db.Department,
+          attributes: ['DepartmentName'],
+          include: [{
+            model: db.College,
+            attributes: ['CollegeName']
+          }]
+        },
+        {
+          model: db.AcademicRegulation,
+          attributes: ['RegulationName']
+        }
+      ],
+      raw: true,
+      nest: true
+    });
+  }else if (accountType === 'professor') {
+    profileData = await db.Professor.findOne({
+      where: { UserID: userId },
+      attributes: { exclude: ['UserID','DepartmentID'] },
+      include: [
+        { 
+          model: db.Department,
+          attributes: ['DepartmentName'],
+          include: [{
+            model: db.College,
+            attributes: ['CollegeName']
+          }]
+        }
+      ],
+      raw: true,
+      nest: true
+    });
+  }else if (accountType === 'admin') {
+    profileData = await db.User.findByPk(userId, {
+      attributes: { exclude: ['PasswordHash', 'PasswordChangedAt', 'PasswordResetCode', 'PasswordResetExpires', 'PasswordResetVerified'] },
+      raw: true,
+      nest: true
+    });
+  }
+  
+  if (!profileData) {
+    return next(new ApiError('Profile data not found for this user.', 404));
+  }
+
   res.status(200).json({
     status: 'success',
-    data: req.user
+    role: accountType, 
+    data: profileData
   });
+
 })
 
 
