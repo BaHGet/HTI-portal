@@ -174,12 +174,19 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
   res.status(200).json({data: user})
 })
 
+const logout = asyncHandler(async(req,res,next)=>{
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully. Please clear the token from client storage.'
+  });
+})
 
 module.exports = {
-    getAllUsers, 
-    addUser, 
-    getUser,
-    changeUserRole,
-    getLoggedUserData,
-    updateLoggedUserPassword
+  getAllUsers, 
+  addUser, 
+  getUser,
+  changeUserRole,
+  getLoggedUserData,
+  updateLoggedUserPassword,
+  logout
 }
