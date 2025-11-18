@@ -28,4 +28,92 @@ const getMe = async () => {
     throw error;
   }
 };
-export { getAllUsers, getMe };
+
+const getAvaliableSubjects = async () => {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/registration/available-subjects`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Get available-subjects error:", error);
+    throw error;
+  }
+};
+
+const getRegisteredSchadule = async () => {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/registration/registered-schedule`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Get registered-schedule error:", error);
+    throw error;
+  }
+};
+const registerSubject = async (GroupID) => {
+  try {
+    if (!GroupID) throw new Error("groupId is required");
+
+    console.log("Registering subject with groupId:", GroupID);
+
+    const response = await axios.post(
+      `${baseUrl}/registration/register-subject`,
+      { GroupID },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error in registerSubject:", error);
+    throw error;
+  }
+};
+
+const dropSubject = async (GroupID) => {
+  try {
+    if (!GroupID) throw new Error("groupId is required");
+
+    console.log("Dropping subject with groupId:", GroupID);
+
+    const response = await axios.delete(
+      `${baseUrl}/registration/drop-enrollment`,
+      {
+        data: { GroupID }, 
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error in dropSubject:", error.response?.data || error);
+    throw error;
+  }
+};
+
+
+export {
+  getAllUsers,
+  getMe,
+  getAvaliableSubjects,
+  getRegisteredSchadule,
+  registerSubject,
+  dropSubject,
+};
