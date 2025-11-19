@@ -99,10 +99,10 @@ const getLoggedUserData = asyncHandler(async(req,res,next)=>{
         },
         {
           model: db.AcademicRegulation,
-          attributes: ['RegulationName']
+          attributes: ['RegulationName','TotalRequiredCredits','RegulationDescription']
         }
       ],
-      raw: true,
+      // raw: true,
       nest: true
     });
   }else if (accountType === 'professor') {
