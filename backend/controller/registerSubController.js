@@ -1,4 +1,4 @@
-
+const { Op } = require('sequelize');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 const checkTimeConflict = require('../utils/timeConflict')
@@ -359,7 +359,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
   const semesterId = req.currentSemester.SemesterID;
   ///////////////////// step 1: get all student enrollments data ///////////////////
   const studentEnrollments = await db.Enrollment.findAll({
-    where: { StudentID: student.StudentID},
+    where: { StudentID: student.StudentID, Status:{[Op.ne]: 'Withdrawn'}},
     attributes:['GroupID'],
     include:[{
       model: db.CourseGroup,
