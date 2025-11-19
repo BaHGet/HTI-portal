@@ -166,26 +166,36 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    ////////////////////// Step 1: Extract Pre-fetched Data from Middlewares ///////////////////
     const student = req.student;
-    const currentEnrollments = req.currentEnrollments;
-
-    ////////////////////// Step 2: Process the Pre-fetched Data in Memory ///////////////////
-    const currentCredits = currentEnrollments.reduce((sum, enrollment) => {
-        return sum + enrollment.CourseGroup.Course.CreditHours;
-    }, 0);
-
-    const currentUserAppointments = currentEnrollments.flatMap(
-        enrollment => enrollment.CourseGroup.GroupSchedules || []
-    );
-
-    const registeredCourseIds = new Set(
-        currentEnrollments.map(enrollment => enrollment.CourseGroup.Course.CourseID)
-    );
-
-    /////////////////// Step 3: Fetch New Group Data & Check Seats ///////////////////
+    const semesterId = req.currentSemester.SemesterID;
     const courseGroupId = req.body.GroupID;
-    const courseGroup = await db.CourseGroup.findByPk(courseGroupId,{
+    //////////////////// STEP(1): All Queries ////////////////////
+    const [currentEnrollments, courseGroup] = await Promise.all([
+    // Query(1): Student Current Enrollments
+    db.Enrollment.findAll({
+      where: {
+        StudentID: student.StudentID,
+        status: "Registered"
+      },
+      include: [{
+        model: db.CourseGroup,
+        required: true,
+        where: { SemesterID: semesterId },
+        include: [
+          { 
+            model: db.Course,
+            attributes: ['CourseID', 'CreditHours'] 
+          },
+          { 
+            model: db.GroupSchedule, 
+            include: [db.TimePeriod] 
+          }
+        ]
+      }],
+      transaction 
+    }),
+    // Query(2): New Group Data
+    db.CourseGroup.findByPk(courseGroupId,{
       include:[{
         model: db.Course,
         attributes: ['CourseID','CreditHours']
@@ -198,17 +208,35 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
         }],
       }],
       transaction 
-    });
+    })
+
+    ])
+    //////////////////// STEP(2): Checks & Processing ////////////////////
+    // Group Check
     if(!courseGroup){
       throw new ApiError("Course group not found",404);
     }
+
+    // Processing Currnet Enrollment Data
+    const currentCredits = currentEnrollments.reduce((sum, enrollment) => {
+        return sum + enrollment.CourseGroup.Course.CreditHours;
+    }, 0);
+
+    const currentUserAppointments = currentEnrollments.flatMap(
+        enrollment => enrollment.CourseGroup.GroupSchedules || []
+    );
+
+    const registeredCourseIds = new Set(
+        currentEnrollments.map(enrollment => enrollment.CourseGroup.Course.CourseID)
+    );
+
+    // Check Available Seats
     if (student.isLastTerm === false && courseGroup.CurrentEnrolled >= courseGroup.Capacity) {
       throw new ApiError("No seats available in this group", 400);
     }
 
-    /////////////////// step 2: Student Credit Hours Limit Check ///////////////////
+    // Check Credit hours
     const newCourseCredits = courseGroup.Course.CreditHours;
-
     let baseMaxCredits;
     if (student.gpa >= 3) {
       baseMaxCredits = 21;
@@ -217,8 +245,6 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     } else {
       baseMaxCredits = 14;
     }
-    
-
     if (student.isLastTerm === true) {
       const proposedTotal = currentCredits + newCourseCredits;
       if (proposedTotal > baseMaxCredits) {
@@ -235,8 +261,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       }
     }
       
-
-    /////////////////// step 3: Time Conflict Check ///////////////////
+    // Check Time Conflict
     const newGroupAppointments = courseGroup.GroupSchedules || [];
 
     const hasConflict = checkTimeConflict(newGroupAppointments, currentUserAppointments);
@@ -244,13 +269,13 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 4: Subject Enrolled Conflict Check ///////////////////
+    // Check Subject Conflict
     const newCourseId = courseGroup.Course.CourseID;
     if (registeredCourseIds.has(newCourseId)) {
       throw new ApiError('You are already registered for this course in another group.', 400);
     }
 
-    /////////////////// step 5: Add course to student Schedule ///////////////////
+    //////////////////// STEP(3): New Enrollment & AvailableSeats ////////////////////
     await db.Enrollment.create({
       StudentID: student.StudentID,
       GroupID: courseGroupId,
@@ -259,10 +284,9 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
-
-    /////////////////// step 6: Sending Response ///////////////////
     const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
-    
+
+    //////////////////// STEP(4): Response ////////////////////
     res.status(201).json({
       success: true,
       message: "Course registered successfully",
