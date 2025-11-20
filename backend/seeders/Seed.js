@@ -51,6 +51,10 @@ const seedDatabase = async () => {
         await db.Exam.bulkCreate(dummyData.exams);
     }
 
+    if (dummyData.evaluationQuestions && dummyData.evaluationQuestions.length > 0) {
+        await db.EvaluationQuestions.bulkCreate(dummyData.evaluationQuestions);
+    }
+
     console.log('🎉 Seeding completed successfully with custom data!');
   } catch (error) {
     console.error('❌ Error during seeding:', error);

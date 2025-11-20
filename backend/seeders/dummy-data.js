@@ -277,6 +277,32 @@ semesterCourses.forEach(sc => {
     });
 });
 
+const evaluationQuestions = [
+    { 
+        QuestionID: 1, 
+        QuestionText: 'ما هو تقييمك لأداء الدكتور وشرحه للمادة؟', 
+        TargetType: 'Professor', 
+        IsActive: true 
+    },
+    { 
+        QuestionID: 2, 
+        QuestionText: 'ما هو تقييمك لأداء المعيد في السكشن/المعمل؟', 
+        TargetType: 'Assistant', 
+        IsActive: true 
+    },
+    { 
+        QuestionID: 3, 
+        QuestionText: 'ما هو تقييمك للمحتوى العلمي للمادة؟', 
+        TargetType: 'Course', 
+        IsActive: true 
+    },
+    { 
+        QuestionID: 4, 
+        QuestionText: 'ما هي مقترحاتك للتحسين والتطوير؟', 
+        TargetType: 'General', 
+        IsActive: true 
+    }
+];
 
 // ===================================================================================
 // --- 8. تصدير كل البيانات ---
@@ -286,5 +312,5 @@ module.exports = {
     colleges, departments, academicRegulations, courseCategories, semesters, timePeriods, users,
     students, professors, courses, coursePrerequisites, semesterCourses,
     studentCompletedCourses, courseGroups, groupSchedules,
-    enrollments, grades, exams // <-- تأكدنا من تصدير الامتحانات
+    enrollments, grades, exams, evaluationQuestions // <-- تأكدنا من تصدير الامتحانات
 };
