@@ -8,7 +8,8 @@ const {
   getUser,
   changeUserRole,
   getLoggedUserData,
-  updateLoggedUserPassword
+  updateLoggedUserPassword,
+  logout
 } = require('../controller/user');
 
 const {
@@ -24,7 +25,7 @@ const userRouter = express.Router();
 // User Routes
 userRouter.get('/getme', protect, getLoggedUserData)
 userRouter.put('/changemypassword', protect, updateLoggedUserPassValidation, updateLoggedUserPassword)
-
+userRouter.post('/logout', protect, logout);
 // Admin Routes
 userRouter.get('/getallusers', protect, restrictTo('admin'), getAllUsers)
 userRouter.get('/getuser', protect, restrictTo('admin'),  getUserValidator, getUser)
