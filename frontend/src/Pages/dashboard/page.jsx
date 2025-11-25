@@ -9,7 +9,7 @@ import {
   Download,
   Info,
   GraduationCap,
-  IndentIncrease,
+  Check,
   ChartNoAxesCombined,
 } from "lucide-react";
 import { LineChart } from "@mantine/charts";
@@ -30,6 +30,7 @@ import {
   ScrollArea,
   Notification,
   Divider,
+  SemiCircleProgress,
 } from "@mantine/core";
 import { Footer } from "../../layouts/footer";
 import profileImage from "../../assets/user_img.jpg";
@@ -234,6 +235,8 @@ const coursesThisTerm = [
 
 const page = () => {
   const cardRef = useRef(null);
+  const [isDownloaded, setIsDownloaded] = useState(false);
+
   const completedHoures = 126;
   const [notifications, setNotifications] = useState(initialNotifications);
 
@@ -247,6 +250,11 @@ const page = () => {
         link.download = "schedule.png";
         link.href = dataUrl;
         link.click();
+        // ⭐ إظهار علامة الصح
+        setIsDownloaded(true);
+
+        // ⏳ رجوع للشكل الطبيعي بعد ثانيتين
+        setTimeout(() => setIsDownloaded(false), 2000);
       })
       .catch((err) => {
         console.error("Error generating image", err);
@@ -467,6 +475,15 @@ const page = () => {
                       <Text fz="sm">+2010 9655 9353</Text>
                     </Group>
                   </Group>
+                  <Badge
+                    ms={100}
+                    size="xl"
+                    w={250}
+                    variant="gradient"
+                    gradient={{ from: "teal", to: "lime", deg: 90 }}
+                  >
+                    طالب مقيد
+                  </Badge>
                 </Stack>
               </Group>
             </Card>
@@ -477,7 +494,7 @@ const page = () => {
           <Flex justify="center" align="center" h="100%">
             <Card shadow="sm" radius="md" w="100%" h="100%">
               <Text c="dimmed" fw={400} fz="lg" align="center">
-                GPA / Hours Progress
+                Hours Progress
               </Text>
               <div className="flex w-full border-1 border-[#BBB] p-0"></div>
               <Stack spacing={20} mt={10} px={20} justify="space-around">
@@ -487,9 +504,6 @@ const page = () => {
                   </Text>
                   <Text fw={400} fz="lg" align="end" mt={10}>
                     Completed: {completedHoures}H
-                  </Text>
-                  <Text fw={400} fz="lg" align="end" mt={10}>
-                    GPA : 3.01
                   </Text>
                 </Flex>
                 <Progress
@@ -509,19 +523,23 @@ const page = () => {
               <Flex justify="start" align="center">
                 <Info size={22} color="#BBB" />
                 <Text c="dimmed" fw={400} fz="lg" align="center" px={5}>
-                  حالة الطالب
+                  المعدل الاكاديمي
                 </Text>
               </Flex>
               <div className="flex w-full border-1 border-[#BBB] p-0"></div>
-              <Flex justify={"center"} align="center" mt={50}>
-                <Badge
-                  size="xl"
-                  w={250}
-                  variant="gradient"
-                  gradient={{ from: "teal", to: "lime", deg: 90 }}
-                >
-                  طالب مقيد
-                </Badge>
+              <Flex justify={"center"} align="center" mt={25}>
+                <Stack>
+                  <SemiCircleProgress
+                    fillDirection="left-to-right"
+                    orientation="up"
+                    label={"GPA: 3.07"}
+                    filledSegmentColor="blue"
+                    size={200}
+                    thickness={16}
+                    value={(3.07 / 4) * 100}
+                  />
+                  <Text c="dimmed" fw={500} fz="lg" align="center">جيد جداً</Text>
+                </Stack>
               </Flex>
             </Card>
           </Flex>
@@ -545,10 +563,22 @@ const page = () => {
                     تحميل كارت التسجيل
                   </Button>
                   <Button
-                    leftSection={<Download size={14} />}
+                    leftSection={
+                      isDownloaded ? (
+                        <Check
+                          size={16}
+                          className="animate-pulse"
+                          color="#FFF"
+                        />
+                      ) : (
+                        <Download size={16} color="#FFF" />
+                      )
+                    }
+                    variant="filled"
+                    color={isDownloaded ? "cyan" : "blue"}
                     onClick={downloadImage}
                   >
-                    تحميل الجدول
+                    {isDownloaded ? "تم التحميل" : "تحميل الجدول"}
                   </Button>
                 </Group>
               </Flex>
