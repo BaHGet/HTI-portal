@@ -33,7 +33,8 @@ import {
 } from "@mantine/core";
 import { Footer } from "../../layouts/footer";
 import profileImage from "../../assets/user_img.jpg";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import * as htmlToImage from "html-to-image";
 
 const days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء"];
 const periods = [
@@ -232,8 +233,25 @@ const coursesThisTerm = [
 ];
 
 const page = () => {
+  const cardRef = useRef(null);
   const completedHoures = 126;
   const [notifications, setNotifications] = useState(initialNotifications);
+
+  const downloadImage = () => {
+    if (cardRef.current === null) return;
+
+    htmlToImage
+      .toPng(cardRef.current, { quality: 1 })
+      .then((dataUrl) => {
+        const link = document.createElement("a");
+        link.download = "schedule.png";
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error("Error generating image", err);
+      });
+  };
 
   function calculateTermGPA(courses, prevGPA = 0, prevHours = 0) {
     // تحويل الدرجة من 100 إلى GPA 4
@@ -526,167 +544,175 @@ const page = () => {
                   >
                     تحميل كارت التسجيل
                   </Button>
-                  <Button leftSection={<Download size={14} />}>
+                  <Button
+                    leftSection={<Download size={14} />}
+                    onClick={downloadImage}
+                  >
                     تحميل الجدول
                   </Button>
                 </Group>
               </Flex>
               <div className="flex w-full border-1 border-[#BBB] mb-3 p-0"></div>
-              <ScrollArea>
-                <Table
-                  withColumnBorders
-                  withRowBorders
-                  withTableBorder
-                  highlightOnHover={false} // ❌ منع الهوفر
-                >
-                  <thead>
-                    <tr>
-                      <th
-                        style={{
-                          textAlign: "center",
-                          border: "1px solid #ccc",
-                        }}
-                      >
-                        اليوم
-                      </th>
-
-                      {periods.map((p) => (
+              <div className="" ref={cardRef}>
+                <ScrollArea>
+                  <Table
+                    withColumnBorders
+                    withRowBorders
+                    withTableBorder
+                    highlightOnHover={false} // ❌ منع الهوفر
+                  >
+                    <thead>
+                      <tr>
                         <th
-                          key={p.label}
                           style={{
                             textAlign: "center",
                             border: "1px solid #ccc",
+                            background: "#fff",
                           }}
                         >
-                          {p.label}
-                          <br />
-                          <Text size="xs">
-                            {p.start} - {p.end}
-                          </Text>
+                          اليوم
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
 
-                  <tbody>
-                    {days.map((day, dayIndex) => {
-                      const dayCode = `D${dayIndex + 1}`;
-
-                      return (
-                        <tr key={day}>
-                          {/* عمود اليوم */}
-                          <td
+                        {periods.map((p) => (
+                          <th
+                            key={p.label}
                             style={{
-                              background: "#f1f3f5",
-                              fontWeight: "bold",
                               textAlign: "center",
                               border: "1px solid #ccc",
+                              background: "#fff",
                             }}
                           >
-                            {day}
-                          </td>
+                            {p.label}
+                            <br />
+                            <Text size="xs">
+                              {p.start} - {p.end}
+                            </Text>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
 
-                          {/* فترات الزمن */}
-                          {periods.map((p, idx) => {
-                            const key = `${dayCode}-${idx + 1}`;
+                    <tbody>
+                      {days.map((day, dayIndex) => {
+                        const dayCode = `D${dayIndex + 1}`;
 
-                            if (mergedMap[key]) {
-                              const { colSpan, course } = mergedMap[key];
+                        return (
+                          <tr key={day}>
+                            {/* عمود اليوم */}
+                            <td
+                              style={{
+                                background: "#f1f3f5",
+                                fontWeight: "bold",
+                                textAlign: "center",
+                                border: "1px solid #ccc",
+                              }}
+                            >
+                              {day}
+                            </td>
+
+                            {/* فترات الزمن */}
+                            {periods.map((p, idx) => {
+                              const key = `${dayCode}-${idx + 1}`;
+
+                              if (mergedMap[key]) {
+                                const { colSpan, course } = mergedMap[key];
+
+                                return (
+                                  <td
+                                    key={p.label}
+                                    colSpan={colSpan}
+                                    style={{
+                                      background: getColor(course.courseCode),
+                                      position: "relative",
+                                      textAlign: "center",
+                                      fontWeight: "bold",
+                                      height: "64px",
+                                      border: "1px solid #ccc", // 👍 border للمربعات المدموجة
+                                    }}
+                                  >
+                                    {/* القاعة أعلى اليسار */}
+                                    <Text
+                                      size="xs"
+                                      style={{
+                                        position: "absolute",
+                                        top: 4,
+                                        left: 6,
+                                      }}
+                                    >
+                                      {course.room}
+                                    </Text>
+
+                                    {/* كود المادة أعلى اليمين */}
+                                    <Text
+                                      size="xs"
+                                      style={{
+                                        position: "absolute",
+                                        top: 4,
+                                        right: 6,
+                                      }}
+                                    >
+                                      {course.courseCode}
+                                    </Text>
+
+                                    {/* اسم المادة في المنتصف */}
+                                    <Box
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        height: "100%",
+                                      }}
+                                    >
+                                      {course.courseName}
+                                    </Box>
+
+                                    {/* الدكتور أسفل اليمين */}
+                                    <Text
+                                      size="xs"
+                                      c="dimmed"
+                                      style={{
+                                        position: "absolute",
+                                        bottom: 4,
+                                        right: 6,
+                                      }}
+                                    >
+                                      {course.professorName}
+                                    </Text>
+                                  </td>
+                                );
+                              }
+
+                              // خلية ضمن span → skip
+                              const merged = Object.keys(mergedMap)
+                                .filter((k) => k.startsWith(dayCode))
+                                .some((k) => {
+                                  const start = parseInt(k.split("-")[1]);
+                                  const span = mergedMap[k].colSpan;
+                                  return (
+                                    idx + 1 > start && idx + 1 < start + span
+                                  );
+                                });
+
+                              if (merged) return null;
 
                               return (
                                 <td
                                   key={p.label}
-                                  colSpan={colSpan}
                                   style={{
-                                    background: getColor(course.courseCode),
-                                    position: "relative",
-                                    textAlign: "center",
-                                    fontWeight: "bold",
                                     height: "64px",
-                                    border: "1px solid #ccc", // 👍 border للمربعات المدموجة
-                                  }}
-                                >
-                                  {/* القاعة أعلى اليسار */}
-                                  <Text
-                                    size="xs"
-                                    style={{
-                                      position: "absolute",
-                                      top: 4,
-                                      left: 6,
-                                    }}
-                                  >
-                                    {course.room}
-                                  </Text>
-
-                                  {/* كود المادة أعلى اليمين */}
-                                  <Text
-                                    size="xs"
-                                    style={{
-                                      position: "absolute",
-                                      top: 4,
-                                      right: 6,
-                                    }}
-                                  >
-                                    {course.courseCode}
-                                  </Text>
-
-                                  {/* اسم المادة في المنتصف */}
-                                  <Box
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "center",
-                                      alignItems: "center",
-                                      height: "100%",
-                                    }}
-                                  >
-                                    {course.courseName}
-                                  </Box>
-
-                                  {/* الدكتور أسفل اليمين */}
-                                  <Text
-                                    size="xs"
-                                    c="dimmed"
-                                    style={{
-                                      position: "absolute",
-                                      bottom: 4,
-                                      right: 6,
-                                    }}
-                                  >
-                                    {course.professorName}
-                                  </Text>
-                                </td>
+                                    border: "1px solid #ccc",
+                                    background: "#fff",
+                                  }} // border للخلية العادية
+                                ></td>
                               );
-                            }
-
-                            // خلية ضمن span → skip
-                            const merged = Object.keys(mergedMap)
-                              .filter((k) => k.startsWith(dayCode))
-                              .some((k) => {
-                                const start = parseInt(k.split("-")[1]);
-                                const span = mergedMap[k].colSpan;
-                                return (
-                                  idx + 1 > start && idx + 1 < start + span
-                                );
-                              });
-
-                            if (merged) return null;
-
-                            return (
-                              <td
-                                key={p.label}
-                                style={{
-                                  height: "64px",
-                                  border: "1px solid #ccc",
-                                }} // border للخلية العادية
-                              ></td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
-              </ScrollArea>
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </ScrollArea>
+              </div>
             </Card>
           </Flex>
         </Grid.Col>
