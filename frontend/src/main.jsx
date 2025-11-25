@@ -3,6 +3,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { ThemeProvider } from "./Context/theme-context.jsx";
 import "@mantine/core/styles.css";
+import "@mantine/charts/styles.css";
 
 import { MantineProvider } from "@mantine/core";
 
