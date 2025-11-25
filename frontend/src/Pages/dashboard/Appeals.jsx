@@ -460,7 +460,7 @@ const AppealsPage = () => {
         </Grid.Col>
       </Grid>
 
-      <Divider label="سجل الالتماسات السابقة" labelPosition="center" my="xl" />
+      <Divider label="سجل الالتماسات" labelPosition="center" my="sm" />
 
       {/* ----------------- جدول الالتماسات السابقة ----------------- */}
       <Card shadow="sm" radius="md" padding="lg" withBorder>

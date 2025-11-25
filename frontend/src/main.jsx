@@ -4,12 +4,13 @@ import App from "./App.jsx";
 import { ThemeProvider } from "./Context/theme-context.jsx";
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
+import theme from "./Context/Mantine-Theme.jsx";
 
 import { MantineProvider } from "@mantine/core";
 
 createRoot(document.getElementById("root")).render(
   <ThemeProvider storageKey="theme">
-    <MantineProvider>
+    <MantineProvider theme={theme}>
       <App />
     </MantineProvider>
   </ThemeProvider>
