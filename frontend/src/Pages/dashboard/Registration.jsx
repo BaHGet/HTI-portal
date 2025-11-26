@@ -6,28 +6,38 @@ import {
   getAvaliableSubjects,
   getRegisteredSchadule,
   registerSubject,
-  dropSubject
+  dropSubject,
 } from "../../Api/Users/usersApi";
 
 const Registration = () => {
   const allowedCreditHours = 21;
 
+  // -------------------------------
   // Modal state
+  // -------------------------------
   const [opened, { open, close }] = useDisclosure(false);
   const [modalMessage, setModalMessage] = useState("");
 
+  // -------------------------------
   // Search state
+  // -------------------------------
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Available and registered courses
+  // -------------------------------
+  // Data states
+  // -------------------------------
   const [availableGroups, setAvailableGroups] = useState([]);
   const [registeredSchedule, setRegisteredSchedule] = useState([]);
 
+  // -------------------------------
   // Loading states
+  // -------------------------------
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(false);
   const [isLoadingRegistered, setIsLoadingRegistered] = useState(false);
 
-  // Column visibility
+  // -------------------------------
+  // Column visibility toggles
+  // -------------------------------
   const [visibleColumns, setVisibleColumns] = useState({
     code: true,
     name: true,
@@ -38,7 +48,9 @@ const Registration = () => {
     credit: true,
   });
 
-  // Timetable slots and days
+  // -------------------------------
+  // Timetable template
+  // -------------------------------
   const slotsTemplate = Array.from({ length: 8 }, (_, idx) => ({
     id: idx + 1,
     label: "",
@@ -54,7 +66,7 @@ const Registration = () => {
   ]);
 
   // -------------------------------
-  // Fetch available groups from backend
+  // Fetch available subjects
   // -------------------------------
   const handleRefreshButton = async () => {
     setIsLoadingAvailable(true);
@@ -71,18 +83,15 @@ const Registration = () => {
   };
 
   // -------------------------------
-  // Fetch registered schedule from backend
+  // Fetch registered schedule
   // -------------------------------
   const fetchRegisteredSchedule = async () => {
     setIsLoadingRegistered(true);
     try {
       const response = await getRegisteredSchadule();
 
-      console.log("REGISTERED RAW DATA:", response.data);
-
       const formatted = response.data.map((subject) => {
         const group = subject.CourseGroup;
-
         return {
           groupId: subject.GroupID,
           courseCode: group.Course.CourseCode || "-",
@@ -95,7 +104,7 @@ const Registration = () => {
             : [],
         };
       });
-      console.log("FORMATTED REGISTERED DATA:", formatted);
+
       setRegisteredSchedule(formatted);
     } catch (error) {
       console.error("Error fetching registered schedule:", error);
@@ -106,9 +115,8 @@ const Registration = () => {
     }
   };
 
-
   // -------------------------------
-  // Fetch both data on component mount
+  // Initial data fetch
   // -------------------------------
   useEffect(() => {
     handleRefreshButton();
@@ -116,7 +124,7 @@ const Registration = () => {
   }, []);
 
   // -------------------------------
-  // Filter available groups by search term
+  // Filter available courses by search
   // -------------------------------
   const filteredGroups = availableGroups.filter(
     (g) =>
@@ -133,7 +141,7 @@ const Registration = () => {
   );
 
   // -------------------------------
-  // Convert schedule array to string for display
+  // Render schedule as string
   // -------------------------------
   const renderSchedule = (schedule) => {
     if (!schedule || schedule.length === 0) return "-";
@@ -141,44 +149,7 @@ const Registration = () => {
   };
 
   // -------------------------------
-  // Update visual timetable based on registered courses
-  // -------------------------------
-  const updateTimetable = () => {
-    // const newDays = days.map((day) => ({
-    //   ...day,
-    //   slots: day.slots.map((slot) => ({ ...slot, label: "", colour: "gray" })),
-    // }));
-
-    // registeredSchedule.forEach((course) => {
-    //   if (Array.isArray(course.schedule)) {
-    //     course.schedule.forEach((s) => {
-    //       if (!s?.day || !s?.time) {
-    //         console.warn("Invalid schedule entry:", s);
-    //         return;
-    //       }
-
-    //       const dayIndex = parseInt(s.day.replace("D", "")) - 1;
-    //       const slotIndex = parseInt(s.time.replace("P", "")) - 1;
-
-    //       if (newDays[dayIndex] && newDays[dayIndex].slots[slotIndex]) {
-    //         newDays[dayIndex].slots[slotIndex].label = course.courseCode;
-    //         newDays[dayIndex].slots[slotIndex].colour = "lightblue";
-    //       }
-    //     });
-    //   }
-    // });
-
-    // setDays(newDays);
-  };
-
-
-  // Update timetable whenever registeredSchedule changes
-  useEffect(() => {
-    updateTimetable();
-  }, [registeredSchedule]);
-
-  // -------------------------------
-  // Handle Add (register subject) API call
+  // Add (register subject)
   // -------------------------------
   const handleAdd = async (group) => {
     if (totalRegisteredCredits + group.creditHours > allowedCreditHours) {
@@ -186,7 +157,6 @@ const Registration = () => {
       open();
       return;
     }
-
     try {
       await registerSubject(group.groupId);
       await handleRefreshButton();
@@ -199,7 +169,7 @@ const Registration = () => {
   };
 
   // -------------------------------
-  // Handle Remove (drop subject) API call
+  // Remove (drop subject)
   // -------------------------------
   const handleRemove = async (group) => {
     try {
@@ -221,19 +191,22 @@ const Registration = () => {
   };
 
   // -------------------------------
-  // Render Available Groups Table Rows
+  // Table rows for available courses
   // -------------------------------
   const registerTableRows = filteredGroups.map((element, idx) => (
     <Table.Tr key={idx}>
       <Table.Td className="text-center">
         <button
-          className={element.availableSeats?"text-green-700 hover:text-green-500 cursor-pointer":"text-gray-400 cursor-not-allowed"}
-          onClick={element.availableSeats?() => handleAdd(element):null}
+          className={
+            element.availableSeats
+              ? "text-green-700 hover:text-green-500 cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
+          }
+          onClick={element.availableSeats ? () => handleAdd(element) : null}
         >
           <PlusCircle size={20} />
         </button>
       </Table.Td>
-
       {visibleColumns.code && (
         <Table.Td className="text-center">{element.courseCode}</Table.Td>
       )}
@@ -265,7 +238,7 @@ const Registration = () => {
   ));
 
   // -------------------------------
-  // Render Registered Courses Table Rows
+  // Table rows for registered courses
   // -------------------------------
   const registeredSubjectsRows = registeredSchedule.map((element, idx) => (
     <Table.Tr key={idx}>
@@ -286,7 +259,7 @@ const Registration = () => {
   ));
 
   // -------------------------------
-  // Timetable Component
+  // Timetable component
   // -------------------------------
   const Timetable = () => (
     <Table variant="vertical" layout="auto" withTableBorder>
@@ -303,7 +276,6 @@ const Registration = () => {
             </Grid>
           </Table.Td>
         </Table.Tr>
-
         {days.map((day) => (
           <Table.Tr key={day.id}>
             <Table.Th>{day.name}</Table.Th>
@@ -332,22 +304,23 @@ const Registration = () => {
   );
 
   // -------------------------------
-  // Render Main Component
+  // Main render
   // -------------------------------
   return (
     <>
-      {/* Modal */}
+      {/* Modal for errors or messages */}
       <Modal opened={opened} onClose={close} withCloseButton={false}>
         <div className="text-center">{modalMessage}</div>
       </Modal>
 
-      {/* Main Content */}
+      {/* Page Header */}
       <div className="text-xl font-bold mb-1">تسجيل المقررات</div>
 
-      <div className="flex flex-col h-[85vh] gap-4 overflow-hidden">
-        {/* Available Courses Table */}
-        <div className="card p-0 rounded-xl h-[65%] flex flex-col overflow-hidden">
-          <div className="flex flex-wrap pt-4 px-4 justify-between items-center">
+      {/* Main Content */}
+      <div className="flex flex-col gap-4 h-[85vh] overflow-hidden">
+        {/* Available Courses */}
+        <div className="card p-0 rounded-xl flex flex-col overflow-hidden">
+          <div className="flex flex-wrap pt-4 px-4 justify-between items-center gap-2">
             <div className="flex flex-wrap items-center gap-4">
               <Button
                 onClick={handleRefreshButton}
@@ -367,7 +340,6 @@ const Registration = () => {
                 />
               </div>
             </div>
-
             <div className="flex flex-wrap gap-4 pt-2">
               <div>Allowed Credits: {allowedCreditHours}</div>
               <div>Registered Credits: {totalRegisteredCredits}</div>
@@ -403,7 +375,7 @@ const Registration = () => {
             ))}
           </div>
 
-          {/* Table body */}
+          {/* Courses Table */}
           <div className="flex-1 overflow-auto">
             {isLoadingAvailable ? (
               <div className="flex justify-center items-center h-full text-gray-600">
@@ -442,7 +414,7 @@ const Registration = () => {
         </div>
 
         {/* Registered Courses + Timetable */}
-        <div className="grid grid-cols-2 gap-4 h-[35%] overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[35%] min-h-[300px] overflow-hidden">
           {/* Registered Courses */}
           <div className="card p-0 rounded-xl flex flex-col overflow-auto">
             <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">

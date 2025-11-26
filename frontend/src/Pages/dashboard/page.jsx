@@ -411,7 +411,13 @@ const page = () => {
     <div className="flex flex-col gap-y-4">
       <h1 className="title">الصفحة الرئيسية</h1>
       <Grid gutter="xl">
-        <Grid.Col span={5} className="">
+        {/*
+          1. كارت بيانات الطالب
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 6 أعمدة (نصف السطر)
+          الشاشات الكبيرة: يأخذ 5 أعمدة
+        */}
+        <Grid.Col span={{ base: 12, md: 6, lg: 5 }} className="">
           <Flex>
             <Card shadow="sm" radius="md" padding="sm" w="100%" h="100%">
               <Group align="flex-start">
@@ -433,7 +439,7 @@ const page = () => {
                   </Text>
                 </Flex>
 
-                {/* اسم الطالب*/}
+                {/* اسم الطالب و البيانات */}
                 <Stack spacing={6} style={{ flex: 1 }}>
                   <Text fw={700} fz="xl" align="center">
                     أحمد حازم أحمد محرم عبدالشافي
@@ -442,13 +448,13 @@ const page = () => {
                     20210741
                   </Text>
 
-                  {/* الصف الأول */}
+                  {/* الصف الأول - يجب أن تتكيف المجموعة هنا */}
                   <Group
                     gap="xl"
                     mt="sm"
                     justify="space-between"
                     dir="ltr"
-                    px={50}
+                    px={{ base: 10, md: 50 }} // تقليل المساحة على الشاشات الصغيرة
                   >
                     <Group gap={6}>
                       <School size={18} />
@@ -463,8 +469,13 @@ const page = () => {
                     </Group>
                   </Group>
 
-                  {/* الصف الثاني */}
-                  <Group gap="xl" justify="space-between" dir="ltr" px={50}>
+                  {/* الصف الثاني - يجب أن تتكيف المجموعة هنا */}
+                  <Group
+                    gap="xl"
+                    justify="space-between"
+                    dir="ltr"
+                    px={{ base: 10, md: 50 }} // تقليل المساحة على الشاشات الصغيرة
+                  >
                     <Group gap={6}>
                       <Mail size={18} />
                       <Text fz="sm">amdhazm0@gmail.com</Text>
@@ -476,11 +487,12 @@ const page = () => {
                     </Group>
                   </Group>
                   <Badge
-                    ms={100}
+                    ms={{ base: 0, md: 100 }} // تعديل الهامش على الشاشات الصغيرة
                     size="xl"
-                    w={250}
+                    w={{ base: "100%", md: 250 }} // جعل العرض كاملًا على الشاشات الصغيرة
                     variant="gradient"
                     gradient={{ from: "teal", to: "lime", deg: 90 }}
+                    style={{ marginInline: "auto" }} // لمركزة الـ Badge عند العرض الكامل
                   >
                     طالب مقيد
                   </Badge>
@@ -490,7 +502,13 @@ const page = () => {
           </Flex>
         </Grid.Col>
 
-        <Grid.Col span={4} className="">
+        {/*
+          2. كارت Hours Progress
+          الشاشات الصغيرة: يأخذ 12 عمود
+          الشاشات المتوسطة: يأخذ 6 أعمدة (بجانب كارت بيانات الطالب)
+          الشاشات الكبيرة: يأخذ 4 أعمدة
+        */}
+        <Grid.Col span={{ base: 12, md: 6, lg: 4 }} className="">
           <Flex justify="center" align="center" h="100%">
             <Card shadow="sm" radius="md" w="100%" h="100%">
               <Text c="dimmed" fw={400} fz="lg" align="center">
@@ -517,7 +535,13 @@ const page = () => {
           </Flex>
         </Grid.Col>
 
-        <Grid.Col span={2} className="">
+        {/*
+          3. كارت المعدل الأكاديمي (GPA)
+          الشاشات الصغيرة: يأخذ 12 عمود
+          الشاشات المتوسطة: يأخذ 6 أعمدة
+          الشاشات الكبيرة: يأخذ 3 أعمدة
+        */}
+        <Grid.Col span={{ base: 12, md: 6, lg: 3 }} className="">
           <Flex justify="center" align="center" h="100%">
             <Card shadow="sm" radius="md" w="100%" h="100%">
               <Flex justify="start" align="center">
@@ -534,27 +558,47 @@ const page = () => {
                     orientation="up"
                     label={"GPA: 3.07"}
                     filledSegmentColor="blue"
-                    size={200}
+                    size={160} // تقليل الحجم قليلاً للملاءمة
                     thickness={16}
                     value={(3.07 / 4) * 100}
                   />
-                  <Text c="dimmed" fw={500} fz="lg" align="center">جيد جداً</Text>
+                  <Text c="dimmed" fw={500} fz="lg" align="center">
+                    جيد جداً
+                  </Text>
                 </Stack>
               </Flex>
             </Card>
           </Flex>
         </Grid.Col>
-        <Grid.Col span={7} className="">
+
+        {/*
+          4. كارت الجدول الدراسي
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات الكبيرة: يأخذ 7 أعمدة (يحتل مساحة أكبر بجانب التنبيهات)
+        */}
+        <Grid.Col span={{ base: 12, lg: 7 }} className="">
           <Flex justify="center" align="center">
             <Card shadow="sm" radius="md" w="100%" h="100%">
-              <Flex align={"center"} justify="space-between" px={5} mb={10}>
+              <Flex
+                align={"center"}
+                justify="space-between"
+                px={5}
+                mb={10}
+                direction={{ base: "column", sm: "row" }} // تجميع الأزرار فوق العنوان على الشاشات الصغيرة
+                gap="sm"
+              >
                 <Group>
                   <Table2 size={22} color="#BBB" />
                   <Text c="dimmed" fw={400} fz="lg" align="start" pr={0} mb={0}>
                     الجدول الدراسي الحالي
                   </Text>
                 </Group>
-                <Group>
+                <Group
+                  gap="sm"
+                  justify={{ base: "center", sm: "flex-end" }} // مركزة الأزرار على الشاشات الصغيرة
+                  w={{ base: "100%", sm: "auto" }}
+                >
                   <Button
                     leftSection={<Download size={14} />}
                     variant="filled"
@@ -583,6 +627,7 @@ const page = () => {
                 </Group>
               </Flex>
               <div className="flex w-full border-1 border-[#BBB] mb-3 p-0"></div>
+              {/* الجدول نفسه يستخدم ScrollArea للمرونة الأفقية */}
               <div className="" ref={cardRef}>
                 <ScrollArea>
                   <Table
@@ -590,6 +635,7 @@ const page = () => {
                     withRowBorders
                     withTableBorder
                     highlightOnHover={false} // ❌ منع الهوفر
+                    style={{ minWidth: "700px" }} // تأكد من وجود حد أدنى للعرض لجدول الحصص
                   >
                     <thead>
                       <tr>
@@ -598,6 +644,7 @@ const page = () => {
                             textAlign: "center",
                             border: "1px solid #ccc",
                             background: "#fff",
+                            minWidth: "70px", // لضمان ظهور "اليوم"
                           }}
                         >
                           اليوم
@@ -610,6 +657,7 @@ const page = () => {
                               textAlign: "center",
                               border: "1px solid #ccc",
                               background: "#fff",
+                              minWidth: "75px", // لتجنب انكماش رؤوس الأعمدة
                             }}
                           >
                             {p.label}
@@ -746,7 +794,14 @@ const page = () => {
             </Card>
           </Flex>
         </Grid.Col>
-        <Grid.Col span={2} className="">
+
+        {/*
+          5. كارت عدد الساعات المسجلة والترتيب
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 6 أعمدة (بجانب كارت التنبيهات)
+          الشاشات الكبيرة: يأخذ 2 عمود (بجانب الجدول)
+        */}
+        <Grid.Col span={{ base: 12, md: 6, lg: 2 }} className="">
           <Flex direction="column" style={{ height: "100%" }} gap="xl">
             {/* الكارت الصغير */}
             <Card shadow="sm" radius="md" style={{ flex: 3 }}>
@@ -758,7 +813,7 @@ const page = () => {
               <p className="text-4xl text-center font-semibold flex justify-center mt-8">
                 16
               </p>
-              <p className="text-xl text-[#BBB] text-center  flex justify-center mt-2">
+              <p className="text-xl text-[#BBB] text-center  flex justify-center mt-2">
                 ساعة معتمدة
               </p>
             </Card>
@@ -779,7 +834,14 @@ const page = () => {
             </Card>
           </Flex>
         </Grid.Col>
-        <Grid.Col span={3} className="">
+
+        {/*
+          6. كارت التنبيهات والإعلامات
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 6 أعمدة (بجانب كارت الساعات والترتيب)
+          الشاشات الكبيرة: يأخذ 3 أعمدة
+        */}
+        <Grid.Col span={{ base: 12, md: 6, lg: 3 }} className="">
           <Flex justify="center" align="center">
             <Card shadow="sm" radius="md" w="100%" h="100%">
               <Flex align={"center"} mb={15}>
@@ -807,7 +869,14 @@ const page = () => {
             </Card>
           </Flex>
         </Grid.Col>
-        <Grid.Col span={5} className="">
+
+        {/*
+          7. كارت كشف درجات الترم الحالي
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات الكبيرة: يأخذ 5 أعمدة
+        */}
+        <Grid.Col span={{ base: 12, lg: 5 }} className="">
           <Flex justify="center" align="center">
             <Card shadow="sm" radius="md" p="md" w="100%" h="100%" withBorder>
               <Flex align={"center"} mb={10}>
@@ -818,22 +887,28 @@ const page = () => {
               </Flex>
               <Divider mb="md" />
               {/* الحسابات أعلى الكارد */}
-              <Flex justify="space-between" mb="md">
-                <Group direction="column" spacing={2}>
+              <Flex
+                justify="space-between"
+                mb="md"
+                direction={{ base: "column", sm: "row" }} // وضع العناصر تحت بعضها على الشاشات الصغيرة جداً
+                align="center"
+                gap="sm"
+              >
+                <Group direction="column" spacing={2} align="center">
                   <Text size="sm" c="dimmed">
                     عدد ساعات الترم
                   </Text>
                   <Text weight={700}>{totalNewHours}</Text>
                 </Group>
 
-                <Group direction="column" spacing={2}>
+                <Group direction="column" spacing={2} align="center">
                   <Text size="sm" c="dimmed">
                     المعدل التراكمي للترم
                   </Text>
                   <Text weight={700}>{(3.052).toFixed(2)}</Text>
                 </Group>
 
-                <Group direction="column" spacing={2}>
+                <Group direction="column" spacing={2} align="center">
                   <Text size="sm" c="dimmed">
                     المعدل الإجمالي
                   </Text>
@@ -845,6 +920,7 @@ const page = () => {
 
               {/* جدول الدرجات */}
               <ScrollArea h={250}>
+                {/* يتم استخدام Table عادي مع ScrollArea لضمان الاستجابة */}
                 <Table withColumnBorders withRowBorders>
                   <Table.Thead>
                     <Table.Tr>
@@ -885,7 +961,14 @@ const page = () => {
             </Card>
           </Flex>
         </Grid.Col>
-        <Grid.Col span={6} className="">
+
+        {/*
+          8. كارت تطور المعدل التراكمي
+          الشاشات الصغيرة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات المتوسطة: يأخذ 12 عمود (السطر بالكامل)
+          الشاشات الكبيرة: يأخذ 7 أعمدة (يملاً باقي السطر)
+        */}
+        <Grid.Col span={{ base: 12, lg: 7 }} className="">
           <Flex justify="center" align="center">
             <Card shadow="sm" radius="md" p="md" w="100%" h="100%" withBorder>
               <Flex align={"center"} mb={10}>
@@ -897,6 +980,7 @@ const page = () => {
               <Divider mb="md" />
               {/* الخط البياني */}
               <ScrollArea>
+                {/* لا يحتاج الخط البياني لتعديل لأنه يستجيب للعرض المتاح له */}
                 <LineChart
                   h={300}
                   data={termData}
@@ -911,159 +995,6 @@ const page = () => {
           </Flex>
         </Grid.Col>
       </Grid>
-
-      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <div className="card">
-          <div className="card-header">
-            <div className="w-fit rounded-lg bg-blue-500/20 p-2 text-blue-500 transition-colors dark:bg-blue-600/20 dark:text-blue-600">
-              <Package size={26} />
-            </div>
-            <p className="card-title">Total Products</p>
-          </div>
-          <div className="card-body bg-slate-100 transition-colors dark:bg-slate-950">
-            <p className="text-3xl font-bold text-slate-900 transition-colors dark:text-slate-50">
-              25,154
-            </p>
-            <span className="flex w-fit items-center gap-x-2 rounded-full border border-blue-500 px-2 py-1 font-medium text-blue-500 dark:border-blue-600 dark:text-blue-600">
-              <TrendingUp size={18} />
-              25%
-            </span>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-header">
-            <div className="rounded-lg bg-blue-500/20 p-2 text-blue-500 transition-colors dark:bg-blue-600/20 dark:text-blue-600">
-              <DollarSign size={26} />
-            </div>
-            <p className="card-title">Total Paid Orders</p>
-          </div>
-          <div className="card-body bg-slate-100 transition-colors dark:bg-slate-950">
-            <p className="text-3xl font-bold text-slate-900 transition-colors dark:text-slate-50">
-              $16,000
-            </p>
-            <span className="flex w-fit items-center gap-x-2 rounded-full border border-blue-500 px-2 py-1 font-medium text-blue-500 dark:border-blue-600 dark:text-blue-600">
-              <TrendingUp size={18} />
-              12%
-            </span>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-header">
-            <div className="rounded-lg bg-blue-500/20 p-2 text-blue-500 transition-colors dark:bg-blue-600/20 dark:text-blue-600">
-              <Users size={26} />
-            </div>
-            <p className="card-title">Total Customers</p>
-          </div>
-          <div className="card-body bg-slate-100 transition-colors dark:bg-slate-950">
-            <p className="text-3xl font-bold text-slate-900 transition-colors dark:text-slate-50">
-              15,400k
-            </p>
-            <span className="flex w-fit items-center gap-x-2 rounded-full border border-blue-500 px-2 py-1 font-medium text-blue-500 dark:border-blue-600 dark:text-blue-600">
-              <TrendingUp size={18} />
-              15%
-            </span>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-header">
-            <div className="rounded-lg bg-blue-500/20 p-2 text-blue-500 transition-colors dark:bg-blue-600/20 dark:text-blue-600">
-              <CreditCard size={26} />
-            </div>
-            <p className="card-title">Sales</p>
-          </div>
-          <div className="card-body bg-slate-100 transition-colors dark:bg-slate-950">
-            <p className="text-3xl font-bold text-slate-900 transition-colors dark:text-slate-50">
-              12,340
-            </p>
-            <span className="flex w-fit items-center gap-x-2 rounded-full border border-blue-500 px-2 py-1 font-medium text-blue-500 dark:border-blue-600 dark:text-blue-600">
-              <TrendingUp size={18} />
-              19%
-            </span>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="card col-span-1 md:col-span-2 lg:col-span-4">
-          <div className="card-header">
-            <p className="card-title">Overview</p>
-          </div>
-          <div className="card-body p-0">
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart
-                data={overviewData}
-                margin={{
-                  top: 0,
-                  right: 0,
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Tooltip cursor={false} formatter={(value) => `$${value}`} />
-
-                <XAxis
-                  dataKey="name"
-                  strokeWidth={0}
-                  stroke={theme === "light" ? "#475569" : "#94a3b8"}
-                  tickMargin={6}
-                />
-                <YAxis
-                  dataKey="total"
-                  strokeWidth={0}
-                  stroke={theme === "light" ? "#475569" : "#94a3b8"}
-                  tickFormatter={(value) => `$${value}`}
-                  tickMargin={6}
-                />
-
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#2563eb"
-                  fillOpacity={1}
-                  fill="url(#colorTotal)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="card col-span-1 md:col-span-2 lg:col-span-3">
-          <div className="card-header">
-            <p className="card-title">Recent Sales</p>
-          </div>
-          <div className="card-body h-[300px] overflow-auto p-0">
-            {recentSalesData.map((sale) => (
-              <div
-                key={sale.id}
-                className="flex items-center justify-between gap-x-4 py-2 pr-2"
-              >
-                <div className="flex items-center gap-x-4">
-                  <img
-                    src={sale.image}
-                    alt={sale.name}
-                    className="size-10 flex-shrink-0 rounded-full object-cover"
-                  />
-                  <div className="flex flex-col gap-y-2">
-                    <p className="font-medium text-slate-900 dark:text-slate-50">
-                      {sale.name}
-                    </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {sale.email}
-                    </p>
-                  </div>
-                </div>
-                <p className="font-medium text-slate-900 dark:text-slate-50">
-                  ${sale.total}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div> */}
       <Footer />
     </div>
   );
