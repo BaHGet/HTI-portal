@@ -135,7 +135,7 @@ const dropSubject = async (GroupID) => {
 };
 
 /* ============================================================
-   RESULTS API  (NEW)
+   RESULTS API
 ============================================================ */
 
 /**
@@ -177,10 +177,50 @@ const getSemesterResults = async (semesterId) => {
 };
 
 /* ============================================================
+   APPEALS API
+============================================================ */
+
+
+// Get my grades (for appeals)
+const getMyGrades = async () => {
+  try {
+    const response = await axios.get(`${baseUrl}/appeals/my-grades`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting my grades:", error);
+    throw error;
+  }
+};
+
+// Submit an appeal
+const createAppeal = async (appealData) => {
+  try {
+    const response = await axios.post(
+      `${baseUrl}/appeals/createappeal`,
+      appealData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating appeal:", error);
+    throw error;
+  }
+};
+
+/* ============================================================
    DEFAULT EXPORT 
 ============================================================ */
 
-export  {
+export {
   getAllUsers,
   getMe,
   getAvaliableSubjects,
@@ -189,4 +229,6 @@ export  {
   dropSubject,
   getSemestersList,
   getSemesterResults,
+  getMyGrades,
+  createAppeal,
 };
