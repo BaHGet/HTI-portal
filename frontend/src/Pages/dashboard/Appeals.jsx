@@ -32,10 +32,8 @@ import React, { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 
 // ----------------------------------------------------
-// البيانات الوهمية (Mock Data)
+// Mock Data
 // ----------------------------------------------------
-
-// 1. المواد المتاحة لتقديم الالتماس عليها
 const availableCourses = [
   {
     value: "CS301",
@@ -72,7 +70,6 @@ const availableCourses = [
   },
 ];
 
-// 2. سجل الالتماسات السابقة
 const initialAppealsHistory = [
   {
     code: "MA201",
@@ -98,9 +95,8 @@ const initialAppealsHistory = [
 ];
 
 // ----------------------------------------------------
-// دوال مساعدة
+// Helper Functions
 // ----------------------------------------------------
-
 const getStatusBadge = (status) => {
   switch (status) {
     case "Approved":
@@ -122,7 +118,7 @@ const getStatusBadge = (status) => {
         </Badge>
       );
     default:
-      return <Badge color="gray">غير معروف</Badge>;
+      return <Badge color="gray">Unknown</Badge>;
   }
 };
 
@@ -140,16 +136,13 @@ const getPartLabel = (key) => {
 };
 
 // ----------------------------------------------------
-// المكون الرئيسي
+// Main Component
 // ----------------------------------------------------
-
 const AppealsPage = () => {
   const [selectedCourseCode, setSelectedCourseCode] = useState(null);
   const [appealNotes, setAppealNotes] = useState("");
   const [checkedParts, setCheckedParts] = useState([]);
   const [appealHistory, setAppealHistory] = useState(initialAppealsHistory);
-
-  // حالة الـ Modal
   const [opened, { open, close }] = useDisclosure(false);
 
   const currentCourse = availableCourses.find(
@@ -162,38 +155,38 @@ const AppealsPage = () => {
       )
     : 0;
 
-  // معالجة اختيار الأجزاء
   const handleCheckboxChange = (part) => {
     setCheckedParts((prev) =>
       prev.includes(part) ? prev.filter((p) => p !== part) : [...prev, part]
     );
   };
 
-  // معالجة اختيار الكل
   const handleSelectAll = (checked) => {
-    if (checked) {
-      setCheckedParts(Object.keys(currentCourse.details.gradeBreakdown));
-    } else {
-      setCheckedParts([]);
+    if (currentCourse) {
+      if (checked) {
+        setCheckedParts(Object.keys(currentCourse.details.gradeBreakdown));
+      } else {
+        setCheckedParts([]);
+      }
     }
   };
 
-  // معالجة تقديم الالتماس
   const submitAppeal = () => {
-    if (!currentCourse || checkedParts.length === 0) {
-      alert("الرجاء اختيار مادة وتحديد جزء واحد على الأقل للاعتراض.");
+    if (
+      !currentCourse ||
+      checkedParts.length === 0 ||
+      appealNotes.trim() === ""
+    ) {
+      alert(
+        "Please select a course, check at least one part to appeal, and write your notes."
+      );
       return;
     }
-
-    // فتح الـ Modal لعرض الملخص والتأكيد
     open();
   };
 
-  // تنفيذ الإرسال النهائي
   const confirmSubmission = () => {
     close();
-
-    // بناء كائن الالتماس الجديد
     const newAppeal = {
       code: currentCourse.value,
       name: currentCourse.details.name,
@@ -201,28 +194,24 @@ const AppealsPage = () => {
       status: "UnderReview",
       adjustment: "قيد المراجعة",
       parts: checkedParts.map((p) => getPartLabel(p)).join(", "),
-      notes: appealNotes || "لا توجد ملاحظات إضافية.",
+      notes: appealNotes || "No additional notes.",
     };
-
-    // إضافة الالتماس الجديد لسجل الالتماسات
     setAppealHistory([newAppeal, ...appealHistory]);
-
-    // إعادة ضبط الحقول
     setSelectedCourseCode(null);
     setCheckedParts([]);
     setAppealNotes("");
-
-    // رسالة نجاح بسيطة
-    alert("تم تقديم الالتماس بنجاح! سيظهر الآن في جدول الالتماسات السابقة.");
+    alert(
+      "تم تقديم الالتماس بنجاح! سيتم مراجعة طلبك وإبلاغك بالتحديثات."
+    );
   };
 
   return (
     <div className="flex flex-col gap-y-4">
       <h1 className="title">صفحة تقديم الالتماسات</h1>
 
-      {/* ----------------- Modal للتأكيد ----------------- */}
       <Modal
         opened={opened}
+        dir="rtl"
         onClose={close}
         title={
           <Text fw={700} fz="lg">
@@ -242,7 +231,7 @@ const AppealsPage = () => {
           </Group>
           <Group justify="space-between">
             <Text fw={700}>أجزاء الاعتراض:</Text>
-            <Badge color="blue" variant="light">
+            <Badge color="red" variant="light">
               {checkedParts.map((p) => getPartLabel(p)).join(" | ")}
             </Badge>
           </Group>
@@ -272,9 +261,7 @@ const AppealsPage = () => {
         </Stack>
       </Modal>
 
-      {/* ----------------- كروت تقديم الالتماس ----------------- */}
       <Grid gutter="xl">
-        {/* العمود الأيمن (اختيار المادة) - span={4} */}
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Card shadow="sm" radius="md" padding="lg" withBorder>
             <Group mb="md">
@@ -284,7 +271,6 @@ const AppealsPage = () => {
               </Text>
             </Group>
             <Divider mb="lg" />
-
             <Select
               label="اختر المادة المراد الاعتراض عليها"
               placeholder="ابحث بكود أو اسم المادة..."
@@ -295,8 +281,6 @@ const AppealsPage = () => {
               nothingFoundMessage="لم يتم العثور على المادة..."
               size="md"
             />
-
-            {/* تفاصيل المادة المختارة */}
             {currentCourse && (
               <Stack
                 spacing="xs"
@@ -305,12 +289,8 @@ const AppealsPage = () => {
                 style={{ backgroundColor: "#F8F9FA", borderRadius: "4px" }}
               >
                 <Group justify="space-between">
-                  <Text
-                    fw={500}
-                    size="sm"
-                    c="dimmed"
-                    leftSection={<Hash size={16} />}
-                  >
+                  <Text fw={500} size="sm" c="dimmed">
+                    <Hash size={16} style={{ marginLeft: 5 }} />
                     كود المادة:
                   </Text>
                   <Text fw={700} size="md" color="blue">
@@ -318,34 +298,22 @@ const AppealsPage = () => {
                   </Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text
-                    fw={500}
-                    size="sm"
-                    c="dimmed"
-                    leftSection={<BookOpenText size={16} />}
-                  >
+                  <Text fw={500} size="sm" c="dimmed">
+                    <BookOpenText size={16} style={{ marginLeft: 5 }} />
                     اسم المادة:
                   </Text>
                   <Text size="md">{currentCourse.details.name}</Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text
-                    fw={500}
-                    size="sm"
-                    c="dimmed"
-                    leftSection={<User size={16} />}
-                  >
+                  <Text fw={500} size="sm" c="dimmed">
+                    <User size={16} style={{ marginLeft: 5 }} />
                     الدكتور:
                   </Text>
                   <Text size="md">{currentCourse.details.doctor}</Text>
                 </Group>
                 <Group justify="space-between">
-                  <Text
-                    fw={500}
-                    size="sm"
-                    c="dimmed"
-                    leftSection={<Award size={16} />}
-                  >
+                  <Text fw={500} size="sm" c="dimmed">
+                    <Award size={16} style={{ marginLeft: 5 }} />
                     التقدير الحالي:
                   </Text>
                   <Badge size="lg" color="green">
@@ -357,7 +325,6 @@ const AppealsPage = () => {
           </Card>
         </Grid.Col>
 
-        {/* العمود الأوسط والأيسر (تفاصيل الدرجات والملاحظات) - span={8} */}
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Card shadow="sm" radius="md" padding="lg" withBorder h="100%">
             <Group mb="md">
@@ -367,14 +334,12 @@ const AppealsPage = () => {
               </Text>
             </Group>
             <Divider mb="lg" />
-
             {!currentCourse ? (
               <Text c="red" fz="md" align="center" mt="xl">
                 الرجاء اختيار مادة من القائمة لتمكين خيارات الاعتراض.
               </Text>
             ) : (
               <Stack spacing="xl">
-                {/* 1. جدول الدرجات والتحديد */}
                 <Table withColumnBorders withTableBorder>
                   <Table.Thead>
                     <Table.Tr>
@@ -406,7 +371,6 @@ const AppealsPage = () => {
                       )
                     )}
                   </Table.Tbody>
-                  {/* صف اختيار الكل */}
                   <Table.Tfoot>
                     <Table.Tr style={{ backgroundColor: "#F8F9FA" }}>
                       <Table.Td colSpan={2} fw={700}>
@@ -429,8 +393,6 @@ const AppealsPage = () => {
                     </Table.Tr>
                   </Table.Tfoot>
                 </Table>
-
-                {/* 2. ملاحظات الطالب */}
                 <Textarea
                   label="ملاحظات الطالب وسبب تقديم الالتماس (مطلوب)"
                   placeholder="وضح بالتفصيل سبب اعتراضك على الدرجة..."
@@ -441,8 +403,6 @@ const AppealsPage = () => {
                   minRows={3}
                   maxRows={6}
                 />
-
-                {/* 3. زر التقديم */}
                 <Button
                   leftSection={<Send size={18} />}
                   onClick={submitAppeal}
@@ -462,7 +422,6 @@ const AppealsPage = () => {
 
       <Divider label="سجل الالتماسات" labelPosition="center" my="sm" />
 
-      {/* ----------------- جدول الالتماسات السابقة ----------------- */}
       <Card shadow="sm" radius="md" padding="lg" withBorder>
         <Group mb="md">
           <FileText size={22} color="#40C057" />

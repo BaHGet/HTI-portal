@@ -6,7 +6,7 @@ import {
   getAvaliableSubjects,
   getRegisteredSchadule,
   registerSubject,
-  dropSubject,
+  dropSubject
 } from "../../Api/Users/usersApi";
 
 const Registration = () => {

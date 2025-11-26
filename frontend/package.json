@@ -21,6 +21,7 @@
     "dotenv": "^17.2.1",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.539.0",
+    "pdfmake": "^0.2.20",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.0.0",
