@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 const baseUrl = import.meta.env.VITE_BASE_API_URL;
 
 export const login = async (email, password) => {
@@ -21,6 +22,14 @@ export const login = async (email, password) => {
     return response.data;
   } catch (error) {
     throw error;
+  }
+};
+
+export const logout = () => {
+  const token = localStorage.getItem("Api_token");
+  
+  if (token) {
+    localStorage.removeItem("Api_token");
   }
 };
 
