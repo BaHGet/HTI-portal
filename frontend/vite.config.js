@@ -9,4 +9,8 @@ export default defineConfig({
     tailwindcss(), // Enable Tailwind plugin
   ],
   base: "/",
+  server: {
+    host: true, 
+    port: 5173, 
+  },
 });

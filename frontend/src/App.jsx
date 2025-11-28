@@ -11,6 +11,8 @@ import DashboardPage from "./Pages/dashboard/page.jsx";
 import Layout from "./Pages/Layout.jsx";
 import Registration from "./Pages/dashboard/Registration.jsx";
 import Withdrawal from "./Pages/dashboard/withdrawal.jsx";
+import Results from "./Pages/dashboard/Results.jsx";
+import Appeals from "./Pages/dashboard/Appeals.jsx";
 
 const App = () => {
   return (
@@ -18,10 +20,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<DashboardPage />} />
-          <Route
-            path="results"
-            element={<h1 className="title capitalize">النتائج</h1>}
-          />
+          <Route path="results" element={<Results />} />
           <Route
             path="reports"
             element={<h1 className="title capitalize">التقارير</h1>}
@@ -31,14 +30,8 @@ const App = () => {
             element={<h1 className="title capitalize">المصروفات</h1>}
           />
           <Route path="registeration" element={<Registration />} />
-          <Route
-            path="withdrawal"
-            element={<Withdrawal />}
-          />
-          <Route
-            path="Petitions"
-            element={<h1 className="title capitalize">الالتماسات</h1>}
-          />
+          <Route path="withdrawal" element={<Withdrawal />} />
+          <Route path="Petitions" element={<Appeals />} />
           <Route
             path="regulations"
             element={<h1 className="title capitalize">اللوائح الدراسية</h1>}

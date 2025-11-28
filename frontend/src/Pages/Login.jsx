@@ -87,7 +87,7 @@ const NewLogin = () => {
                   />
                 </div>
                 <input
-                  type="email"
+                  type=""
                   name="email"
                   id="email"
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"

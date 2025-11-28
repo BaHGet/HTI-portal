@@ -1,0 +1,96 @@
+{
+  "success": true,
+  "count": 6,
+  "data": [
+    {
+      "courseCode": "اتص303",
+      "courseName": "مادة 3 (متطلبات تخصص إجبارية)",
+      "creditHours": 3,
+      "groupNumber": "G1",
+      "professorName": "د. أستاذ 1",
+      "availableSeats": 50,
+      "schedule": [],
+      "groupId": 76,
+      "courseId": 112
+    },
+    {
+      "courseCode": "اتص303",
+      "courseName": "مادة 3 (متطلبات تخصص إجبارية)",
+      "creditHours": 3,
+      "groupNumber": "G2",
+      "professorName": "د. أستاذ 3",
+      "availableSeats": 1,
+      "schedule": [
+        {
+          "day": "D2",
+          "time": "P1",
+          "room": "R102"
+        }
+      ],
+      "groupId": 29,
+      "courseId": 112
+    },
+    {
+      "courseCode": "اتص303",
+      "courseName": "مادة 3 (متطلبات تخصص إجبارية)",
+      "creditHours": 3,
+      "groupNumber": "G3",
+      "professorName": "د. أستاذ 1",
+      "availableSeats": 1,
+      "schedule": [
+        {
+          "day": "D3",
+          "time": "P2",
+          "room": "R201"
+        }
+      ],
+      "groupId": 30,
+      "courseId": 112
+    },
+    {
+      "courseCode": "اتص401",
+      "courseName": "مادة 1 (متطلبات تخصص اختيارية)",
+      "creditHours": 3,
+      "groupNumber": "G1",
+      "professorName": "د. أستاذ 2",
+      "availableSeats": 50,
+      "schedule": [],
+      "groupId": 79,
+      "courseId": 115
+    },
+    {
+      "courseCode": "اتص401",
+      "courseName": "مادة 1 (متطلبات تخصص اختيارية)",
+      "creditHours": 3,
+      "groupNumber": "G1",
+      "professorName": "د. أستاذ 3",
+      "availableSeats": 1,
+      "schedule": [
+        {
+          "day": "D2",
+          "time": "P1",
+          "room": "R101"
+        }
+      ],
+      "groupId": 37,
+      "courseId": 115
+    },
+    {
+      "courseCode": "اتص401",
+      "courseName": "مادة 1 (متطلبات تخصص اختيارية)",
+      "creditHours": 3,
+      "groupNumber": "G2",
+      "professorName": "د. أستاذ 3",
+      "availableSeats": 1,
+      "schedule": [
+        {
+          "day": "D2",
+          "time": "P1",
+          "room": "R102"
+        }
+      ],
+      "groupId": 38,
+      "courseId": 115
+    }
+  ]
+}
