@@ -54,7 +54,7 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
 
   const grades = await db.Grade.findAll({
     where: semester, 
-    attributes: ['LetterGrade'],
+    attributes: ['LetterGrade','Total'],
     order: [
         [db.Semester, 'StartDate', 'ASC'] 
     ],
@@ -89,6 +89,7 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
       CourseName: g.Enrollment.CourseGroup.Course.CourseName,
       CourseCode: g.Enrollment.CourseGroup.Course.CourseCode,
       CreditHours: g.Enrollment.CourseGroup.Course.CreditHours,
+      Total: g.Total,
       LetterGrade: g.LetterGrade
     }));
   }else {
@@ -109,6 +110,7 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
         CourseName: g.Enrollment.CourseGroup.Course.CourseName,
         CourseCode: g.Enrollment.CourseGroup.Course.CourseCode,
         CreditHours: g.Enrollment.CourseGroup.Course.CreditHours,
+        Total: g.Total,
         LetterGrade: g.LetterGrade
       });
     });
