@@ -49,6 +49,7 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
   ////////////////////// step 0: Get Data //////////////////////
   const student = req.student
   const semesterId = req.currentSemester.SemesterID;
+  const currentAcademicYear = req.currentAcademicYear;
 
   const { 
     gradeId, 
@@ -76,6 +77,7 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
   }
 
   ////////////////////// step 2: Create Appeal //////////////////////
+  const t = await db.sequelize.transaction();
   try {
     const newAppeal = await db.GradeAppeal.create({
       GradeID: gradeId,
@@ -85,8 +87,25 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
       AppealFinal: appealFinal || false,
       AppealActivities: appealActivities || false,
       Status: 'Pending' 
-    });
+    }, { transaction: t });
 
+    const APPEAL_COST = 100;
+    const updatedFinance = await db.StudentFinancial.increment(
+      { AppealFees: APPEAL_COST }, 
+      { 
+        where: { 
+          StudentID: student.StudentID,
+          AcademicYear: currentAcademicYear 
+        } ,
+        transaction: t 
+      }
+    );
+    if (!updatedFinance || updatedFinance[0][1] === 0) {
+      throw new ApiError (`No financial record found`,400)
+    }
+
+    await t.commit();
+    
     const appealResponse = newAppeal.toJSON();
     delete appealResponse.StudentID;
 
@@ -97,6 +116,9 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
     });
 
   } catch (error) {
+    
+    await t.rollback();
+
     if (error.name === 'SequelizeUniqueConstraintError') {
       return next(new ApiError('You have already submitted an appeal for this grade. Only one appeal is allowed.', 400));
     }

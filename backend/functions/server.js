@@ -88,6 +88,9 @@ app.use("/api/v1/results", ResultsRouter);
 const { EvaluationRouter } = require("../routes/evaluationRoute");
 app.use("/api/v1/evaluations", EvaluationRouter);
 
+const { PaymentRouter } = require("../routes/studentFinancialRoute");
+app.use("/api/v1/payment", PaymentRouter);
+
 
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));

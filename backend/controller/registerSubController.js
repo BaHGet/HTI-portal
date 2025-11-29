@@ -30,11 +30,6 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       where:{ RegulationID: student.RegulationID},
       include: [
         { 
-          model: db.Semester, 
-          where: { SemesterID: semester.SemesterID },
-          attributes: [] 
-        },
-        { 
           model: db.Course, 
           as: 'Prerequisites',
           attributes: ['CourseID', 'CourseName'] 
@@ -45,6 +40,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
         },
         {
           model: db.CourseGroup,
+          where: { SemesterID: semester.SemesterID },
           attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
           include: [
           {
