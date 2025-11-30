@@ -66,6 +66,9 @@ app.use(cookieParser());
 const sql = require("../config/mysqlDB");
 sql.dbConnection();
 
+const { globalLimiter } = require ("../utils/rateLimiter")
+app.use("/api/v1/", globalLimiter);
+
 const { authRouter } = require("../routes/auth");
 app.use("/api/v1/auth", authRouter);
 
