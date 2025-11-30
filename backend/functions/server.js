@@ -12,7 +12,7 @@ const socketIo = require('socket.io');
 const app = express();
 const cors = require("cors");
 
-app.use(express.json());
+app.use(express.json({limit:'5kb'}));
 app.use(
   cors({
     origin: "*",
