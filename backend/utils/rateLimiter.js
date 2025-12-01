@@ -11,8 +11,8 @@ const globalLimiter = rateLimit({
 
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  limit: 5,
+  windowMs: 1 * 60 * 1000, 
+  limit: 3,
   skipSuccessfulRequests: true, 
   message: { status: 'fail', message: 'Too many login attempts, please try again after 15 minutes.' },
   standardHeaders: 'draft-8',
