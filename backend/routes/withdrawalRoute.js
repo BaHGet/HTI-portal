@@ -4,7 +4,7 @@ const {
   getStudentSub,
   withdrawalSub,
   restoringSub
-} = require('../controller/WithdrawalController.js');
+} = require('../controller/withdrawalController');
 
 
 const {

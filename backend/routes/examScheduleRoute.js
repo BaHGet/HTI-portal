@@ -28,9 +28,9 @@ SchedulesRouter
   .get('/my-exam-schedule',
     protect,
     restrictTo("student"),
+    examTypeValidator,
     getStudent,
     setCurrentSemester,
-    examTypeValidator,
     getMyExamSchedule
   )
 

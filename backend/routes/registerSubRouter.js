@@ -10,7 +10,6 @@ const {
 const {
   setCurrentSemester,
   getStudent,
-  loadCurrentEnrollments
 } = require('../middlewares/registerSubMiddleware')
 
 const {
@@ -40,7 +39,6 @@ registerSubRouter
     GroupSubValidator,
     getStudent, 
     setCurrentSemester,
-    loadCurrentEnrollments,
     registerSubject
   );
 registerSubRouter

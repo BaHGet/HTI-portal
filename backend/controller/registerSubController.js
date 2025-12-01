@@ -1,4 +1,4 @@
-
+const { Op } = require('sequelize');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 const checkTimeConflict = require('../utils/timeConflict')
@@ -12,85 +12,88 @@ const db = require("../models/index");
 // @route   GET /api/registration/available-subjects
 // @access  Private (Student)
 exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
-  // Step 0: GetStudentInfo (including finished courses)
   const student = req.student;
-  const completedCourses = await student.getCourses({
-    attributes: ['CourseID','CreditHours'],
-    include: [{ 
-      model: db.CourseCategory,
-      attributes: ['CourseCategoryID', 'RequiredCredits']
-     }]
-  });
-  /////////////////// step 1: Find Semester Available Courses and student Regulation ///////////////////
-  // step 1.1: Fetch all courses offered in this semester
-  const semesterCourses = await db.Course.findAll({
-    attributes: ['CourseID', 'CourseCode', 'CourseName', 'CreditHours', 'RegulationID', 'CourseCategoryID'],
-    include: [
-      { 
-        model: db.Semester, 
-        where: { SemesterID: req.currentSemester.SemesterID },
-        attributes: [] 
-      },
-      { 
-        model: db.Course, 
-        as: 'Prerequisites',
-        attributes: ['CourseID', 'CourseName'] 
-      },
-      {
+  const semester= req.currentSemester
+  //////////////////// STEP(1): All Queries ////////////////////
+  const [completedCourses, semesterCourses, currentEnrollments ] = await Promise.all([
+    // Query(1): Student Completed Courses
+    student.getCourses({
+      attributes: ['CourseID','CreditHours'],
+      include: [{ 
         model: db.CourseCategory,
-        attributes: ['CourseCategoryID', 'RequiredCredits'] 
-      },
-      {
-        model: db.CourseGroup,
-        attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
-        include: [
-        {
-          model: db.Professor,
-          attributes: ['ProfessorName'], 
+        attributes: ['CourseCategoryID', 'RequiredCredits']
+      }]
+    }),
+    // Query(2): Student Semester Courses
+    db.Course.findAll({
+      attributes: ['CourseID', 'CourseCode', 'CourseName', 'CreditHours', 'CourseCategoryID'],
+      where:{ RegulationID: student.RegulationID},
+      include: [
+        { 
+          model: db.Semester, 
+          where: { SemesterID: semester.SemesterID },
+          attributes: [] 
+        },
+        { 
+          model: db.Course, 
+          as: 'Prerequisites',
+          attributes: ['CourseID', 'CourseName'] 
         },
         {
-          model: db.GroupSchedule,
-          attributes: ['DayOfWeek', 'Room'],
-          include:[{
-            model: db.TimePeriod,
-            attributes: ['PeriodName']
+          model: db.CourseCategory,
+          attributes: ['CourseCategoryID', 'RequiredCredits'] 
+        },
+        {
+          model: db.CourseGroup,
+          attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
+          include: [
+          {
+            model: db.Professor,
+            attributes: ['ProfessorName'], 
+          },
+          {
+            model: db.GroupSchedule,
+            attributes: ['DayOfWeek', 'Room'],
+            include:[{
+              model: db.TimePeriod,
+              attributes: ['PeriodName']
+            }]
           }]
-        }]
-      }
-    ]
-  });
+        }
+      ]
+    }),
+    // Query(3): Student Current Enrollments
+    db.Enrollment.findAll({
+      where: {
+        StudentID: student.StudentID, 
+      },
+      attributes: ['GroupID'],
+      include: [{
+        model: db.CourseGroup,
+        attributes:[],
+        where: {SemesterID: req.currentSemester.SemesterID}
+      }]
+    })
+  ]);
+
   if (!semesterCourses.length) {
     return res.status(200).json({ success: true, count: 0, data: [] });
   }
-  // step 1.2: find Student AcademicRegulations
-  const studentRegulation = await student.getAcademicRegulation({
-    attributes: ['RegulationID']
-  });
-  if (!studentRegulation) {
-    return next(new ApiError('Could not find the academic regulation for this student', 404));
-  }
 
-  //////////////// step 2: filter(1) semesterCourses based on studentRegulation ////////////////
-  const studentAllCourses = semesterCourses
-    .filter(course => course.RegulationID === studentRegulation.RegulationID);
-
-  //////////////// step 3: filter(2) studentAllCourses based on student completed courses ////////////////
-  // step 3.1: get completed course
+  //////////////////// STEP(2): All Filters ////////////////////
+  // Filter(1): Completed CoursesIds
   const completedCourseIdsSet = new Set(completedCourses.map(course => course.CourseID));
-
-  // step 3.2: filtration process
-  const unFinishedCourses = studentAllCourses
+  // Filter(2): UnFinishedCourses 
+  const unFinishedCourses = semesterCourses
   .filter(course => !completedCourseIdsSet.has(course.CourseID));
-
-  //////////////// step 4: filter studentCourses based on prerequisites ////////////////
+  // Filter(3): Finished Prerequisite Courses 
   const finishedPrerequisiteCourses = unFinishedCourses
     .filter(course =>{
       if(!course.Prerequisites || course.Prerequisites.length === 0) return true;
       return course.Prerequisites
         .every(prerequisite => completedCourseIdsSet.has(prerequisite.CourseID));
     })
-  
-  //////////////// step 5: filter based on category ////////////////
+  // Filter(4): Student Available Courses 
   const availableCourses = finishedPrerequisiteCourses
     .filter(course => {
       const requiredCredits = course.CourseCategory.RequiredCredits;
@@ -106,21 +109,10 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       }, 0);
       return completedCreditsInCategory < requiredCredits;
     })
-
-  ///////////// step 6: GroupIDs the student is currently enrolled in for this semester ///////////////
-  const currentEnrollments = await db.Enrollment.findAll({
-    where: {
-      StudentID: student.StudentID, 
-    },
-    attributes: ['GroupID'],
-    include: [{
-      model: db.CourseGroup,
-      attributes:[],
-      where: {SemesterID: req.currentSemester.SemesterID}
-    }]
-  });
+  // Filter(5): Student Current Enrollments
   const enrolledGroupIdsSet = new Set(currentEnrollments.map(enrollment => enrollment.GroupID));
-  ///////////// step 7: Format the final result ///////////////
+
+  //////////////////// STEP(3): Formatte Results ////////////////////
   const formattedResult = availableCourses.flatMap(course => {
     return course.CourseGroups
       .filter(group => !enrolledGroupIdsSet.has(group.GroupID))
@@ -157,8 +149,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       });
   });
 
-  /////////////// step 7: return the available courses ////////////////
-  
+  //////////////////// STEP(4): Resposnse ////////////////////
   res.status(200).json({
         success: true,
         count: formattedResult.length,
@@ -175,26 +166,36 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
   const transaction = await db.sequelize.transaction();
   try {
-    ////////////////////// Step 1: Extract Pre-fetched Data from Middlewares ///////////////////
     const student = req.student;
-    const currentEnrollments = req.currentEnrollments;
-
-    ////////////////////// Step 2: Process the Pre-fetched Data in Memory ///////////////////
-    const currentCredits = currentEnrollments.reduce((sum, enrollment) => {
-        return sum + enrollment.CourseGroup.Course.CreditHours;
-    }, 0);
-
-    const currentUserAppointments = currentEnrollments.flatMap(
-        enrollment => enrollment.CourseGroup.GroupSchedules || []
-    );
-
-    const registeredCourseIds = new Set(
-        currentEnrollments.map(enrollment => enrollment.CourseGroup.Course.CourseID)
-    );
-
-    /////////////////// Step 3: Fetch New Group Data & Check Seats ///////////////////
+    const semesterId = req.currentSemester.SemesterID;
     const courseGroupId = req.body.GroupID;
-    const courseGroup = await db.CourseGroup.findByPk(courseGroupId,{
+    //////////////////// STEP(1): All Queries ////////////////////
+    const [currentEnrollments, courseGroup] = await Promise.all([
+    // Query(1): Student Current Enrollments
+    db.Enrollment.findAll({
+      where: {
+        StudentID: student.StudentID,
+        status: "Registered"
+      },
+      include: [{
+        model: db.CourseGroup,
+        required: true,
+        where: { SemesterID: semesterId },
+        include: [
+          { 
+            model: db.Course,
+            attributes: ['CourseID', 'CreditHours'] 
+          },
+          { 
+            model: db.GroupSchedule, 
+            include: [db.TimePeriod] 
+          }
+        ]
+      }],
+      transaction 
+    }),
+    // Query(2): New Group Data
+    db.CourseGroup.findByPk(courseGroupId,{
       include:[{
         model: db.Course,
         attributes: ['CourseID','CreditHours']
@@ -207,17 +208,35 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
         }],
       }],
       transaction 
-    });
+    })
+
+    ])
+    //////////////////// STEP(2): Checks & Processing ////////////////////
+    // Group Check
     if(!courseGroup){
       throw new ApiError("Course group not found",404);
     }
+
+    // Processing Currnet Enrollment Data
+    const currentCredits = currentEnrollments.reduce((sum, enrollment) => {
+        return sum + enrollment.CourseGroup.Course.CreditHours;
+    }, 0);
+
+    const currentUserAppointments = currentEnrollments.flatMap(
+        enrollment => enrollment.CourseGroup.GroupSchedules || []
+    );
+
+    const registeredCourseIds = new Set(
+        currentEnrollments.map(enrollment => enrollment.CourseGroup.Course.CourseID)
+    );
+
+    // Check Available Seats
     if (student.isLastTerm === false && courseGroup.CurrentEnrolled >= courseGroup.Capacity) {
       throw new ApiError("No seats available in this group", 400);
     }
 
-    /////////////////// step 2: Student Credit Hours Limit Check ///////////////////
+    // Check Credit hours
     const newCourseCredits = courseGroup.Course.CreditHours;
-
     let baseMaxCredits;
     if (student.gpa >= 3) {
       baseMaxCredits = 21;
@@ -226,8 +245,6 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     } else {
       baseMaxCredits = 14;
     }
-    
-
     if (student.isLastTerm === true) {
       const proposedTotal = currentCredits + newCourseCredits;
       if (proposedTotal > baseMaxCredits) {
@@ -244,8 +261,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       }
     }
       
-
-    /////////////////// step 3: Time Conflict Check ///////////////////
+    // Check Time Conflict
     const newGroupAppointments = courseGroup.GroupSchedules || [];
 
     const hasConflict = checkTimeConflict(newGroupAppointments, currentUserAppointments);
@@ -253,13 +269,13 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
       throw new ApiError ("Time Conflict",400)
     }
 
-    /////////////////// step 4: Subject Enrolled Conflict Check ///////////////////
+    // Check Subject Conflict
     const newCourseId = courseGroup.Course.CourseID;
     if (registeredCourseIds.has(newCourseId)) {
       throw new ApiError('You are already registered for this course in another group.', 400);
     }
 
-    /////////////////// step 5: Add course to student Schedule ///////////////////
+    //////////////////// STEP(3): New Enrollment & AvailableSeats ////////////////////
     await db.Enrollment.create({
       StudentID: student.StudentID,
       GroupID: courseGroupId,
@@ -268,10 +284,9 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
-
-    /////////////////// step 6: Sending Response ///////////////////
     const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
-    
+
+    //////////////////// STEP(4): Response ////////////////////
     res.status(201).json({
       success: true,
       message: "Course registered successfully",
@@ -344,7 +359,7 @@ exports.getRegisteredSchedule = asyncHandler( async(req, res, next) => {
   const semesterId = req.currentSemester.SemesterID;
   ///////////////////// step 1: get all student enrollments data ///////////////////
   const studentEnrollments = await db.Enrollment.findAll({
-    where: { StudentID: student.StudentID},
+    where: { StudentID: student.StudentID, Status:{[Op.ne]: 'Withdrawn'}},
     attributes:['GroupID'],
     include:[{
       model: db.CourseGroup,
