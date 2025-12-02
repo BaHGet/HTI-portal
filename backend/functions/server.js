@@ -8,11 +8,34 @@ const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
 const http = require('http'); 
 const socketIo = require('socket.io');
+const helmet = require('helmet');
+const hpp = require('hpp');
 
 const app = express();
 const cors = require("cors");
 
 app.use(express.json({limit:'5kb'}));
+app.use(helmet());
+app.use(hpp());
+
+// Custom Middleware instead of xss-clean
+app.use((req, res, next) => {
+  const clean = (obj) => {
+    for (const key in obj) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        clean(obj[key]);
+      }
+    }
+  };
+  if (req.body) clean(req.body);
+  if (req.query) clean(req.query);
+  if (req.params) clean(req.params);
+
+  next();
+});
+
 app.use(
   cors({
     origin: "*",

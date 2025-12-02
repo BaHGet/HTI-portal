@@ -174,12 +174,17 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
   res.status(200).json({data: user})
 })
 
-const logout = asyncHandler(async(req,res,next)=>{
+const logout = asyncHandler(async (req, res, next) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 2 * 1000), 
+    httpOnly: true
+  });
+
   res.status(200).json({
     status: 'success',
-    message: 'Logged out successfully. Please clear the token from client storage.'
+    message: 'Logged out successfully.'
   });
-})
+});
 
 module.exports = {
   getAllUsers, 
