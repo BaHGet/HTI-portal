@@ -1,9 +1,9 @@
-const { check  } = require('express-validator');
+const { check , param } = require('express-validator');
 const validatorMiddleware = require ('../middlewares/validatorMiddleware')
 
 
 exports.createAppealValidator=[
-  check('gradeId')
+  param('gradeId')
     .notEmpty().withMessage('GradeID is required.')
     .isInt().withMessage('GradeID must be a valid integer.'),
   check('appealMidterm')

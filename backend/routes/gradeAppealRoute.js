@@ -32,7 +32,7 @@ GradeAppealRouter
   )
 
 GradeAppealRouter
-  .post('/createappeal',
+  .post('/createappeal/:gradeId',
     protect,
     restrictTo("student"),
     createAppealValidator,

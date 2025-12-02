@@ -1,11 +1,11 @@
-const { check  } = require('express-validator');
+const { check, param  } = require('express-validator');
 const validatorMiddleware = require ('../middlewares/validatorMiddleware')
 
 
 
 
 exports.GroupSubValidator = [
-  check('GroupID')
+  param('groupId')
     .notEmpty()
     .withMessage('GroupID is required')
     .isInt()

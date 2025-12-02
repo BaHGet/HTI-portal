@@ -51,8 +51,8 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
   const semesterId = req.currentSemester.SemesterID;
   const currentAcademicYear = req.currentAcademicYear;
 
+  const gradeId = req.params.gradeId
   const { 
-    gradeId, 
     studentNotes, 
     appealMidterm, 
     appealFinal, 
