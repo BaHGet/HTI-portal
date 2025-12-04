@@ -30,11 +30,6 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
       where:{ RegulationID: student.RegulationID},
       include: [
         { 
-          model: db.Semester, 
-          where: { SemesterID: semester.SemesterID },
-          attributes: [] 
-        },
-        { 
           model: db.Course, 
           as: 'Prerequisites',
           attributes: ['CourseID', 'CourseName'] 
@@ -45,6 +40,7 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
         },
         {
           model: db.CourseGroup,
+          where: { SemesterID: semester.SemesterID },
           attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
           include: [
           {
@@ -284,7 +280,14 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
     await transaction.commit();
+
     const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
+    if (req.io) {
+      req.io.emit('seats_update', {
+        groupId: courseGroupId,
+        availableSeats: availableSeats
+      });
+    }
 
     //////////////////// STEP(4): Response ////////////////////
     res.status(201).json({
@@ -332,11 +335,17 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
   /////////////////// step 3: Updating Seats & Sending Response ///////////////////
   try{
     await db.sequelize.transaction(async (t) => {
-
       await enrollment.CourseGroup.decrement('CurrentEnrolled', { by: 1, transaction: t });
       await enrollment.destroy({ transaction: t });
-
     });
+
+    const newAvailableSeats = enrollment.CourseGroup.Capacity - (enrollment.CourseGroup.CurrentEnrolled - 1);
+    if (req.io) {
+      req.io.emit('seats_update', {
+        groupId: groupId,
+        availableSeats: newAvailableSeats
+      });
+    }
 
     res.status(200).json({
       Success: true,

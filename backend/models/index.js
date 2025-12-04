@@ -24,6 +24,7 @@ const StudentCompletedCourse = require('./studentCompletedCourses')(sequelize);
 const EvaluationQuestions = require('./evaluationQuestions')(sequelize);
 const EvaluationTracking = require('./evaluationTracking')(sequelize);
 const EvaluationAnswers = require('./evaluationAnswers')(sequelize);
+const StudentFinancial = require('./studentFinancial')(sequelize);
 
 //////////////////////////// Define Relationships between models ///////////////////////////////
 
@@ -154,6 +155,10 @@ EvaluationQuestions.hasMany(EvaluationAnswers, { foreignKey: 'QuestionID' });
 EvaluationAnswers.belongsTo(CourseGroup, { foreignKey: 'GroupID' });
 CourseGroup.hasMany(EvaluationAnswers, { foreignKey: 'GroupID' });
 
+// Relation between Student and ( StudentFinancials )
+Student.hasMany(StudentFinancial, { foreignKey: 'StudentID' });
+StudentFinancial.belongsTo(Student, { foreignKey: 'StudentID' });
+
 const db = {
   sequelize, 
   Sequelize,
@@ -178,7 +183,8 @@ const db = {
   StudentCompletedCourse,
   EvaluationQuestions,
   EvaluationTracking,
-  EvaluationAnswers
+  EvaluationAnswers,
+  StudentFinancial
 };
 
 

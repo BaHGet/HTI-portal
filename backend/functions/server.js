@@ -6,6 +6,8 @@ const logger = require("../utils/logger");
 const cookieParser = require("cookie-parser");
 const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
+const http = require('http'); 
+const socketIo = require('socket.io');
 
 const app = express();
 const cors = require("cors");
@@ -88,6 +90,9 @@ app.use("/api/v1/results", ResultsRouter);
 const { EvaluationRouter } = require("../routes/evaluationRoute");
 app.use("/api/v1/evaluations", EvaluationRouter);
 
+const { PaymentRouter } = require("../routes/studentFinancialRoute");
+app.use("/api/v1/payment", PaymentRouter);
+
 
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));
@@ -100,6 +105,21 @@ app.get("/", (req, res) => {
 // Global error handling middleware for express
 app.use(globalError);
 
-app.listen(3000);
+// Server Connection
+const server = http.createServer(app); 
+const io = socketIo(server, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"]
+  }
+});
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
+server.listen(3000, () => {
+  console.log(`Server running on port 3000`);
+  console.log(`Socket.io is ready! 🚀`);
+});
 // module.exports.handler = serverless(app);
