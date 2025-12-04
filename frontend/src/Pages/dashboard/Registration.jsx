@@ -8,6 +8,7 @@ import {
   registerSubject,
   dropSubject,
 } from "../../Api/Users/usersApi";
+import StudentTimetable from "../../Components/StudentTimetable";
 
 const Registration = () => {
   const allowedCreditHours = 21;
@@ -414,7 +415,7 @@ const Registration = () => {
         </div>
 
         {/* Registered Courses + Timetable */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[35%] min-h-[300px] overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto min-h-[300px] overflow-hidden">
           {/* Registered Courses */}
           <div className="card p-0 rounded-xl flex flex-col overflow-auto">
             <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">
@@ -462,21 +463,7 @@ const Registration = () => {
 
           {/* Student Timetable */}
           <div className="card p-0 rounded-xl flex flex-col overflow-auto">
-            <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">
-              <div className="pr-4">Student Timetable</div>
-              <Button
-                rightSection={<Download />}
-                className="ml-2 px-0"
-                color="green"
-                variant="outline"
-                size="xs"
-              >
-                <p>Download Timetable</p>
-              </Button>
-            </div>
-            <div className="p-0 pt-0 overflow-x-auto flex-1">
-              <Timetable />
-            </div>
+            <StudentTimetable/>
           </div>
         </div>
       </div>
