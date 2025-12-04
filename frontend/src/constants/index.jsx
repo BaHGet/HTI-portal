@@ -40,6 +40,7 @@ export const navbarLinks = [
         icon: BookOpenCheck,
         path: "/results",
       },
+      
       {
         label: "التقارير",
         icon: NotepadText,
