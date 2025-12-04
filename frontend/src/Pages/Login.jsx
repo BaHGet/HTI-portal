@@ -60,7 +60,7 @@ export default function Login() {
   };
 
   return (
-    <Container  size={420} my={80}>
+    <Container h={'100%'} w={'100%'} size={420} my={80}>
       <Paper
         shadow="lg"
         radius="md"
