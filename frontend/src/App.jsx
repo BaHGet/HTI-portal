@@ -13,6 +13,7 @@ import Registration from "./Pages/dashboard/Registration.jsx";
 import Withdrawal from "./Pages/dashboard/withdrawal.jsx";
 import Results from "./Pages/dashboard/Results.jsx";
 import Appeals from "./Pages/dashboard/Appeals.jsx";
+import Payments from "./Pages/dashboard/Payments.jsx";
 
 const App = () => {
   return (
@@ -27,7 +28,7 @@ const App = () => {
           />
           <Route
             path="payments"
-            element={<h1 className="title capitalize">المصروفات</h1>}
+            element={<Payments />}
           />
           <Route path="registeration" element={<Registration />} />
           <Route path="withdrawal" element={<Withdrawal />} />
