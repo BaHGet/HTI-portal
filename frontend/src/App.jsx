@@ -14,6 +14,7 @@ import Withdrawal from "./Pages/dashboard/withdrawal.jsx";
 import Results from "./Pages/dashboard/Results.jsx";
 import Appeals from "./Pages/dashboard/Appeals.jsx";
 import Payments from "./Pages/dashboard/Payments.jsx";
+import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 
 const App = () => {
   return (
@@ -57,7 +58,7 @@ const App = () => {
           />
           <Route
             path="complaints-and-suggestions"
-            element={<h1 className="title capitalize">الشكاوي والاقتراحات</h1>}
+            element={<FeedbackPage/>}
           />
         </Route>
 
