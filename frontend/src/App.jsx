@@ -15,6 +15,7 @@ import Results from "./Pages/dashboard/Results.jsx";
 import Appeals from "./Pages/dashboard/Appeals.jsx";
 import Payments from "./Pages/dashboard/Payments.jsx";
 import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
+import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
 
 const App = () => {
   return (
@@ -54,7 +55,7 @@ const App = () => {
           />
           <Route
             path="faculty-members"
-            element={<h1 className="title capitalize">اعضاء هيئة التدريس</h1>}
+            element={<FacultyDirectory/>}
           />
           <Route
             path="complaints-and-suggestions"
