@@ -1,8 +1,4 @@
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./Pages/Login.jsx";
 import "./index.css";
 import ForgotPassword from "./Pages/ForgotPassword.jsx";
@@ -17,6 +13,7 @@ import Payments from "./Pages/dashboard/Payments.jsx";
 import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
 import StudentServicesPage from "./Pages/dashboard/StudentServicesPage.jsx";
+import ExamsTables from "./Pages/dashboard/ExamsTables.jsx";
 
 const App = () => {
   return (
@@ -29,10 +26,8 @@ const App = () => {
             path="reports"
             element={<h1 className="title capitalize">التقارير</h1>}
           />
-          <Route
-            path="payments"
-            element={<Payments />}
-          />
+          <Route path="exams-tables" element={<ExamsTables />} />
+          <Route path="payments" element={<Payments />} />
           <Route path="registeration" element={<Registration />} />
           <Route path="withdrawal" element={<Withdrawal />} />
           <Route path="Petitions" element={<Appeals />} />
@@ -48,20 +43,9 @@ const App = () => {
             path="materials"
             element={<h1 className="title capitalize">بنك المواد</h1>}
           />
-          <Route
-            path="student-affairs"
-            element={
-              <StudentServicesPage/>
-            }
-          />
-          <Route
-            path="faculty-members"
-            element={<FacultyDirectory/>}
-          />
-          <Route
-            path="complaints-and-suggestions"
-            element={<FeedbackPage/>}
-          />
+          <Route path="student-affairs" element={<StudentServicesPage />} />
+          <Route path="faculty-members" element={<FacultyDirectory />} />
+          <Route path="complaints-and-suggestions" element={<FeedbackPage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />
