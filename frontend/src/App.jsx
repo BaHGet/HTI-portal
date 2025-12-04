@@ -16,6 +16,7 @@ import Appeals from "./Pages/dashboard/Appeals.jsx";
 import Payments from "./Pages/dashboard/Payments.jsx";
 import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
+import StudentServicesPage from "./Pages/dashboard/StudentServicesPage.jsx";
 
 const App = () => {
   return (
@@ -50,7 +51,7 @@ const App = () => {
           <Route
             path="student-affairs"
             element={
-              <h1 className="title capitalize">التواصل مع شؤون الطلاب</h1>
+              <StudentServicesPage/>
             }
           />
           <Route

@@ -15,16 +15,27 @@ import {
   Image,
   ScrollArea,
   Avatar,
+  Pagination, // تم إضافة مكون Pagination
+  Alert,
 } from "@mantine/core";
-import { Search, Mail, Phone, ExternalLink, Filter } from "lucide-react";
+import {
+  Search,
+  Mail,
+  Phone,
+  ExternalLink,
+  Filter,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
 
-// ** 1. البيانات الثابتة والوهمية **
-// قوائم التصفية
+// ** 1. البيانات الثابتة **
 const departments = [
   { value: "CS", label: "قسم علوم الحاسوب" },
   { value: "EE", label: "قسم الهندسة الكهربائية" },
   { value: "BUSS", label: "قسم إدارة الأعمال" },
   { value: "ARCH", label: "قسم العمارة" },
+  { value: "MATH", label: "قسم الرياضيات" },
+  { value: "CHEM", label: "قسم الكيمياء" },
 ];
 
 const ranks = [
@@ -34,78 +45,88 @@ const ranks = [
   { value: "Lecturer", label: "محاضر" },
 ];
 
-// بيانات أعضاء هيئة التدريس الوهمية
-const facultyData = [
-  {
-    id: 1,
-    nameAr: "د. محمد سعيد الغامدي",
-    nameEn: "Dr. Mohammed Alghamdi",
-    rank: "Professor",
-    department: "CS",
-    specialization: "الذكاء الاصطناعي وتعلم الآلة",
-    email: "m.alghamdi@uni.edu",
-    phoneExt: "01023456789",
-    officeHours: "الأحد والثلاثاء: 10:00 - 12:00",
-    imageUrl:
-      "https://images.unsplash.com/photo-1560250097-fbab4cba431a?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: 2,
-    nameAr: "أ.د. فاطمة علي الحسني",
-    nameEn: "Prof. Fatimah Alhasani",
-    rank: "Associate",
-    department: "BUSS",
-    specialization: "إدارة الموارد البشرية",
-    email: "f.alhasani@uni.edu",
-    phoneExt: "01023456789",
-    officeHours: "الاثنين والأربعاء: 14:00 - 15:00",
-    imageUrl:
-      "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: 3,
-    nameAr: "د. خالد عبد العزيز",
-    nameEn: "Dr. Khalid Abdulaziz",
-    rank: "Assistant",
-    department: "EE",
-    specialization: "أنظمة الطاقة المتجددة",
-    email: "k.abdulaziz@uni.edu",
-    phoneExt: "01023456789",
-    officeHours: "يومياً: 11:00 - 12:00",
-    imageUrl:
-      "https://images.unsplash.com/photo-1557862921-37829c790f19?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: 4,
-    nameAr: "م. نورة فيصل القحطاني",
-    nameEn: "Eng. Noura Alqahtani",
-    rank: "Lecturer",
-    department: "ARCH",
-    specialization: "التصميم المستدام",
-    email: "n.alqahtani@uni.edu",
-    phoneExt: "01023456789",
-    officeHours: "الثلاثاء والخميس: 09:00 - 10:00",
-    imageUrl:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29329?auto=format&fit=crop&w=300&q=80",
-  },
-];
+// ** 2. البيانات الوهمية (تم زيادتها إلى 30) **
+const generateFacultyData = (count) => {
+  const data = [];
+  const names = [
+    { ar: "محمد", en: "Mohammed" },
+    { ar: "فاطمة", en: "Fatimah" },
+    { ar: "خالد", en: "Khalid" },
+    { ar: "نورة", en: "Noura" },
+    { ar: "علي", en: "Ali" },
+    { ar: "سارة", en: "Sara" },
+    { ar: "يوسف", en: "Yousef" },
+    { ar: "مريم", en: "Maryam" },
+    { ar: "عبد الله", en: "Abdullah" },
+    { ar: "هدى", en: "Huda" },
+    { ar: "ماجد", en: "Majid" },
+    { ar: "ريما", en: "Rima" },
+    { ar: "فيصل", en: "Faisal" },
+    { ar: "لجين", en: "Lujain" },
+    { ar: "سعود", en: "Saud" },
+  ];
+  const lastNames = [
+    "الغامدي",
+    "الحسني",
+    "العلي",
+    "القحطاني",
+    "المالكي",
+    "الرشيد",
+  ];
+  const specializations = [
+    "الذكاء الاصطناعي",
+    "إدارة الموارد البشرية",
+    "أنظمة الطاقة",
+    "التصميم المستدام",
+    "التحليل العددي",
+    "الكيمياء العضوية",
+  ];
 
-// ** 2. مكون بطاقة العضو **
+  for (let i = 1; i <= count; i++) {
+    const nameIdx = i % names.length;
+    const lastIdx = i % lastNames.length;
+    const deptIdx = i % departments.length;
+    const rankIdx = i % ranks.length;
+    const specIdx = i % specializations.length;
+
+    data.push({
+      id: i,
+      nameAr: `د. ${names[nameIdx].ar} ${lastNames[lastIdx]}`,
+      nameEn: `Dr. ${names[nameIdx].en} ${lastNames[lastIdx]}`,
+      rank: ranks[rankIdx].value,
+      department: departments[deptIdx].value,
+      specialization: specializations[specIdx],
+      email: `${names[nameIdx].en.toLowerCase()}.${lastNames[lastIdx]
+        .toLowerCase()
+        .substring(0, 4)}@uni.edu`,
+      phoneExt: `01023456789`,
+      officeHours:
+        i % 3 === 0
+          ? "الاثنين والأربعاء: 14:00 - 15:00"
+          : "الأحد والثلاثاء: 10:00 - 12:00",
+      imageUrl: null, // تم إزالة الصور الثابتة لاستخدام Avatar
+    });
+  }
+  return data;
+};
+
+const facultyData = generateFacultyData(30);
+const RESULTS_PER_PAGE = 12; // عدد النتائج المطلوبة في كل صفحة
+
+// ** 3. مكون بطاقة العضو (Faculty Member Card) **
 const FacultyCard = ({ faculty }) => {
-  // دالة لإنشاء حرفين اختصاراً للاسم (إذا لم تتوفر صورة)
   const getInitials = (name) => {
-    const parts = name.split(" ");
+    const parts = name.split(" ").filter((p) => p.length > 1);
     if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+      return (parts[1][0] + parts[2][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   };
 
   return (
-    <Card shadow="sm" radius="md" padding="lg" withBorder>
+    <Card shadow="sm" radius="md" padding="lg" withBorder h="100%">
       <Stack gap="md">
         <Group wrap="nowrap" align="flex-start" gap="md">
-          {/* الصورة أو Avatar */}
           <Avatar
             src={faculty.imageUrl}
             alt={faculty.nameAr}
@@ -116,7 +137,6 @@ const FacultyCard = ({ faculty }) => {
             {getInitials(faculty.nameAr)}
           </Avatar>
 
-          {/* البيانات الأساسية */}
           <Stack gap={rem(4)} style={{ flexGrow: 1 }}>
             <Text fw={700} fz="lg" c="blue">
               {faculty.nameAr}
@@ -134,7 +154,6 @@ const FacultyCard = ({ faculty }) => {
 
         <Divider />
 
-        {/* التفاصيل والتواصل */}
         <Stack gap="xs" fz="sm">
           <Group wrap="nowrap" gap="xs">
             <Text fw={500} style={{ minWidth: rem(80) }}>
@@ -178,7 +197,7 @@ const FacultyCard = ({ faculty }) => {
             leftSection={<Phone size={16} />}
             disabled={!faculty.phoneExt}
           >
-             {faculty.phoneExt}
+           {faculty.phoneExt}
           </Button>
         </Group>
       </Stack>
@@ -186,15 +205,21 @@ const FacultyCard = ({ faculty }) => {
   );
 };
 
-// ** 3. المكون الرئيسي للصفحة **
+// ** 4. المكون الرئيسي للصفحة (FacultyDirectory) **
 const FacultyDirectory = () => {
   // حالات التصفية
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [selectedRank, setSelectedRank] = useState(null);
 
+  // حالة Pagination
+  const [activePage, setPage] = useState(1);
+
   // دالة التصفية الرئيسية (استخدام useMemo لتحسين الأداء)
   const filteredFaculty = useMemo(() => {
+    // نعود دائماً للصفحة الأولى عند تغيير شروط التصفية
+    setPage(1);
+
     return facultyData.filter((member) => {
       // 1. تصفية البحث النصي (الاسم والتخصص)
       const matchesSearch =
@@ -214,12 +239,29 @@ const FacultyDirectory = () => {
     });
   }, [searchTerm, selectedDepartment, selectedRank]);
 
+  // حساب إجمالي عدد الصفحات
+  const totalPages = Math.ceil(filteredFaculty.length / RESULTS_PER_PAGE);
+
+  // حساب البيانات المعروضة في الصفحة الحالية
+  const startIndex = (activePage - 1) * RESULTS_PER_PAGE;
+  const endIndex = startIndex + RESULTS_PER_PAGE;
+  const paginatedFaculty = filteredFaculty.slice(startIndex, endIndex);
+
   // عرض بطاقات النتائج
-  const facultyCards = filteredFaculty.map((member) => (
-    <Grid.Col span={{ base: 12, sm: 6, lg: 4 }} key={member.id}>
+  const facultyCards = paginatedFaculty.map((member) => (
+    // يتم عرض 4 أعمدة على الشاشات الكبيرة (lg) و 2 على الشاشات المتوسطة (sm) وعمود واحد على الشاشات الصغيرة (base)
+    <Grid.Col span={{ base: 12, sm: 8, lg: 4 }} key={member.id}>
       <FacultyCard faculty={member} />
     </Grid.Col>
   ));
+
+  // عند إعادة تعيين التصفية، نعود للصفحة الأولى
+  const handleReset = () => {
+    setSearchTerm("");
+    setSelectedDepartment(null);
+    setSelectedRank(null);
+    setPage(1);
+  };
 
   return (
     <div dir="rtl">
@@ -230,7 +272,7 @@ const FacultyDirectory = () => {
       <Grid gutter="xl">
         {/* العمود الأيمن: أدوات البحث والتصفية */}
         <Grid.Col span={{ base: 12, md: 4, lg: 3 }}>
-          <Card shadow="sm" radius="md" padding="lg" withBorder >
+          <Card shadow="sm" radius="md" padding="lg" withBorder>
             <Stack gap="md">
               <Group>
                 <Filter size={20} color="#339AF0" />
@@ -275,11 +317,7 @@ const FacultyDirectory = () => {
               <Button
                 variant="light"
                 color="gray"
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedDepartment(null);
-                  setSelectedRank(null);
-                }}
+                onClick={handleReset}
                 mt="sm"
               >
                 إعادة تعيين التصفية
@@ -295,7 +333,6 @@ const FacultyDirectory = () => {
               <Text fw={700} fz="lg" c="indigo">
                 النتائج: ({filteredFaculty.length} عضو)
               </Text>
-              {/* يمكن إضافة زر للتبديل بين طريقة العرض (قائمة/بطاقات) هنا */}
             </Group>
 
             <Divider mb="lg" />
@@ -312,6 +349,19 @@ const FacultyDirectory = () => {
                 </Grid.Col>
               )}
             </Grid>
+
+            {/* Pagination - التقسيم إلى صفحات */}
+            {totalPages > 1 && (
+              <Flex justify="center" mt="xl">
+                <Pagination
+                  total={totalPages}
+                  value={activePage}
+                  onChange={setPage}
+                  siblings={1}
+                  boundaries={1}
+                />
+              </Flex>
+            )}
           </Card>
         </Grid.Col>
       </Grid>
