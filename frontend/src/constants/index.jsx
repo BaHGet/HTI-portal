@@ -1,6 +1,7 @@
 import {
   BookOpenCheck,
   BookText,
+  CalendarCheck,
   CalendarPlus,
   DollarSign,
   GraduationCap,
@@ -39,10 +40,16 @@ export const navbarLinks = [
         icon: BookOpenCheck,
         path: "/results",
       },
+      
       {
         label: "التقارير",
         icon: NotepadText,
         path: "/reports",
+      },
+      {
+        label: "جداول الإمتحانات",
+        icon: CalendarCheck,
+        path: "/exams-tables",
       },
       {
         label: "المصروفات",

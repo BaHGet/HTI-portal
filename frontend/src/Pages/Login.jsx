@@ -8,191 +8,148 @@ import EyeOffIcon from "./../assets/Icons/show.svg";
 import "./../index.css";
 import { login } from "../Api/auth/authApi";
 
-const NewLogin = () => {
+import {
+  Container,
+  Paper,
+  TextInput,
+  Button,
+  Title,
+  Text,
+  Alert,
+  Stack,
+  Image,
+  Group,
+  Divider,
+  PasswordInput,
+} from "@mantine/core";
+
+import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
+
+export default function Login() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [sys_msg, setErrorMessage] = useState("Coded by HTI Students");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMessage("Please fill in all fields.");
-      return;
-    }
-    try {
-      await login(email, password);
-      navigate("/");
-    } catch (error) {
-      console.log(error);
-      setErrorMessage("Invalid email or password, please try again.");
-    }
-  };
+    setError("");
+    setLoading(true);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
+    try {
+      const res = await login(email, password);
+
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
+      }
+
+      navigate("/");
+    } catch (err) {
+      if (err?.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
-      <div className="flex bg-white rounded-lg shadow-xl overflow-hidden w-[600px] sm:w-[700px] md:w-[800px] mx-4 sm:mx-0">
-        {/* Left Column - Illustration/Promotional */}
-        <div className="hidden lg:block w-1/2  relative overflow-hidden rounded-r-lg">
-          {/* Placeholder for the illustration - you'd replace this with an actual SVG or image */}
-          <div className=" justify-center">
-            <div className="flex-shrink items-center text-gray-800 text-2xl text-center mt-10 font-semibold mb-6">
-              <span>HTI EDU Portal</span>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src={HtiLogo}
-                alt="Login Illustration"
-                className="w-4/7 h-4/7 object-contain"
-              />
-            </div>
-          </div>
-        </div>
+    <Container h={'100%'} w={'100%'} size={420} my={80}>
+      <Paper
+        shadow="lg"
+        radius="md"
+        p="xl"
+        withBorder
+        style={{ direction: "rtl", textAlign: "right" }}
+      >
+        {/* اللوجو */}
+        <Group justify="center" mb="md">
+          <Image src={HtiLogo} w={150} h={150} fit="contain" />
+        </Group>
 
-        {/* Right Column - Login Form */}
-        <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col bg-gray-10 justify-center">
-          <h2 className="text-2xl text-gray-900 mb-2">
-            Log in to your Account
-          </h2>
-          <div className="relative flex py-5 items-center">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="flex-shrink mx-4 text-gray-500 text-sm">
-              continue with your EDU Email
-            </span>
-            <div className="flex-grow border-t border-gray-300"></div>
-          </div>
+        <Title order={2} ta="center" mb={5}>
+          تسجيل الدخول
+        </Title>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <img
-                    src={MailIcon}
-                    alt="Mail Icon"
-                    className="w-5 h-5"
-                    style={{
-                      color: "#9ca3af",
-                      filter:
-                        "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
-                    }}
-                  />
-                </div>
-                <input
-                  type=""
-                  name="email"
-                  id="email"
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm"
-                  placeholder="Enter your Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+        <Text size="sm" c="dimmed" ta="center" mb="lg">
+          قم بتسجيل الدخول باستخدام البريد الإلكتروني الجامعي
+        </Text>
+
+        <Divider mb="lg" />
+
+        <form dir="ltr" onSubmit={handleSubmit}>
+          <Stack>
+            {/* Email */}
+            <TextInput
+              lang="en"
+              dir="ltr"
+              label="البريد الإلكتروني"
+              placeholder="student@hti.edu.eg"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              rightSection={<Mail size={18} />}
+              required
+              styles={{ input: { direction: "ltr", textAlign: "left" } }}
+            />
+            <TextInput
+              dir="ltr"
+              label="كلمة المرور"
+              placeholder="أدخل كلمة المرور"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              leftSection={<Lock size={18} />}
+              rightSection={
+                <img
+                  src={showPassword ? EyeOffIcon : EyeIcon}
+                  alt="eye"
+                  style={{ width: 20, cursor: "pointer" }}
+                  onClick={() => setShowPassword(!showPassword)}
                 />
-              </div>
-            </div>
-            {/* Password Input */}
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <img
-                    src={LockClosedIcon} // This will be your lock icon image
-                    alt="Lock Icon"
-                    className="w-5 h-5"
-                    style={{
-                      color: "#9ca3af",
-                      filter:
-                        "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
-                    }}
-                  />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"} // Dynamically set type
-                  name="password"
-                  id="password"
-                  autoComplete="off"
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 text-gray-900 sm:text-sm" // Increased pr-10 for button
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                {/* Show/Hide Password Button using img tags */}
-                <span
-                  type="button" // Important: Prevent form submission
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                  title={showPassword ? "Hide password" : "Show password"}
-                >
-                  <img
-                    src={showPassword ? EyeOffIcon : EyeIcon} // Choose icon based on state
-                    alt={showPassword ? "Hide password" : "Show password"}
-                    className="w-5 h-5"
-                    style={{
-                      color: "#9ca3af",
-                      filter:
-                        "invert(62%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(93%) contrast(89%)",
-                    }}
-                  />
-                </span>
-              </div>
-            </div>
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Remember me
-                </label>
-              </div>
-              <span
-                href="#"
-                className="font-medium text-blue-600 hover:text-blue-500 text-sm"
-              >
-                <Link to="/forgot-password">Forgot your password?</Link>
-              </span>
-            </div>
+              }
+              required
+            />
+
+            {/* Error Alert */}
+            {error && (
+              <Alert icon={<AlertCircle size={16} />} color="red" radius="md">
+                {error}
+              </Alert>
+            )}
+
             {/* Login Button */}
-            <button
+            <Button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-950 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              fullWidth
+              loading={loading}
+              leftSection={<LogIn size={18} />}
+              size="md"
             >
-              Login
-            </button>
-          </form>
-          <div className="relative flex py-5 items-center justify-center">
-            <span className="flex-shrink mx-4 text-sm text-center ">
-              {sys_msg !== "Coded by HTI Students" ? (
-                <span className="text-red-600">{sys_msg}</span>
-              ) : (
-                <span className="text-gray-500">{sys_msg}</span>
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+              تسجيل الدخول
+            </Button>
 
-export default NewLogin;
+            {/* Forgot Password */}
+            <Text size="sm" ta="center" mt="sm">
+              <Link
+                to="/forgot-password"
+                style={{
+                  textDecoration: "none",
+                  color: "var(--mantine-color-blue-6)",
+                  fontWeight: 500,
+                }}
+              >
+                نسيت كلمة المرور؟
+              </Link>
+            </Text>
+          </Stack>
+        </form>
+      </Paper>
+    </Container>
+  );
+}
