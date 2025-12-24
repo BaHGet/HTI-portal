@@ -13,10 +13,13 @@ const {
   resetPasswordValidator
 } = require('../validations/authValidator')
 
+const {
+  authLimiter
+} = require ('../utils/rateLimiter')
 
 const authRouter = express.Router();
 
-authRouter.post('/login', loginValidator, login);
+authRouter.post('/login', authLimiter, loginValidator, login);
 authRouter.post('/forgotpassword', forgetPasswordValidator, forgotPassword);
 authRouter.post('/verifyresetcode', verifyPassResetCode);
 authRouter.put('/resetpassword', resetPasswordValidator, resetPassword);

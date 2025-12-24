@@ -34,7 +34,7 @@ withdrawalSubRouter
 
 
 withdrawalSubRouter
-  .put('/withdrawal-subject', 
+  .put('/withdrawal-subject/:enrollmentId', 
     protect, 
     restrictTo("student"),
     EnrollmentValidator, 
@@ -44,7 +44,7 @@ withdrawalSubRouter
   );
 
 withdrawalSubRouter
-.put('/restoring-subject', 
+.put('/restoring-subject/:enrollmentId', 
   protect, 
   restrictTo("student"),
   EnrollmentValidator, 

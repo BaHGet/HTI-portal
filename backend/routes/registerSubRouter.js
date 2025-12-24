@@ -33,7 +33,7 @@ registerSubRouter
     getAvailableSubjects
   );
 registerSubRouter
-  .post('/register-subject', 
+  .post('/register-subject/:groupId', 
     protect, 
     restrictTo("student"),
     GroupSubValidator,
@@ -42,7 +42,7 @@ registerSubRouter
     registerSubject
   );
 registerSubRouter
-  .delete('/drop-enrollment', 
+  .delete('/drop-enrollment/:groupId', 
     protect, 
     restrictTo("student"), 
     GroupSubValidator,

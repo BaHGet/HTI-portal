@@ -164,7 +164,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
   try {
     const student = req.student;
     const semesterId = req.currentSemester.SemesterID;
-    const courseGroupId = req.body.GroupID;
+    const courseGroupId = req.params.groupId;
     //////////////////// STEP(1): All Queries ////////////////////
     const [currentEnrollments, courseGroup] = await Promise.all([
     // Query(1): Student Current Enrollments
@@ -316,7 +316,7 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
 exports.dropEnrollment = asyncHandler(async (req, res, next) => {
   /////////////////// step 1: Get studentID, GroupID ///////////////////
   const student = req.student
-  const groupId = req.body.GroupID;
+  const groupId = req.params.groupId;
   const semesterId = req.currentSemester.SemesterID;
   /////////////////// step 2: find matched data and destroy it ///////////////////
   const enrollment  = await db.Enrollment.findOne({

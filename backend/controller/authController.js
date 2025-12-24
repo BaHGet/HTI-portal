@@ -11,55 +11,77 @@ const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
 
-const login = async (req, res) => {
-  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.Email}`)
-  // data to validate user with
-  const {email, password} = req.body
+const login = async (req, res, next) => {
+  logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.Email}`);
+  
+  const { email, password } = req.body;
+
   try {
+    // 1. Check if user exists
     const checkUser = await db.User.findOne({
-      where: { Email : email },
-      attributes: [ 'UserID', 'Email', 'PasswordHash']
-    })
+      where: { Email: email },
+      attributes: ['UserID', 'Email', 'PasswordHash', 'AccountType'] 
+    });
+
     if (!checkUser) return res.status(400).send('Invalid email or password');
 
+    // 2. Check Password
     const validPass = await comparing(password, checkUser.PasswordHash);
     if (!validPass) return res.status(400).send('Invalid email or password');
 
-    const token = createToken({ id: checkUser.UserID, email: checkUser.Email })
-    res.header('token',token);
-    res.status(200).send()
+    const token = createToken({ id: checkUser.UserID, email: checkUser.Email, role: checkUser.AccountType });
+
+    const cookieOptions = {
+      expires: new Date(Date.now() +  3 * 60 * 60 * 1000), 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'strict'
+    };
+
+    res
+      .status(200)
+      .cookie('jwt', token, cookieOptions) 
+      .json({
+        status: 'success',
+        message: 'Logged in successfully',
+      });
+
   } catch (err) {
     logger.error(`${err.status || 500} - ${err.message}`);
     res.status(500).json({ error: "Internal server error", message: err.message });
   }
 };
 
-const protect = asyncHandler(async (req,res,next) => {
-
+const protect = asyncHandler(async (req, res, next) => {
   let token;
-  if (req.headers.authorization  && req.headers.authorization .startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
-  if (!token) {
-    return next(new ApiError('You are not logged in, please login to get access', 401));
+  // else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  //   token = req.headers.authorization.split(' ')[1];
+  // }
+  // if (!token) {
+  //   return next(new ApiError('You are not logged in, please login to get access', 401));
+  // }
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+  } catch (err) {
+    return next(new ApiError('Invalid token, please login again', 401));
   }
-
-  const decoded = jwt.verify(token, process.env.TOKEN_SECRET)
-
-  const currentUser = await  db.User.findByPk(decoded.id)
+  const currentUser = await db.User.findByPk(decoded.id);
   if (!currentUser) {
     return next(new ApiError('User that belong to that token no longer exist', 401));
   }
   if (currentUser.PasswordChangedAt) {
-    const passChangeTimestamp = parseInt(currentUser.PasswordChangedAt.getTime() / 1000 , 10);
-    if (passChangeTimestamp > decoded.iat ){
-      return next(new ApiError("User changed password recently",401))
+    const passChangeTimestamp = parseInt(currentUser.PasswordChangedAt.getTime() / 1000, 10);
+    if (passChangeTimestamp > decoded.iat) {
+      return next(new ApiError("User changed password recently", 401));
     }
-  } 
-  
+  }
   req.user = currentUser;
   next();
-})
+});
 
 const restrictTo = (...roles) => 
   asyncHandler(async (req, res, next) => {
