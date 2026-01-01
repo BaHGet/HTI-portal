@@ -6,12 +6,12 @@ const {
 } = require('../controller/authController')
 
 const {
-  setCurrentSemester,
   getStudent,
 } = require('../middlewares/registerSubMiddleware')
 
 // test middleware //
 const {getpastSemester} = require('../middlewares/gradeAppealMiddleware.js')
+const {setCurrentAcademicYear} = require('../middlewares/studentFinancialMiddleware.js')
 
 const {
   getGrades,
@@ -32,12 +32,13 @@ GradeAppealRouter
   )
 
 GradeAppealRouter
-  .post('/createappeal',
+  .post('/createappeal/:gradeId',
     protect,
     restrictTo("student"),
     createAppealValidator,
     getStudent,
     getpastSemester,
+    setCurrentAcademicYear,
     createAppeal
   )
 

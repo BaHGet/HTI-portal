@@ -21,6 +21,10 @@ const GroupSchedule = require('./groupSchedule')(sequelize);
 const Grade = require('./grades')(sequelize);
 const GradeAppeal = require('./gradeAppeals')(sequelize);
 const StudentCompletedCourse = require('./studentCompletedCourses')(sequelize);
+const EvaluationQuestions = require('./evaluationQuestions')(sequelize);
+const EvaluationTracking = require('./evaluationTracking')(sequelize);
+const EvaluationAnswers = require('./evaluationAnswers')(sequelize);
+const StudentFinancial = require('./studentFinancial')(sequelize);
 
 //////////////////////////// Define Relationships between models ///////////////////////////////
 
@@ -139,6 +143,22 @@ GradeAppeal.belongsTo(Grade, { foreignKey: 'GradeID' });
 Student.hasMany(GradeAppeal, { foreignKey: 'StudentID' });
 GradeAppeal.belongsTo(Student, { foreignKey: 'StudentID' });
 
+// Relation between EvaluationTracking and ( Enrollment )
+EvaluationTracking.belongsTo(Enrollment, { foreignKey: 'EnrollmentID' });
+Enrollment.hasOne(EvaluationTracking, { foreignKey: 'EnrollmentID' });
+
+// Relation between EvaluationAnswer and ( EvaluationQuestion )
+EvaluationAnswers.belongsTo(EvaluationQuestions, { foreignKey: 'QuestionID' });
+EvaluationQuestions.hasMany(EvaluationAnswers, { foreignKey: 'QuestionID' });
+
+// Relation between EvaluationAnswer and ( CourseGroup )
+EvaluationAnswers.belongsTo(CourseGroup, { foreignKey: 'GroupID' });
+CourseGroup.hasMany(EvaluationAnswers, { foreignKey: 'GroupID' });
+
+// Relation between Student and ( StudentFinancials )
+Student.hasMany(StudentFinancial, { foreignKey: 'StudentID' });
+StudentFinancial.belongsTo(Student, { foreignKey: 'StudentID' });
+
 const db = {
   sequelize, 
   Sequelize,
@@ -161,6 +181,10 @@ const db = {
   Grade, 
   GradeAppeal,
   StudentCompletedCourse,
+  EvaluationQuestions,
+  EvaluationTracking,
+  EvaluationAnswers,
+  StudentFinancial
 };
 
 

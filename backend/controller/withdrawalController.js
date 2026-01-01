@@ -41,7 +41,7 @@ exports.withdrawalSub = asyncHandler ( async(req , res, next )=>{
     const student = req.student
     const semesterId = req.currentSemester.SemesterID;
 
-    const enrollmentId = req.body.EnrollmentID;
+    const enrollmentId = req.params.enrollmentId;
     if (!enrollmentId) {
       throw new ApiError("Please provide the EnrollmentID to withdraw.", 400);
     }
@@ -109,7 +109,7 @@ exports.restoringSub = asyncHandler ( async(req , res, next )=>{
   const student = req.student
   const semesterId = req.currentSemester.SemesterID;
 
-  const enrollmentId = req.body.EnrollmentID;
+  const enrollmentId = req.params.enrollmentId;
   if (!enrollmentId) {
     return next(new ApiError("Please provide the EnrollmentID to withdraw.", 400));
   }

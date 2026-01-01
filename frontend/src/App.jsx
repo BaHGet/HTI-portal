@@ -14,23 +14,37 @@ import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
 import StudentServicesPage from "./Pages/dashboard/StudentServicesPage.jsx";
 import ExamsTables from "./Pages/dashboard/ExamsTables.jsx";
+import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        {/* 🔒 Protected Routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DashboardPage />} />
           <Route path="results" element={<Results />} />
-          <Route
-            path="reports"
-            element={<h1 className="title capitalize">التقارير</h1>}
-          />
           <Route path="exams-tables" element={<ExamsTables />} />
           <Route path="payments" element={<Payments />} />
           <Route path="registeration" element={<Registration />} />
           <Route path="withdrawal" element={<Withdrawal />} />
           <Route path="Petitions" element={<Appeals />} />
+          <Route path="student-affairs" element={<StudentServicesPage />} />
+          <Route path="faculty-members" element={<FacultyDirectory />} />
+          <Route path="complaints-and-suggestions" element={<FeedbackPage />} />
+
+          {/* صفحات placeholder */}
+          <Route
+            path="reports"
+            element={<h1 className="title capitalize">التقارير</h1>}
+          />
           <Route
             path="regulations"
             element={<h1 className="title capitalize">اللوائح الدراسية</h1>}
@@ -43,13 +57,13 @@ const App = () => {
             path="materials"
             element={<h1 className="title capitalize">بنك المواد</h1>}
           />
-          <Route path="student-affairs" element={<StudentServicesPage />} />
-          <Route path="faculty-members" element={<FacultyDirectory />} />
-          <Route path="complaints-and-suggestions" element={<FeedbackPage />} />
         </Route>
 
+        {/* 🌐 Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* ❌ Not Found */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

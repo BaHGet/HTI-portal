@@ -10,7 +10,6 @@ const {
 const {
   setCurrentSemester,
   getStudent,
-  loadCurrentEnrollments
 } = require('../middlewares/registerSubMiddleware')
 
 const {
@@ -34,17 +33,16 @@ registerSubRouter
     getAvailableSubjects
   );
 registerSubRouter
-  .post('/register-subject', 
+  .post('/register-subject/:groupId', 
     protect, 
     restrictTo("student"),
     GroupSubValidator,
     getStudent, 
     setCurrentSemester,
-    loadCurrentEnrollments,
     registerSubject
   );
 registerSubRouter
-  .delete('/drop-enrollment', 
+  .delete('/drop-enrollment/:groupId', 
     protect, 
     restrictTo("student"), 
     GroupSubValidator,

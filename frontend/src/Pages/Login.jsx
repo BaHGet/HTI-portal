@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HtiLogo from "./../assets/1.jpg";
 import MailIcon from "./../assets/Icons/mail.svg";
@@ -7,6 +7,7 @@ import EyeIcon from "./../assets/Icons/hide.svg";
 import EyeOffIcon from "./../assets/Icons/show.svg";
 import "./../index.css";
 import { login } from "../Api/auth/authApi";
+
 
 import {
   Container,
@@ -26,6 +27,12 @@ import {
 import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 
 export default function Login() {
+  useEffect(() => {
+    const token = localStorage.getItem("Api_token");
+    if (token) {
+      navigate("/", { replace: true });
+    }
+  }, []);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");

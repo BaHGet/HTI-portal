@@ -6,11 +6,36 @@ const logger = require("../utils/logger");
 const cookieParser = require("cookie-parser");
 const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
+const http = require('http'); 
+const socketIo = require('socket.io');
+const helmet = require('helmet');
+const hpp = require('hpp');
 
 const app = express();
 const cors = require("cors");
 
-app.use(express.json());
+app.use(express.json({limit:'5kb'}));
+app.use(helmet());
+app.use(hpp());
+
+// Custom Middleware instead of xss-clean
+app.use((req, res, next) => {
+  const clean = (obj) => {
+    for (const key in obj) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        clean(obj[key]);
+      }
+    }
+  };
+  if (req.body) clean(req.body);
+  if (req.query) clean(req.query);
+  if (req.params) clean(req.params);
+
+  next();
+});
+
 app.use(
   cors({
     origin: "*",
@@ -64,6 +89,9 @@ app.use(cookieParser());
 const sql = require("../config/mysqlDB");
 sql.dbConnection();
 
+const { globalLimiter } = require ("../utils/rateLimiter")
+app.use("/api/v1/", globalLimiter);
+
 const { authRouter } = require("../routes/auth");
 app.use("/api/v1/auth", authRouter);
 
@@ -85,6 +113,12 @@ app.use("/api/v1/schedules", SchedulesRouter);
 const { ResultsRouter } = require("../routes/resultsRoute");
 app.use("/api/v1/results", ResultsRouter);
 
+const { EvaluationRouter } = require("../routes/evaluationRoute");
+app.use("/api/v1/evaluations", EvaluationRouter);
+
+const { PaymentRouter } = require("../routes/studentFinancialRoute");
+app.use("/api/v1/payment", PaymentRouter);
+
 
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));
@@ -97,6 +131,25 @@ app.get("/", (req, res) => {
 // Global error handling middleware for express
 app.use(globalError);
 
+<<<<<<< HEAD
 app.listen(3000,'0.0.0.0');
+=======
+// Server Connection
+const server = http.createServer(app); 
+const io = socketIo(server, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"]
+  }
+});
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+>>>>>>> 222bb1f6e6a3656246a64acad2992b37eba331ba
 
+server.listen(3000, () => {
+  console.log(`Server running on port 3000`);
+  console.log(`Socket.io is ready! 🚀`);
+});
 // module.exports.handler = serverless(app);

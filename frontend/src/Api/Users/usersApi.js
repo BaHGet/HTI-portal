@@ -217,6 +217,23 @@ const createAppeal = async (appealData) => {
 };
 
 /* ============================================================
+   GetExamsSchaduale 
+============================================================ */
+ const getExamSchedule = async (type) => {
+  try {
+    const response = await axios.get(`${baseUrl}/schedules/my-exam-schedule`, {
+      params: { type }, 
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error getting exam schedule:", error);
+    throw error;
+  }
+};
+/* ============================================================
    DEFAULT EXPORT 
 ============================================================ */
 
@@ -231,4 +248,5 @@ export {
   getSemesterResults,
   getMyGrades,
   createAppeal,
+  getExamSchedule,
 };
