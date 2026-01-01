@@ -97,6 +97,6 @@ app.get("/", (req, res) => {
 // Global error handling middleware for express
 app.use(globalError);
 
-app.listen(3000);
+app.listen(3000,'0.0.0.0');
 
 // module.exports.handler = serverless(app);
