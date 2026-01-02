@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-
-import { getRegisteredSchadule } from "../../Api/Users/usersApi";
+import { getRegisteredSchadule } from "../../api/Users/usersApi";
 
 /**
  * يحوّل response بتاع /registration/registered-schedule
@@ -57,10 +56,12 @@ export const useRegisteredSchedule = () => {
     staleTime: 1000 * 60 * 10, // 10 min
     gcTime: 1000 * 60 * 30, // 30 min
     refetchOnWindowFocus: false,
+    // Example: Disable fetching until the component is mounted or refetch is needed
+    enabled: true, // You can set this to false during specific conditions
   });
 
   const timetableData = useMemo(() => {
-    // ✅ مهم: أثناء اللودينج ممنوع أي داتا ستاتيك تظهر
+    // ✅ أثناء اللودينج ممنوع أي داتا ستاتيك تظهر
     if (query.isLoading) return [];
     return mapApiScheduleToTimetableData(query.data);
   }, [query.isLoading, query.data]);
@@ -70,6 +71,6 @@ export const useRegisteredSchedule = () => {
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error,
-    refetch: query.refetch,
+    refetch: query.refetch, // سيتم تحديث الجدول بعد استدعاء هذه الدالة
   };
 };

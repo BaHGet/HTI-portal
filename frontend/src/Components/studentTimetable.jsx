@@ -33,7 +33,8 @@ export const StudentTimetable = () => {
   const cardRef = useRef(null);
   const [isDownloaded, setIsDownloaded] = useState(false);
 
-  const { timetableData, isLoading, isFetching } = useRegisteredSchedule();
+  const { timetableData, isLoading, isFetching, refetch } =
+    useRegisteredSchedule(); // Include refetch here
 
   const mergedMap = useMemo(
     () => generateMergedMap(timetableData),
@@ -58,6 +59,11 @@ export const StudentTimetable = () => {
   };
 
   const overlayVisible = isLoading || isFetching;
+
+  // Add refetch call to refresh timetable after modifications
+  const handleRefreshTimetable = () => {
+    refetch(); // Refresh timetable data from server after changes
+  };
 
   return (
     <Card shadow="sm" radius="md" w="100%" h="100%">
@@ -92,6 +98,7 @@ export const StudentTimetable = () => {
               leftSection={<Download size={14} />}
               variant="filled"
               color="teal"
+              onClick={handleRefreshTimetable} // Refresh timetable on click
             >
               تحميل كارت التسجيل
             </Button>
