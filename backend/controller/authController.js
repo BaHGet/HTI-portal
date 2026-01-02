@@ -32,10 +32,10 @@ const login = async (req, res, next) => {
     const token = createToken({ id: checkUser.UserID, email: checkUser.Email, role: checkUser.AccountType });
 
     const cookieOptions = {
-      expires: new Date(Date.now() +  3 * 60 * 60 * 1000), 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict'
+      expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     };
 
     res

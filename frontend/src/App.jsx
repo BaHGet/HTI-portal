@@ -14,7 +14,6 @@ import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
 import StudentServicesPage from "./Pages/dashboard/StudentServicesPage.jsx";
 import ExamsTables from "./Pages/dashboard/ExamsTables.jsx";
-import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 
 const App = () => {
   return (
@@ -24,9 +23,9 @@ const App = () => {
         <Route
           path="/"
           element={
-            <ProtectedRoute>
+            
               <Layout />
-            </ProtectedRoute>
+            
           }
         >
           <Route index element={<DashboardPage />} />

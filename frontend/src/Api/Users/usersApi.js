@@ -3,14 +3,33 @@ import axios from "axios";
 const baseUrl = import.meta.env.VITE_BASE_API_URL;
 
 /**
- * Creates request headers containing the JWT token.
- * @returns {object} Axios headers with Authorization token.
+ * Axios client configured for cookie-based authentication.
+ * It automatically sends cookies with each request.
+ *
+ * Requirements:
+ * - Backend CORS must allow credentials.
+ * - Cookies must be set correctly (HttpOnly + SameSite/Secure as needed).
  */
-const authHeaders = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
-  },
+const apiClient = axios.create({
+  baseURL: baseUrl,
+  withCredentials: true,
 });
+
+/**
+ * Normalize and throw a friendly error message.
+ * Replace with your own throwNiceError if you already have it.
+ *
+ * @param {any} error Axios error
+ * @throws {Error}
+ */
+const throwNiceError = (error) => {
+  const message =
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    "Something went wrong";
+  throw new Error(message);
+};
 
 /* ============================================================
    USERS API
@@ -18,35 +37,31 @@ const authHeaders = () => ({
 
 /**
  * Fetch all users (Admin Route)
- * @returns {Promise<object>} Users list
+ * Endpoint: GET /user/getallusers
+ * @returns {Promise<object>}
  */
-const getAllUsers = async () => {
+export const getAllUsers = async () => {
   try {
-    const response = await axios.get(`${baseUrl}/getallusers`);
-    return response.data;
+    const { data } = await apiClient.get("/user/getallusers");
+    return data;
   } catch (error) {
     console.error("Get all users error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /**
- * Fetch logged-in user information
- * Saves user_id in cookies for global usage
- * @returns {Promise<object>} Current user data
+ * Fetch logged-in user (student/admin) data
+ * Endpoint: GET /user/getme
+ * @returns {Promise<object>}
  */
-const getMe = async () => {
+export const getMe = async () => {
   try {
-    const response = await axios.get(`${baseUrl}/user/getme`, authHeaders());
-
-    if (response.data && response.data._id) {
-      document.cookie = `user_id=${response.data._id}; path=/;`;
-    }
-
-    return response.data;
+    const { data } = await apiClient.get("/user/getme");
+    return data;
   } catch (error) {
     console.error("Get me error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
@@ -55,82 +70,70 @@ const getMe = async () => {
 ============================================================ */
 
 /**
- * Get all available subjects user can register for
- * @returns {Promise<object>} Subjects list
+ * Get all available subjects the student can register
+ * Endpoint: GET /registration/available-subjects
+ * @returns {Promise<object>}
  */
-const getAvaliableSubjects = async () => {
+export const getAvaliableSubjects = async () => {
   try {
-    const response = await axios.get(
-      `${baseUrl}/registration/available-subjects`,
-      authHeaders()
-    );
-    return response.data;
+    const { data } = await apiClient.get("/registration/available-subjects");
+    return data;
   } catch (error) {
     console.error("Get available-subjects error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /**
- * Get the schedule of already registered subjects
+ * Get registered schedule (enrollments)
+ * Endpoint: GET /registration/registered-schedule
  * @returns {Promise<object>}
  */
-const getRegisteredSchadule = async () => {
+export const getRegisteredSchadule = async () => {
   try {
-    const response = await axios.get(
-      `${baseUrl}/registration/registered-schedule`,
-      authHeaders()
-    );
-    return response.data;
+    const { data } = await apiClient.get("/registration/registered-schedule");
+    return data;
   } catch (error) {
     console.error("Get registered-schedule error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /**
- * Register user into a subject group
+ * Register a subject by GroupID (NOW: GroupID in URL)
+ * Endpoint: POST /registration/register-subject/:GroupID
  * @param {number|string} GroupID
  * @returns {Promise<object>}
  */
-const registerSubject = async (GroupID) => {
+export const registerSubject = async (GroupID) => {
   try {
     if (!GroupID) throw new Error("GroupID is required");
-
-    const response = await axios.post(
-      `${baseUrl}/registration/register-subject`,
-      { GroupID },
-      authHeaders()
+    const { data } = await apiClient.post(
+      `/registration/register-subject/${GroupID}`
     );
-
-    return response.data;
+    return data;
   } catch (error) {
     console.error("registerSubject error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /**
- * Drop an enrolled subject
+ * Drop enrollment by GroupID (NOW: GroupID in URL)
+ * Endpoint: DELETE /registration/drop-enrollment/:GroupID
  * @param {number|string} GroupID
  * @returns {Promise<object>}
  */
-const dropSubject = async (GroupID) => {
+export const dropSubject = async (GroupID) => {
   try {
     if (!GroupID) throw new Error("GroupID is required");
-
-    const response = await axios.delete(
-      `${baseUrl}/registration/drop-enrollment`,
-      {
-        data: { GroupID },
-        ...authHeaders(),
-      }
+    const { data } = await apiClient.delete(
+      `/registration/drop-enrollment/${GroupID}`
     );
-
-    return response.data;
+    return data;
   } catch (error) {
     console.error("dropSubject error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
@@ -139,40 +142,49 @@ const dropSubject = async (GroupID) => {
 ============================================================ */
 
 /**
- * Fetch list of semesters available for the logged user
+ * Get semesters list for the logged student
+ * Endpoint: GET /results/semesters-list
  * @returns {Promise<object>}
  */
-const getSemestersList = async () => {
+export const getSemestersList = async () => {
   try {
-    const response = await axios.get(
-      `${baseUrl}/results/semesters-list`,
-      authHeaders()
-    );
-    return response.data;
+    const { data } = await apiClient.get("/results/semesters-list");
+    return data;
   } catch (error) {
     console.error("Get semesters-list error:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /**
- * Fetch results of a specific semester
+ * Get results for a specific semester
+ * Endpoint: GET /results/my-results/:semesterId
  * @param {string|number} semesterId
  * @returns {Promise<object>}
  */
-const getSemesterResults = async (semesterId) => {
+export const getSemesterResults = async (semesterId) => {
   try {
     if (!semesterId) throw new Error("semesterId is required");
-
-    const response = await axios.get(
-      `${baseUrl}/results/my-results/${semesterId}`,
-      authHeaders()
-    );
-
-    return response.data;
+    const { data } = await apiClient.get(`/results/my-results/${semesterId}`);
+    return data;
   } catch (error) {
     console.error("Get semester results error:", error);
-    throw error;
+    throwNiceError(error);
+  }
+};
+
+/**
+ * Get ALL results across all semesters (Dashboard usage)
+ * Endpoint: GET /results/my-results/all
+ * @returns {Promise<object>}
+ */
+export const getMyResultsAll = async () => {
+  try {
+    const { data } = await apiClient.get("/results/my-results/all");
+    return data;
+  } catch (error) {
+    console.error("Get my-results/all error:", error);
+    throwNiceError(error);
   }
 };
 
@@ -180,73 +192,83 @@ const getSemesterResults = async (semesterId) => {
    APPEALS API
 ============================================================ */
 
-
-// Get my grades (for appeals)
-const getMyGrades = async () => {
+/**
+ * Get my grades (for appeals)
+ * Endpoint: GET /appeals/my-grades
+ * @returns {Promise<object>}
+ */
+export const getMyGrades = async () => {
   try {
-    const response = await axios.get(`${baseUrl}/appeals/my-grades`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
-      },
-    });
-    return response.data;
+    const { data } = await apiClient.get("/appeals/my-grades");
+    return data;
   } catch (error) {
     console.error("Error getting my grades:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
-// Submit an appeal
-const createAppeal = async (appealData) => {
+/**
+ * Create appeal (NOW: gradeId in URL)
+ * Endpoint: POST /appeals/createappeal/:gradeId
+ * @param {number|string} gradeId
+ * @param {object} appealData
+ * @returns {Promise<object>}
+ */
+export const createAppeal = async (gradeId, appealData) => {
   try {
-    const response = await axios.post(
-      `${baseUrl}/appeals/createappeal`,
+    if (!gradeId) throw new Error("gradeId is required");
+    if (!appealData) throw new Error("appealData is required");
+
+    const { data } = await apiClient.post(
+      `/appeals/createappeal/${gradeId}`,
       appealData,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
-          "Content-Type": "application/json",
-        },
-      }
+      { headers: { "Content-Type": "application/json" } }
     );
-    return response.data;
+
+    return data;
   } catch (error) {
     console.error("Error creating appeal:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
 
 /* ============================================================
-   GetExamsSchaduale 
+   EXAMS SCHEDULE API
 ============================================================ */
- const getExamSchedule = async (type) => {
+
+/**
+ * Get current user's exam schedule
+ * Endpoint: GET /schedules/my-exam-schedule?type=Midterm|Final
+ * @param {string} [type]
+ * @returns {Promise<object>}
+ */
+export const getExamSchedule = async (type) => {
   try {
-    const response = await axios.get(`${baseUrl}/schedules/my-exam-schedule`, {
-      params: { type }, 
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("Api_token")}`,
-      },
+    const { data } = await apiClient.get("/schedules/my-exam-schedule", {
+      params: type ? { type } : undefined,
     });
-    return response.data;
+    return data;
   } catch (error) {
     console.error("Error getting exam schedule:", error);
-    throw error;
+    throwNiceError(error);
   }
 };
+
 /* ============================================================
-   DEFAULT EXPORT 
+   PAYMENT API
 ============================================================ */
 
-export {
-  getAllUsers,
-  getMe,
-  getAvaliableSubjects,
-  getRegisteredSchadule,
-  registerSubject,
-  dropSubject,
-  getSemestersList,
-  getSemesterResults,
-  getMyGrades,
-  createAppeal,
-  getExamSchedule,
+/**
+ * Get student payment/finance status
+ * Endpoint: GET /payment/student-payment
+ * @returns {Promise<object>}
+ */
+export const getStudentPayment = async () => {
+  try {
+    const { data } = await apiClient.get("/payment/student-payment");
+    return data;
+  } catch (error) {
+    console.error("Error getting student payment:", error);
+    throwNiceError(error);
+  }
 };
