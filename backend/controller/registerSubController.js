@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 const checkTimeConflict = require('../utils/timeConflict')
 const redisClient = require('../utils/redisClient');
+const { emitSeatsUpdate } = require("../Sockets/courseHooks");
 
 const db = require("../models/index");
 
@@ -324,15 +325,12 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     }, { transaction });
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
+    courseGroup.CurrentEnrolled += 1;
     await transaction.commit();
 
-    const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
-    if (req.io) {
-      req.io.emit('seats_update', {
-        groupId: courseGroupId,
-        availableSeats: availableSeats
-      });
-    }
+    const availableSeats = courseGroup.Capacity - courseGroup.CurrentEnrolled;
+
+    emitSeatsUpdate(courseGroupId, courseGroup.CurrentEnrolled, courseGroup.Capacity);
 
     //////////////////// STEP(4): Response ////////////////////
     res.status(201).json({

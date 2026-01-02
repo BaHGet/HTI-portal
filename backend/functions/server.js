@@ -1,24 +1,33 @@
+// Core
 require("dotenv").config();
 const express = require("express");
-const serverless = require("serverless-http");
-const morgan = require("morgan");
-const logger = require("../utils/logger");
-const cookieParser = require("cookie-parser");
-const globalError = require("../middlewares/apiMiddleware");
-const ApiError = require("../utils/apiError");
-const http = require('http'); 
-const socketIo = require('socket.io');
+const http = require('http');
+// Security & utils
 const helmet = require('helmet');
 const hpp = require('hpp');
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
+// App utils
+// const serverless = require("serverless-http");
+const logger = require("../utils/logger");
+const globalError = require("../middlewares/apiMiddleware");
+const ApiError = require("../utils/apiError");
+// Socket
+const { initSocket } = require("../utils/socket");
+// DB
+const sql = require("../config/mysqlDB");
+
 
 const app = express();
-const cors = require("cors");
+const server = http.createServer(app); 
+
 
 app.use(express.json({limit:'5kb'}));
 app.use(helmet());
 app.use(hpp());
 
-// Custom Middleware instead of xss-clean
+// Custom XSS middleware
 app.use((req, res, next) => {
   const clean = (obj) => {
     for (const key in obj) {
@@ -36,9 +45,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// CORS Configuration
 app.use(
   cors({
-    origin: "*",
+    origin: process.env.CLIENT_URL || "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
@@ -86,11 +96,9 @@ app.use(
 
 app.use(cookieParser());
 
-const sql = require("../config/mysqlDB");
-sql.dbConnection();
 
 const { globalLimiter } = require ("../utils/rateLimiter")
-app.use("/api/v1/", globalLimiter);
+app.use("/api/v1", globalLimiter);
 
 const { authRouter } = require("../routes/auth");
 app.use("/api/v1/auth", authRouter);
@@ -122,33 +130,31 @@ app.use("/api/v1/payment", PaymentRouter);
 const { professorsRouter } = require("../routes/professorRoute");
 app.use("/api/v1/professors", professorsRouter);
 
+app.get("/", (req, res) => {
+  res.send("HTI Portal Backend is Running... 🚀");
+});
 
 app.all("/{*any}", (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));
 });
 
-app.get("/", (req, res) => {
-  res.send("hi");
-});
 
 // Global error handling middleware for express
 app.use(globalError);
 
 // Server Connection
-const server = http.createServer(app); 
-const io = socketIo(server, {
-  cors: {
-    origin: "*", 
-    methods: ["GET", "POST"]
-  }
-});
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+async function startServer() {
+  await sql.dbConnection();
+  await initSocket(server);
 
-server.listen(3000, () => {
-  console.log(`Server running on port 3000`);
-  console.log(`Socket.io is ready! 🚀`);
-});
+
+  server.listen(3000, () => {
+    console.log(`Server running on port 3000`);
+    console.log(`Socket.io is ready! 🚀`);
+  });
+}
+
+startServer();
+
+
 // module.exports.handler = serverless(app);
