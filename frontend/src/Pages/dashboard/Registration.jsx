@@ -367,7 +367,7 @@ const Registration = () => {
 
           {/* Clickable Timetable */}
           <div
-            className="card p-0 rounded-xl flex flex-col "
+            className="card p-0 rounded-xl flex flex-col timetable-card"
             onClick={handleOpenTimetableModal}
           >
             <div className=" w-full h-full ">
