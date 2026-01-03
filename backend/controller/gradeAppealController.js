@@ -138,7 +138,7 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
       return next(new ApiError('You have already submitted an appeal for this grade. Only one appeal is allowed.', 400));
     }
     
-    return next(new ApiError('Server error while creating appeal.', 500));
+    return next(error);
   }
 });
 
