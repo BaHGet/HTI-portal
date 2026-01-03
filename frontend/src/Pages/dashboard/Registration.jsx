@@ -12,8 +12,6 @@ import StudentTimetable from "../../Components/StudentTimetable"; // Import time
 import { useMe } from "../../hooks/queries/useMe"; // Hook to get student data
 import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule.js";
 
-
-
 const Registration = () => {
   const { timetableData, isLoading, refetch } = useRegisteredSchedule();
 
@@ -23,7 +21,7 @@ const Registration = () => {
   const [update, setUpdate] = useState(0);
 
   // Modal state for showing timetable
-  const [opened, setOpened] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
   const [openedModal, setOpenedModal] = useState(false); // New modal state
   const [modalMessage, setModalMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +92,8 @@ const Registration = () => {
     } catch (error) {
       console.error("Error fetching registered schedule:", error);
       setModalMessage("حدث خطأ أثناء جلب المواد المسجلة.");
-      open();
+      open(); // عرض رسالة خطأ بدلاً من فتح تبويب جديد
+      // **تأكد من عدم فتح أي تبويب جديد هنا**
     } finally {
       setIsLoadingRegistered(false);
     }
@@ -123,9 +122,10 @@ const Registration = () => {
   const handleAdd = async (group) => {
     if (totalRegisteredCredits + group.creditHours > allowedCreditHours) {
       setModalMessage("لقد تخطيت الحد الأقصى لعدد الساعات المسموح به للتسجيل");
-      open();
-      return;
+      open(); // عرض رسالة الخطأ
+      return; // لا داعي لإضافة مادة أو تغيير التبويب
     }
+
     try {
       await registerSubject(group.groupId);
       refetch(); // تحديث الجدول بعد إضافة المادة
@@ -134,7 +134,13 @@ const Registration = () => {
     } catch (error) {
       console.error("Error registering subject:", error);
       setModalMessage("حدث خطأ أثناء إضافة المادة.");
-      open();
+      open(); // عرض رسالة الخطأ بدلاً من فتح تبويب جديد
+      // **تأكد من أنك لا تحاول إعادة توجيه هنا**
+      const errorMessage =
+        error.response?.data?.message || error.message || "حدث خطأ غير متوقع";
+
+      setModalMessage(errorMessage); // نضع الرسالة القادمة من السيرفر هنا
+      opened(true); // نفتح المودال لعرض الرسالة
     }
   };
 
