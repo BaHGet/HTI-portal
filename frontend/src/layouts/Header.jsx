@@ -35,14 +35,15 @@ const Header = ({ collapsed, setCollapsed }) => {
     try {
       // 1) اطلب من الباك اند يمسح الكوكيز
       await logout();
+      
     } catch (e) {
       console.error("Logout error:", e);
     } finally {
       // 2) امسح كاش الداتا الخاصة بالطالب
       queryClient.clear();
-
-      // 3) روح للوجن
       navigate("/login", { replace: true });
+      // 3) روح للوجن
+      
     }
   }
 
