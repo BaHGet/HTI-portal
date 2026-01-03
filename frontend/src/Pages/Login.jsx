@@ -7,6 +7,7 @@ import EyeIcon from "./../assets/Icons/hide.svg";
 import EyeOffIcon from "./../assets/Icons/show.svg";
 import "./../index.css";
 import { login } from "../Api/auth/authApi";
+import Cookies from "js-cookie";
 
 
 import {
@@ -50,17 +51,21 @@ export default function Login() {
     try {
       const res = await login(email, password);
 
-      if (res?.token) {
-        localStorage.setItem("token", res.token);
-      }
+      // الباك بيرجع success/message فقط
+      if (res?.status === "success") {
+        const jwt = Cookies.get("jwt");
 
-      navigate("/");
-    } catch (err) {
-      if (err?.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        if (jwt) {
+          navigate("/", { replace: true });
+        } else {
+          setError(
+            "تم تسجيل الدخول لكن الكوكي لم تُحفظ"
+          );
+        }
       }
+    } catch (err) {
+      if (err?.response?.data?.message) setError(err.response.data.message);
+      else setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     } finally {
       setLoading(false);
     }

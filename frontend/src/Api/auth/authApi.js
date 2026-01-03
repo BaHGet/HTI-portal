@@ -42,8 +42,12 @@ const throwNiceError = (error) => {
  */
 export const login = async (email, password) => {
   try {
-    const { data } = await api.post("/auth/login", { email, password });
-    return data;
+    const { data } = await api.post(
+      "/auth/login",
+      { email, password },
+      { withCredentials: true }
+    );
+    return data; // status/message
   } catch (error) {
     throwNiceError(error);
   }
