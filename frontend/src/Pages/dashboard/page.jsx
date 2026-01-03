@@ -158,9 +158,9 @@ const page = () => {
 
   const gpaText = (() => {
     if (isMeLoading || !Number.isFinite(gpaNumber)) return "";
-    if (gpaNumber >= 3.6) return "ممتاز";
-    if (gpaNumber >= 3.0) return "جيد جداً";
-    if (gpaNumber >= 2.4) return "جيد";
+    if (gpaNumber >= 3.4) return "ممتاز";
+    if (gpaNumber >= 2.8) return "جيد جداً";
+    if (gpaNumber >= 2.2) return "جيد";
     if (gpaNumber >= 2.0) return "مقبول";
     return "ضعيف";
   })();

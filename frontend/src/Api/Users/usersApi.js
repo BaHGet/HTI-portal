@@ -272,3 +272,66 @@ export const getStudentPayment = async () => {
     throwNiceError(error);
   }
 };
+
+/* ============================================================
+   withdrawal API
+============================================================ */
+/**
+ * Get all subjects registered by the student
+ * Endpoint: GET /withdrawal/get-subjects
+ * @returns {Promise<object>}
+ */
+export const getRegisteredSubjects = async () => {
+  try {
+    const { data } = await apiClient.get("/withdrawal/get-subjects");
+    return data;
+  } catch (error) {
+    console.error("Get registered subjects error:", error);
+    throwNiceError(error);
+  }
+};
+
+
+/**
+ * Withdraw a subject by EnrollmentID
+ * Endpoint: PUT /withdrawal/withdrawal-subject/:EnrollmentID
+ * @param {number|string} EnrollmentID
+ * @returns {Promise<object>}
+ */
+export const withdrawSubject = async (EnrollmentID) => {
+  try {
+    if (!EnrollmentID) throw new Error("EnrollmentID is required");
+
+    const { data } = await apiClient.put(
+      `/withdrawal/withdrawal-subject/${EnrollmentID}`,
+    );
+    return data;
+  } catch (error) {
+    console.error("Withdraw subject error:", error);
+    throwNiceError(error);
+  }
+};
+
+
+
+/**
+ * Restore a withdrawn subject by EnrollmentID
+ * Endpoint: PUT /withdrawal/restoring-subject/:EnrollmentID
+ * @param {number|string} EnrollmentID
+ * @returns {Promise<object>}
+ */
+export const restoreSubject = async (EnrollmentID) => {
+  try {
+    if (!EnrollmentID) throw new Error("EnrollmentID is required");
+
+    const { data } = await apiClient.put(
+      `/withdrawal/restoring-subject/${EnrollmentID}` // التعديل هنا
+    );
+
+    return data;
+  } catch (error) {
+    console.error("Restore subject error:", error);
+    throwNiceError(error);
+  }
+};
+
