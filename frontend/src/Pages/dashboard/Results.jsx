@@ -12,10 +12,11 @@ import {
   Flex,
   ScrollArea,
   LoadingOverlay,
+  TextInput,
 } from "@mantine/core";
 import { BookOpenText, CalendarSearch, GraduationCap } from "lucide-react";
 
-import { getSemestersList, getSemesterResults } from "../../Api/Users/usersApi";
+import { getSemestersList, getSemesterResults } from "../../api/Users/usersApi";
 
 // GPA Color
 const getGpaColor = (gpa) => {
@@ -25,16 +26,42 @@ const getGpaColor = (gpa) => {
   return "red";
 };
 
+// Convert Letter Grade to GPA Points (out of 4)
+const getGpaPoints = (letterGrade) => {
+  switch (letterGrade) {
+    case "A":
+      return 4;
+    case "B+":
+      return 3.5;
+    case "B":
+      return 3;
+    case "C+":
+      return 2.5;
+    case "C":
+      return 2;
+    case "D+":
+      return 1.5;
+    case "D":
+      return 1;
+    default:
+      return 0;
+  }
+};
+
 const ResultsPage = () => {
   const [semesters, setSemesters] = useState([]);
-  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState("all"); // default to 'all' for cumulative results
   const [loading, setLoading] = useState(false);
 
   const [results, setResults] = useState({
     GPA: 0,
     courses: [],
     isDataAvailable: false,
+    totalCreditHours: 0,
+    semesterGpa: 0,
   });
+
+  const [searchQuery, setSearchQuery] = useState(""); // To store the search input
 
   // ========== Fetch Semesters on Mount ==========
   useEffect(() => {
@@ -74,17 +101,58 @@ const ResultsPage = () => {
 
         const res = await getSemesterResults(selectedTerm);
 
-        setResults({
-          GPA: parseFloat(res.GPA),
-          courses: res.data,
-          isDataAvailable: res.data && res.data.length > 0,
-        });
+        let totalCredits = 0;
+        let totalPoints = 0;
+        let courseCount = 0;
+
+        // Calculate the total credit hours and GPA
+        if (selectedTerm === "all") {
+          // Handle 'all' case (cumulative results)
+          const allCourses = res.data.flatMap((semester) => semester.Results);
+          allCourses.forEach((course) => {
+            if (course.LetterGrade !== "P") {
+              totalCredits += course.CreditHours;
+              totalPoints +=
+                getGpaPoints(course.LetterGrade) * course.CreditHours;
+              courseCount++;
+            }
+          });
+
+          setResults({
+            GPA: parseFloat(res.GPA),
+            courses: allCourses,
+            isDataAvailable: res.data && res.data.length > 0,
+            totalCreditHours: totalCredits,
+            semesterGpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+          });
+        } else {
+          // Handle single semester case
+          const semesterResults = res.data;
+          semesterResults.forEach((course) => {
+            if (course.LetterGrade !== "P") {
+              totalCredits += course.CreditHours;
+              totalPoints +=
+                getGpaPoints(course.LetterGrade) * course.CreditHours;
+              courseCount++;
+            }
+          });
+
+          setResults({
+            GPA: parseFloat(res.GPA),
+            courses: semesterResults,
+            isDataAvailable: res.data && res.data.length > 0,
+            totalCreditHours: totalCredits,
+            semesterGpa: totalCredits > 0 ? totalPoints / totalCredits : 0,
+          });
+        }
       } catch (err) {
         console.error("Error fetching results:", err);
         setResults({
           GPA: 0,
           courses: [],
           isDataAvailable: false,
+          totalCreditHours: 0,
+          semesterGpa: 0,
         });
       } finally {
         setLoading(false);
@@ -94,10 +162,19 @@ const ResultsPage = () => {
     fetchResults();
   }, [selectedTerm]);
 
+  // ========== Filtered Courses based on search query ==========
+  const filteredCourses = results.courses.filter((course) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      course.CourseName.toLowerCase().includes(searchLower) ||
+      course.CourseCode.toLowerCase().includes(searchLower)
+    );
+  });
+
   // ========== Table Rows ==========
   const rows =
-    results.isDataAvailable && results.courses.length > 0 ? (
-      results.courses.map((course, index) => (
+    results.isDataAvailable && filteredCourses.length > 0 ? (
+      filteredCourses.map((course, index) => (
         <Table.Tr key={index}>
           <Table.Td style={{ textAlign: "center" }}>
             {course.CourseCode}
@@ -108,20 +185,17 @@ const ResultsPage = () => {
           <Table.Td style={{ textAlign: "center" }}>
             {course.CreditHours}
           </Table.Td>
-          <Table.Td style={{ textAlign: "center" }}>
+          <Table.Td dir="ltr" style={{ textAlign: "center" }}>
             {course.LetterGrade}
           </Table.Td>
           <Table.Td style={{ textAlign: "center" }}>
             <Badge
+              style={{ textAlign: "center" }}
+
+              dir="ltr"
               size="lg"
-              color={getGpaColor(
-                course.LetterGrade === "A"
-                  ? 4
-                  : course.LetterGrade === "B"
-                  ? 3
-                  : 2
-              )}
-              variant="filled"
+              color={'black'}
+              variant="outline"
             >
               {course.LetterGrade}
             </Badge>
@@ -187,9 +261,29 @@ const ResultsPage = () => {
                 <Badge
                   size="xl"
                   variant="filled"
-                  color={
-                    results.isDataAvailable ? getGpaColor(results.GPA) : "grey"
-                  }
+                  color={getGpaColor(results.semesterGpa)}
+                >
+                  {results.isDataAvailable
+                    ? results.semesterGpa.toFixed(2)
+                    : "-"}
+                </Badge>
+              </Stack>
+              <Stack align="center" gap={3}>
+                <Text size="sm" c="dimmed">
+                  إجمالي الساعات المسجلة
+                </Text>
+                <Badge size="xl" variant="filled">
+                  {results.totalCreditHours}
+                </Badge>
+              </Stack>
+              <Stack align="center" gap={3}>
+                <Text size="sm" c="dimmed">
+                  GPA الكامل
+                </Text>
+                <Badge
+                  size="xl"
+                  variant="filled"
+                  color={getGpaColor(results.GPA)}
                 >
                   {results.isDataAvailable ? results.GPA.toFixed(2) : "-"}
                 </Badge>
@@ -198,6 +292,8 @@ const ResultsPage = () => {
           </Card>
         </Grid.Col>
 
+        {/* === Search Input for Courses === */}
+        
         {/* === Courses Table === */}
         <Grid.Col span={12}>
           <Card shadow="sm" radius="md" padding="lg" withBorder>
@@ -206,10 +302,17 @@ const ResultsPage = () => {
               <Text fw={700} fz="lg" c="dimmed">
                 جدول نتائج المواد
               </Text>
+              <TextInput
+              px={25}
+                placeholder="ابحث عن مادة..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<BookOpenText size={16} />}
+              />
             </Flex>
             <Divider mb="md" />
 
-            <ScrollArea h={350}>
+            <ScrollArea h={500}>
               <Table withColumnBorders withRowBorders withTableBorder>
                 <Table.Thead>
                   <Table.Tr>
