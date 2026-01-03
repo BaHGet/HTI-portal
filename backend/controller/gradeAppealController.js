@@ -20,13 +20,13 @@ exports.getGrades = asyncHandler(async(req,res,next)=>{
         StudentID:student.StudentID,
         Status: {[Op.in]: ['Completed', 'Failed']}
       },
-      attributes: [],
+      attributes: ['GroupID'],
       include:[{
         model: db.CourseGroup,
-        attributes: [],
+        attributes: ['CourseID'],
         include:[{
           model: db.Course,
-          attributes: ['CourseName']
+          attributes: ['CourseName','CourseCode']
         }],  
       }],  
     },
@@ -37,10 +37,25 @@ exports.getGrades = asyncHandler(async(req,res,next)=>{
     }]
   });
   
+  const formattedData = grades.map(grade => {
+    return {
+      GradeID: grade.GradeID,
+      CourseCode: grade.Enrollment.CourseGroup.Course.CourseCode,
+      CourseName: grade.Enrollment.CourseGroup.Course.CourseName,
+      Midterm: grade.Midterm,
+      Final: grade.Final,
+      Activities: grade.Activities,
+      Total: grade.Total,
+      LetterGrade: grade.LetterGrade,
+      AppealStatus: grade.GradeAppeal ? grade.GradeAppeal.Status : 'No Appeal'
+    };
+  });
+
+
   res.status(200).json({
     success: true,
-    count: grades.length,
-    data: grades
+    count: formattedData.length,
+    data: formattedData
   });
 })
 
