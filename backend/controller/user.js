@@ -176,7 +176,7 @@ const updateLoggedUserPassword = asyncHandler(async(req,res,next)=>{
 
 const logout = asyncHandler(async (req, res, next) => {
   res.cookie('jwt', 'loggedout', {
-    expires: new Date(Date.now() + 2 * 1000), 
+    expires: new Date(Date.now()), 
     httpOnly: true
   });
 

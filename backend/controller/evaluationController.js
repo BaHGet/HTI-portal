@@ -1,4 +1,6 @@
 const asyncHandler = require('express-async-handler');
+const ApiError = require('../utils/apiError');
+
 const db = require("../models/index");
 
 
@@ -116,8 +118,7 @@ exports.EvaluationAnswer=asyncHandler(async(req,res,next)=>{
     if (error.name === 'SequelizeUniqueConstraintError') {
       return next(new ApiError('You have already submitted evaluation for this course.', 400));
     }
-    console.error('Submit Evaluation Error:', error);
-    return next(new ApiError('Internal Server Error during submission.', 500));
+    return next(error);
   }
 })
 
