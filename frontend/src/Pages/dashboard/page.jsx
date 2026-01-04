@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
 } from "lucide-react";
 import { LineChart } from "@mantine/charts";
+
 import {
   Card,
   Text,
@@ -37,19 +38,6 @@ import StudentTimetable from "../../Components/StudentTimetable";
 // ✅ عدّل المسار ده حسب مكان hook عندك
 import { useMe } from "../../hooks/queries/useMe";
 import { getSemesterResults } from "../../api/Users/usersApi";
-
-const days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء"];
-const periods = [
-  { label: "P1", start: "09:00", end: "09:45" },
-  { label: "P2", start: "09:45", end: "10:30" },
-  { label: "P3", start: "10:30", end: "11:15" },
-  { label: "P4", start: "11:15", end: "12:00" },
-  { label: "P5", start: "12:00", end: "12:45" },
-  { label: "P6", start: "12:45", end: "01:30" },
-  { label: "P7", start: "01:30", end: "02:15" },
-  { label: "P8", start: "02:15", end: "03:00" },
-];
-
 
 const initialNotifications = [
   {
@@ -94,17 +82,6 @@ const initialNotifications = [
     message: "تم الموافقة على طلبك لتغيير المجموعة.",
     type: "success",
   },
-];
-
-
-const coursesThisTerm = [
-  { code: "CS101", name: "Introduction to CS", grade: 85, hours: 3 },
-  { code: "MATH201", name: "Calculus", grade: 92, hours: 3 },
-  { code: "PHY101", name: "Physics I", grade: 76, hours: 2 },
-  { code: "ENG101", name: "English", grade: 89, hours: 2 },
-  { code: "HIST101", name: "History", grade: 95, hours: 2 },
-  { code: "CHEM101", name: "Chemistry", grade: 67, hours: 3 },
-  { code: "BIO101", name: "Biology", grade: 88, hours: 3 },
 ];
 
 const useTermData = () => {
@@ -179,7 +156,7 @@ const useTermData = () => {
         // تخزين بيانات الفصل الدراسي الأخير
         setLatestTermData(latestSemester.Results);
         setLatestTermName(latestSemester.SemesterName); // تخزين اسم الفصل الدراسي
-        
+
         setTermData(formattedTermData);
         setIsLoading(false);
       } catch (error) {
@@ -191,7 +168,7 @@ const useTermData = () => {
     fetchTermData();
   }, []);
 
-  return { termData, isLoading , latestTermData, latestTermName };
+  return { termData, isLoading, latestTermData, latestTermName };
 };
 
 // Convert Letter Grade to GPA Points (out of 4)
@@ -231,9 +208,9 @@ const page = () => {
   let lastTermPoints = 0;
   let lastTermTotalCredits = 0;
   let lastSemesterGpa = 0;
-  if(latestTermData){
-    latestTermData.forEach(course => {
-      if (course.LetterGrade !== "P"){
+  if (latestTermData) {
+    latestTermData.forEach((course) => {
+      if (course.LetterGrade !== "P") {
         lastTermTotalCredits += course.CreditHours;
         lastTermPoints += getGpaPoints(course.LetterGrade) * course.CreditHours;
       }
@@ -243,7 +220,6 @@ const page = () => {
         ? (lastTermPoints / lastTermTotalCredits).toFixed(2)
         : 0;
   }
-
 
   // ✅ getMe مرة واحدة (React Query cache)
   const { data: meResponse, isLoading: isMeLoading } = useMe();
@@ -305,73 +281,6 @@ const page = () => {
         console.error("Error generating image", err);
       });
   };
-
-  function calculateTermGPA(courses, prevGPA = 0, prevHours = 0) {
-    const gradeToGPA = (grade) => {
-      if (grade >= 95) return 4.0;
-      if (grade >= 90) return 4.0;
-      if (grade >= 85) return 3.7;
-      if (grade >= 80) return 3.3;
-      if (grade >= 75) return 3.0;
-      if (grade >= 70) return 2.7;
-      if (grade >= 65) return 2.3;
-      if (grade >= 60) return 2.0;
-      return 0.0;
-    };
-
-    const totalNewHours = courses.reduce((acc, c) => acc + c.hours, 0);
-    const totalNewPoints = courses.reduce(
-      (acc, c) => acc + gradeToGPA(c.grade) * c.hours,
-      0
-    );
-
-    const totalHours = prevHours + totalNewHours;
-    const totalPoints = prevGPA * prevHours + totalNewPoints;
-
-    return totalHours === 0 ? 0 : totalPoints / totalHours;
-  }
-
-  function getLetterGrade(grade) {
-    if (grade >= 94) return "A+";
-    if (grade >= 90) return "A";
-    if (grade >= 80) return "B";
-    if (grade >= 70) return "C";
-    if (grade >= 60) return "D";
-    return "F";
-  }
-
-  function gradeToGPA(grade) {
-    if (grade >= 95) return 4.0;
-    if (grade >= 90) return 4.0;
-    if (grade >= 85) return 3.7;
-    if (grade >= 80) return 3.3;
-    if (grade >= 75) return 3.0;
-    if (grade >= 70) return 2.7;
-    if (grade >= 65) return 2.3;
-    if (grade >= 60) return 2.0;
-    return 0.0;
-  }
-
-  // ✅ الحسابات دي ملهاش API واضح عندك دلوقتي، فهنسيبها (بس مش هتظهر أثناء اللودينج)
-  const prevGPA = 3.01;
-  const prevHours = 126;
-
-  const safeCoursesThisTerm = isMeLoading ? [] : coursesThisTerm;
-
-  const totalNewHours = safeCoursesThisTerm.reduce(
-    (acc, c) => acc + c.hours,
-    0
-  );
-  const totalNewPoints = safeCoursesThisTerm.reduce(
-    (acc, c) => acc + gradeToGPA(c.grade) * c.hours,
-    0
-  );
-
-  const newTermGPA = calculateTermGPA(safeCoursesThisTerm, prevGPA, prevHours);
-  const newCumulativeGPA =
-    prevHours + totalNewHours === 0
-      ? 0
-      : (prevGPA * prevHours + totalNewPoints) / (prevHours + totalNewHours);
 
   const handleClose = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -739,7 +648,7 @@ const page = () => {
                                   textdirection: "ltr",
                                 }}
                               >
-                                {course.LetterGrade}
+                                <Text dir="ltr">{course.LetterGrade}</Text>
                               </Table.Td>
                             </Table.Tr>
                           ))
