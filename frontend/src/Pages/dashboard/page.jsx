@@ -30,12 +30,13 @@ import {
 } from "@mantine/core";
 import { Footer } from "../../layouts/footer";
 import profileImage from "../../assets/user_img.jpg";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as htmlToImage from "html-to-image";
 import StudentTimetable from "../../Components/StudentTimetable";
 
 // ✅ عدّل المسار ده حسب مكان hook عندك
 import { useMe } from "../../hooks/queries/useMe";
+import { getSemesterResults } from "../../api/Users/usersApi";
 
 const days = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء"];
 const periods = [
@@ -48,6 +49,7 @@ const periods = [
   { label: "P7", start: "01:30", end: "02:15" },
   { label: "P8", start: "02:15", end: "03:00" },
 ];
+
 
 const initialNotifications = [
   {
@@ -94,21 +96,6 @@ const initialNotifications = [
   },
 ];
 
-const termData = [
-  { term: "1-2021", gpa: 3.2 },
-  { term: "2-2021", gpa: 3.4 },
-  { term: "3-2021", gpa: 3.1 },
-  { term: "1-2022", gpa: 3.5 },
-  { term: "2-2022", gpa: 3.6 },
-  { term: "3-2022", gpa: 3.3 },
-  { term: "1-2023", gpa: 3.7 },
-  { term: "2-2023", gpa: 3.8 },
-  { term: "3-2023", gpa: 3.6 },
-  { term: "1-2024", gpa: 3.4 },
-  { term: "2-2024", gpa: 3.5 },
-  { term: "3-2024", gpa: 3.7 },
-  { term: "1-2025", gpa: 3.9 },
-];
 
 const coursesThisTerm = [
   { code: "CS101", name: "Introduction to CS", grade: 85, hours: 3 },
@@ -120,9 +107,143 @@ const coursesThisTerm = [
   { code: "BIO101", name: "Biology", grade: 88, hours: 3 },
 ];
 
+const useTermData = () => {
+  const [latestTermData, setLatestTermData] = useState(null);
+  const [latestTermName, setLatestTermName] = useState("");
+  const [termData, setTermData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // دالة لحساب الـ GPA بناءً على الدرجات
+  const calculateGPA = (courses) => {
+    const totalCreditHours = courses.reduce(
+      (acc, course) => acc + course.CreditHours,
+      0
+    );
+    const totalPoints = courses.reduce(
+      (acc, course) =>
+        acc + getGpaPoints(course.LetterGrade) * course.CreditHours,
+      0
+    );
+
+    return totalCreditHours === 0 ? 0 : totalPoints / totalCreditHours;
+  };
+
+  const getGpaPoints = (letterGrade) => {
+    switch (letterGrade) {
+      case "A+":
+      case "A":
+        return 4.0;
+      case "A-":
+        return 3.7;
+      case "B+":
+        return 3.3;
+      case "B":
+        return 3.0;
+      case "B-":
+        return 2.7;
+      case "C+":
+        return 2.3;
+      case "C":
+        return 2.0;
+      case "C-":
+        return 1.7;
+      case "D+":
+        return 1.3;
+      case "D":
+        return 1.0;
+      default:
+        return 0.0;
+    }
+  };
+
+  // استدعاء الدالة الخاصة بـ API لجلب البيانات وتحديثها
+  useEffect(() => {
+    const fetchTermData = async () => {
+      try {
+        const response = await getSemesterResults("all"); // نمرر 'all' لجلب نتائج كل الفصول
+        const semesters = response.data;
+
+        // نقوم بحساب الـ GPA لكل تيرم
+        const formattedTermData = semesters.map((semester) => {
+          const semesterGPA = calculateGPA(semester.Results);
+          return {
+            term: semester.SemesterName,
+            gpa: semesterGPA.toFixed(2),
+          };
+        });
+
+        // استخراج الفصل الدراسي الأخير
+        const latestSemester = semesters[semesters.length - 1];
+        const semesterResults = latestSemester.Results;
+
+        // تخزين بيانات الفصل الدراسي الأخير
+        setLatestTermData(latestSemester.Results);
+        setLatestTermName(latestSemester.SemesterName); // تخزين اسم الفصل الدراسي
+        
+        setTermData(formattedTermData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching semester data:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchTermData();
+  }, []);
+
+  return { termData, isLoading , latestTermData, latestTermName };
+};
+
+// Convert Letter Grade to GPA Points (out of 4)
+const getGpaPoints = (letterGrade) => {
+  switch (letterGrade) {
+    case "A+":
+      return 4;
+    case "A":
+      return 4;
+    case "A-":
+      return 3.7;
+    case "B+":
+      return 3.3;
+    case "B":
+      return 3;
+    case "B-":
+      return 2.7;
+    case "C+":
+      return 2.3;
+    case "C":
+      return 2;
+    case "C-":
+      return 1.7;
+    case "D+":
+      return 1.3;
+    case "D":
+      return 1;
+    default:
+      return 0; // This is for "F" or any unrecognized grade
+  }
+};
+
 const page = () => {
+  const { termData, isLoading, latestTermData, latestTermName } = useTermData();
   const cardRef = useRef(null);
   const [isDownloaded, setIsDownloaded] = useState(false);
+  let lastTermPoints = 0;
+  let lastTermTotalCredits = 0;
+  let lastSemesterGpa = 0;
+  if(latestTermData){
+    latestTermData.forEach(course => {
+      if (course.LetterGrade !== "P"){
+        lastTermTotalCredits += course.CreditHours;
+        lastTermPoints += getGpaPoints(course.LetterGrade) * course.CreditHours;
+      }
+    });
+    lastSemesterGpa =
+      lastTermTotalCredits > 0
+        ? (lastTermPoints / lastTermTotalCredits).toFixed(2)
+        : 0;
+  }
+
 
   // ✅ getMe مرة واحدة (React Query cache)
   const { data: meResponse, isLoading: isMeLoading } = useMe();
@@ -533,7 +654,7 @@ const page = () => {
                     pr={5}
                     mb={0}
                   >
-                    كشف درجات الترم الحالي
+                    كشف درجات اخر فصل دراسي {`(${latestTermName})`}
                   </Text>
                 </Flex>
 
@@ -550,7 +671,9 @@ const page = () => {
                     <Text size="sm" c="dimmed">
                       عدد ساعات الترم
                     </Text>
-                    <Text weight={700}>{showStatic ? totalNewHours : ""}</Text>
+                    <Text weight={700}>
+                      {showStatic ? lastTermTotalCredits : ""}
+                    </Text>
                   </Group>
 
                   <Group direction="column" spacing={2} align="center">
@@ -558,7 +681,7 @@ const page = () => {
                       المعدل التراكمي للترم
                     </Text>
                     <Text weight={700}>
-                      {showStatic ? (3.052).toFixed(2) : ""}
+                      {showStatic ? lastSemesterGpa : ""}
                     </Text>
                   </Group>
 
@@ -567,7 +690,11 @@ const page = () => {
                       المعدل الإجمالي
                     </Text>
                     <Text weight={700}>
-                      {showStatic ? newCumulativeGPA.toFixed(2) : ""}
+                      {showStatic
+                        ? Number.isFinite(gpaNumber)
+                          ? gpaNumber.toFixed(2)
+                          : "--"
+                        : ""}
                     </Text>
                   </Group>
                 </Flex>
@@ -594,22 +721,29 @@ const page = () => {
                     </Table.Thead>
 
                     <Table.Tbody>
-                      {safeCoursesThisTerm.map((course) => (
-                        <Table.Tr key={course.code}>
-                          <Table.Td style={{ textAlign: "center" }}>
-                            {course.code}
-                          </Table.Td>
-                          <Table.Td style={{ textAlign: "center" }}>
-                            {course.name}
-                          </Table.Td>
-                          <Table.Td style={{ textAlign: "center" }}>
-                            {course.grade}
-                          </Table.Td>
-                          <Table.Td style={{ textAlign: "center" }}>
-                            {getLetterGrade(course.grade)}
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
+                      {latestTermData
+                        ? latestTermData.map((course) => (
+                            <Table.Tr key={course.CourseCode}>
+                              <Table.Td style={{ textAlign: "center" }}>
+                                {course.CourseCode}
+                              </Table.Td>
+                              <Table.Td style={{ textAlign: "center" }}>
+                                {course.CourseName}
+                              </Table.Td>
+                              <Table.Td style={{ textAlign: "center" }}>
+                                {course.Total}
+                              </Table.Td>
+                              <Table.Td
+                                style={{
+                                  textAlign: "center",
+                                  textdirection: "ltr",
+                                }}
+                              >
+                                {course.LetterGrade}
+                              </Table.Td>
+                            </Table.Tr>
+                          ))
+                        : null}
                     </Table.Tbody>
                   </Table>
                 </ScrollArea>
@@ -639,7 +773,7 @@ const page = () => {
                 <ScrollArea>
                   <LineChart
                     h={300}
-                    data={showStatic ? termData : []}
+                    data={termData}
                     dataKey="term"
                     yAxisProps={{ domain: [0, 4] }}
                     series={[{ name: "gpa", color: "indigo.6" }]}
