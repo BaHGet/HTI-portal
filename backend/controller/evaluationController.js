@@ -11,7 +11,7 @@ exports.getEvaluations = asyncHandler ( async(req , res, next )=>{
 
   const studentEnrollments = await db.Enrollment.findAll({
     where: { StudentID: student.StudentID},
-    attributes:['EnrollmentID'],
+    attributes:['EnrollmentID','Status'],
     include:[{
       model: db.CourseGroup,
       where: { SemesterID: semesterId },
@@ -37,6 +37,7 @@ exports.getEvaluations = asyncHandler ( async(req , res, next )=>{
     const isEvaluated = completedEvaluations.some(ev => ev.EnrollmentID === enrollment.EnrollmentID);
     return {
       EnrollmentID: enrollment.EnrollmentID,
+      Status: enrollment.Status,
       CourseName: enrollment.CourseGroup.Course.CourseName,
       CourseCode: enrollment.CourseGroup.Course.CourseCode,
       CreditHours: enrollment.CourseGroup.Course.CreditHours,
