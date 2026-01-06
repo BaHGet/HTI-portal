@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getExamSchedule } from "../../Api/Users/usersApi";
+import { getExamSchedule } from "../../api/Users/usersApi";
 import {
   Card,
   Grid,

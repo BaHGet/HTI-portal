@@ -117,7 +117,6 @@ const TuitionFeesPage = () => {
         setLoading(true); // عند بدء التحميل نحدد أن البيانات في حالة تحميل
         const response = await getStudentPayment(); // استدعاء الـ API
         setApiData(response.data); // تخزين البيانات عند تحميلها
-        console.log("Fetched payment data:", response.data);
         setLoading(false); // عند الانتهاء من التحميل نقوم بتعيين الـ loading إلى false
       } catch (error) {
         setLoading(false);

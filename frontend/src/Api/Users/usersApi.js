@@ -272,6 +272,76 @@ export const getStudentPayment = async () => {
     throwNiceError(error);
   }
 };
+/* ============================================================
+   SURVEY API
+============================================================ */
+
+/**
+ * Get student survaiable-subjects status
+ * Endpoint: GET /evaluations/get-subjects
+ * @returns {Promise<object>}
+ */
+export const getSubjects = async () => {
+  try {
+    const { data } = await apiClient.get("/evaluations/get-subjects");
+    return data;
+  } catch (error) {
+    console.error("Error getting student Subjects:", error);
+    throwNiceError(error);
+  }
+};
+
+/**
+ * Withdraw a subject by EnrollmentID
+ * Endpoint: PUT /withdrawal/withdrawal-subject/:EnrollmentID
+ * @param {number|string} EnrollmentID
+ * @returns {Promise<object>}
+ */
+export const getSurveyQuestions = async (EnrollmentID) => {
+  try {
+    if (!EnrollmentID) throw new Error("EnrollmentID is required");
+
+    const { data } = await apiClient.get(
+      `/evaluations/pending-eval/${EnrollmentID}`
+    );
+    return data;
+  } catch (error) {
+    console.error("Get Questions Error:", error);
+    throwNiceError(error);
+  }
+};
+
+/**
+ * Submit evaluation answers
+ * Endpoint: POST /evaluations/eval-answers/:EnrollmentID
+ * @param {number|string} EnrollmentID
+ * @param {Array} answers - The answers to be submitted
+ * @returns {Promise<object>}
+ */
+export const submitSurveyAnswers = async (EnrollmentID, answers) => {
+  try {
+    if (!EnrollmentID) throw new Error("EnrollmentID is required");
+    if (!Array.isArray(answers) || answers.length === 0) {
+      throw new Error("Answers are required and should be an array");
+    }
+
+    // إعداد البيانات التي سيتم إرسالها
+    const requestData = {
+      answers: answers,
+    };
+
+    // إرسال البيانات عبر POST أو PUT حسب الحاجة
+    const { data } = await apiClient.post(
+      `/evaluations/eval-answers/${EnrollmentID}`,
+      requestData
+    );
+
+    return data;
+  } catch (error) {
+    console.error("Submit Answers Error:", error);
+    throwNiceError(error); // يمكنك تعديل هذه الدالة للتعامل مع الأخطاء بشكل ملائم
+  }
+};
 
 /* ============================================================
    withdrawal API

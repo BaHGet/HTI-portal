@@ -42,9 +42,9 @@ export const navbarLinks = [
       },
       
       {
-        label: "التقارير",
+        label: "الإستبيانات",
         icon: NotepadText,
-        path: "/reports",
+        path: "/surveys",
       },
       {
         label: "جداول الإمتحانات",

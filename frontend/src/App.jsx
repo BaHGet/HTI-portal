@@ -23,6 +23,7 @@ import FeedbackPage from "./Pages/dashboard/FeedbackPage.jsx";
 import FacultyDirectory from "./Pages/dashboard/FacultyDirectory.jsx";
 import StudentServicesPage from "./Pages/dashboard/StudentServicesPage.jsx";
 import ExamsTables from "./Pages/dashboard/ExamsTables.jsx";
+import Survey from "./Pages/dashboard/Survey.jsx";
 
 function RequireAuth() {
   const location = useLocation();
@@ -50,6 +51,7 @@ const App = () => {
             <Route path="results" element={<Results />} />
             <Route path="exams-tables" element={<ExamsTables />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="surveys" element={<Survey />} />
             <Route path="registeration" element={<Registration />} />
             <Route path="withdrawal" element={<Withdrawal />} />
             <Route path="Petitions" element={<Appeals />} />
@@ -61,10 +63,6 @@ const App = () => {
             />
 
             {/* صفحات placeholder */}
-            <Route
-              path="reports"
-              element={<h1 className="title capitalize">التقارير</h1>}
-            />
             <Route
               path="regulations"
               element={<h1 className="title capitalize">اللوائح الدراسية</h1>}
