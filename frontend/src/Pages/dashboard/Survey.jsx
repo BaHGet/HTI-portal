@@ -25,21 +25,20 @@ const SurveyPage = () => {
   const [answers, setAnswers] = useState([]);
   const [enrollmentID, setEnrollmentID] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEvaluated, setIsEvaluated] = useState(false);
 
+  const fetchServaiesData = async () => {
+    try {
+      setLoading(true);
+      const response = await getSubjects(); // استدعاء الـ API
+      setSurveys(response.data); // تخزين البيانات عند تحميلها
+      setLoading(false); // عند الانتهاء من التحميل نقوم بتعيين الـ loading إلى false
+    } catch (error) {
+      setLoading(false);
+      console.error("Error fetching Subject data:", error);
+    }
+  };
   // محاكاة جلب البيانات من API
   useEffect(() => {
-      const fetchServaiesData = async () => {
-        try {
-          setLoading(true);
-          const response = await getSubjects(); // استدعاء الـ API
-          setSurveys(response.data); // تخزين البيانات عند تحميلها
-          setLoading(false); // عند الانتهاء من التحميل نقوم بتعيين الـ loading إلى false
-        } catch (error) {
-          setLoading(false);
-          console.error("Error fetching Subject data:", error);
-        }
-      };
       fetchServaiesData();
     }, []);
 
@@ -52,7 +51,6 @@ const SurveyPage = () => {
         setbtnLoading(false);
         setEnrollmentID(EnrollmentID);
         setIsModalOpen(true);
-        setIsEvaluated(false);
       } catch (error) {
         setbtnLoading(false);
         alert("لقد قمت بالإجابة على هذا الاستبيان مسبقاً.");
@@ -111,10 +109,10 @@ const SurveyPage = () => {
         setbtnLoading(true);
         await submitSurveyAnswers(EnrollmentID, answer);
         setbtnLoading(false);
-        setIsEvaluated(true);
         setIsModalOpen(false);
         setAnswers([]);
         setEnrollmentID(0);
+        fetchServaiesData();
       } catch (error) {
         console.error("Error submitting survey answers:", error);
       }
@@ -130,11 +128,11 @@ const SurveyPage = () => {
         <Table.Tr key={survey.EnrollmentID}>
           <Table.Td style={{ textAlign: "center" }}>
             <Button
-            size="sm"
+              size="sm"
               onClick={() => handleStartSurvey(survey.EnrollmentID)}
-              disabled={isEvaluated}
+              disabled={survey.isEvaluated}
             >
-              {isEvaluated ? (
+              {survey.isEvaluated ? (
                 "تمت الإجابة"
               ) : btnLoading ? (
                 <Loader size="sm" color="rgba(255, 255, 255, 1)" />
@@ -144,10 +142,13 @@ const SurveyPage = () => {
             </Button>
           </Table.Td>
           <Table.Td style={{ textAlign: "center" }}>
-            {survey.CourseGroup.Course.CourseName}
+            {survey.CourseCode}
           </Table.Td>
           <Table.Td style={{ textAlign: "center" }}>
-            {survey.CourseGroup.GroupNumber}
+            {survey.CourseName}
+          </Table.Td>
+          <Table.Td style={{ textAlign: "center" }}>
+            {survey.GroupNumber}
           </Table.Td>
         </Table.Tr>
       )
@@ -166,10 +167,13 @@ const SurveyPage = () => {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th style={{ textAlign: "center" }}>
-                  ابدأ الاستبيان
+                 
                 </Table.Th>
                 <Table.Th style={{ textAlign: "center" }}>
-                  اسم الاستبيان
+                 كود المادة
+                </Table.Th>
+                <Table.Th style={{ textAlign: "center" }}>
+                  اسم المادة
                 </Table.Th>
                 <Table.Th style={{ textAlign: "center" }}>
                   رقم المجموعة

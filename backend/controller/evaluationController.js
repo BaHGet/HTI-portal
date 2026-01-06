@@ -9,7 +9,7 @@ exports.getEvaluations = asyncHandler(async (req, res, next) => {
 
   const studentEnrollments = await db.Enrollment.findAll({
     where: { StudentID: student.StudentID },
-    attributes: ["EnrollmentID"],
+    attributes: ["EnrollmentID", "Status"],
     include: [
       {
         model: db.CourseGroup,
@@ -39,6 +39,7 @@ exports.getEvaluations = asyncHandler(async (req, res, next) => {
     );
     return {
       EnrollmentID: enrollment.EnrollmentID,
+      Status: enrollment.Status,
       CourseName: enrollment.CourseGroup.Course.CourseName,
       CourseCode: enrollment.CourseGroup.Course.CourseCode,
       CreditHours: enrollment.CourseGroup.Course.CreditHours,
