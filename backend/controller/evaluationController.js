@@ -5,6 +5,54 @@ const db = require("../models/index");
 
 
 
+exports.getEvaluations = asyncHandler ( async(req , res, next )=>{
+  const student = req.student
+  const semesterId = req.currentSemester.SemesterID;
+
+  const studentEnrollments = await db.Enrollment.findAll({
+    where: { StudentID: student.StudentID},
+    attributes:['EnrollmentID'],
+    include:[{
+      model: db.CourseGroup,
+      where: { SemesterID: semesterId },
+      attributes: ['GroupNumber'],
+      include:[
+        {
+        model: db.Course,
+        attributes:['CourseName','CourseCode','CreditHours'],
+        }
+      ]
+    }]
+  })
+
+  const enrollmentIds = studentEnrollments.map(e => e.EnrollmentID);
+
+  const completedEvaluations = await db.EvaluationTracking.findAll({
+    where: { 
+      EnrollmentID: { [db.Sequelize.Op.in]: enrollmentIds } 
+    }
+  });
+
+  const formattedData = studentEnrollments.map(enrollment => {
+    const isEvaluated = completedEvaluations.some(ev => ev.EnrollmentID === enrollment.EnrollmentID);
+    return {
+      EnrollmentID: enrollment.EnrollmentID,
+      CourseName: enrollment.CourseGroup.Course.CourseName,
+      CourseCode: enrollment.CourseGroup.Course.CourseCode,
+      CreditHours: enrollment.CourseGroup.Course.CreditHours,
+      GroupNumber: enrollment.CourseGroup.GroupNumber,
+      isEvaluated: isEvaluated 
+    };
+  });
+
+  res.status(200).json({
+    success: true,
+    count: formattedData.length,
+    data: formattedData
+  });
+})
+
+
 
 exports.PendingEvaluations=asyncHandler(async(req,res,next)=>{
   const student = req.student;

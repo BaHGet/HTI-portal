@@ -11,10 +11,7 @@ const {
 } = require('../middlewares/registerSubMiddleware')
 
 const {
-  getStudentSub
-} = require('../controller/withdrawalController')
-
-const {
+  getEvaluations,
   PendingEvaluations,
   EvaluationAnswer
 } = require('../controller/evaluationController')
@@ -32,7 +29,7 @@ EvaluationRouter
     restrictTo("student"),
     getStudent,
     setCurrentSemester,
-    getStudentSub
+    getEvaluations
   )
 
 EvaluationRouter
