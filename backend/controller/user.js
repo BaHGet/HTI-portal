@@ -87,8 +87,12 @@ const getLoggedUserData = asyncHandler(async(req,res,next)=>{
   if (accountType === 'student' || accountType === 'Graduated') {
     profileData = await db.Student.findOne({
       where: { UserID: userId },
-      attributes: ['StudentID','StudentName','StudentAddress','CreditHours','gpa'], 
+      attributes: ['StudentID','StudentName','StudentAddress','CreditHours','gpa','isLastTerm'], 
       include: [
+        {
+          model: db.Professor,
+          attributes: ['ProfessorName']
+        },
         { 
           model: db.Department,
           attributes: ['DepartmentName'],
