@@ -21,6 +21,8 @@ import {
   Skeleton, // استخدمنا Skeleton لعرض حالة التحميل
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { useMe } from "../../hooks/queries/useMe";
+
 import {
   User,
   DollarSign,
@@ -51,13 +53,6 @@ const BANK_DETAILS = {
     instapayID: "nileuni.pay",
     bankName: "InstaPay/البنوك المشتركة",
   },
-};
-const studentData = {
-  id: "20230123",
-  name: "محمد علي أحمد",
-  id: "20210741",
-  department: "علوم الحاسوب",
-  initialPaymentStatus: "NotPaid",
 };
 
 // ** القيود
@@ -97,6 +92,17 @@ const TuitionFeesPage = () => {
   const [loading, setLoading] = useState(true); // حالة التحميل
   const [apiData, setApiData] = useState(null); // لتخزين بيانات الـ API بعد تحميلها
 
+  const { data: meResponse, isLoading: isMeLoading } = useMe();
+  const me = meResponse?.data;
+  const showStatic = !isMeLoading;
+
+
+  const studentData = {
+    id: isMeLoading ? "" : me?.StudentID ?? "",
+    name: isMeLoading ? "" : me?.StudentName || "",
+  };
+
+
   const [
     uploadModalOpened,
     { open: openUploadModal, close: closeUploadModal },
@@ -109,7 +115,7 @@ const TuitionFeesPage = () => {
     const fetchPaymentData = async () => {
       try {
         setLoading(true); // عند بدء التحميل نحدد أن البيانات في حالة تحميل
-        const response = await getStudentPayment("20230123"); // استدعاء الـ API
+        const response = await getStudentPayment(); // استدعاء الـ API
         setApiData(response.data); // تخزين البيانات عند تحميلها
         console.log("Fetched payment data:", response.data);
         setLoading(false); // عند الانتهاء من التحميل نقوم بتعيين الـ loading إلى false
@@ -304,7 +310,11 @@ const TuitionFeesPage = () => {
               mt="md"
               onClick={handleSubmitPayment}
             >
-              دفع الآن ({currentFees.totalRequired.toLocaleString()} ج.م)
+              دفع الآن (
+              {termType == "full_year"
+                ? apiData.summary.remainingTotal.toLocaleString()
+                : apiData.summary.remainingFirstInstallment.toLocaleString()}{" "}
+              ج.م)
             </Button>
           </Flex>
         </Alert>
