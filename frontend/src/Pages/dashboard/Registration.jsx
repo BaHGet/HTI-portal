@@ -13,12 +13,10 @@ import { useMe } from "../../hooks/queries/useMe"; // Hook to get student data
 import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule.js";
 
 const Registration = () => {
-  const { timetableData, isLoading, refetch } = useRegisteredSchedule();
+  const { refetch } = useRegisteredSchedule();
 
-  const [studentData, setStudentData] = useState(null);
   const { data: meResponse } = useMe(); // Get cached data for the student
   const [allowedCreditHours, setAllowedCreditHours] = useState(0); // Default to 21 hours
-  const [update, setUpdate] = useState(0);
 
   // Modal state for showing timetable
   const [opened, { open, close }] = useDisclosure(false);
