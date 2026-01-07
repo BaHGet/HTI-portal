@@ -9,6 +9,7 @@ import {
   dropSubject,
 } from "../../Api/Users/usersApi";
 import StudentTimetable from "../../Components/StudentTimetable";
+import { socket } from "../../Api/Subjects/subjectsAPI";
 
 const Registration = () => {
   const allowedCreditHours = 21;
@@ -120,6 +121,46 @@ const Registration = () => {
   // Initial data fetch
   // -------------------------------
   useEffect(() => {
+    // Handle socket connection
+    socket.on("connect", () => {
+      console.log("Connected to server via Socket.IO");
+    });
+
+    // Handle socket disconnection
+    socket.on("disconnect", () => {
+      console.log("Disconnected from server");
+    });
+
+    // Example: Listen for real-time course availability updates
+    socket.on("courseAvailabilityUpdate", (data) => {
+      console.log("Course availability updated:", data);
+      // Refresh available courses when seats change
+      handleRefreshButton();
+    });
+
+    // Example: Listen for registration updates
+    socket.on("registrationUpdate", (data) => {
+      console.log("Registration updated:", data);
+      // Refresh both lists when someone registers/drops a course
+      handleRefreshButton();
+      fetchRegisteredSchedule();
+    });
+
+    // Example: Listen for errors from server
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
+      setModalMessage(error.message || "حدث خطأ في الاتصال");
+      open();
+    });
+
+    // Cleanup: Remove all event listeners when component unmounts
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("courseAvailabilityUpdate");
+      socket.off("registrationUpdate");
+      socket.off("error");
+    };
     handleRefreshButton();
     fetchRegisteredSchedule();
   }, []);
