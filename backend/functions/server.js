@@ -19,7 +19,6 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 
 const app = express();
-const server = http.createServer(app); 
 
 
 // ✅ CORS (لازم Origin محدد طالما withCredentials = true)
