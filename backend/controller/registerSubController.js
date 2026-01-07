@@ -2,6 +2,8 @@ const { Op } = require('sequelize');
 const asyncHandler = require('express-async-handler');
 const ApiError = require('../utils/apiError');
 const checkTimeConflict = require('../utils/timeConflict')
+const redisClient = require('../utils/redisClient');
+const { emitSeatsUpdate } = require("../Sockets/courseHooks");
 
 const db = require("../models/index");
 
@@ -14,67 +16,110 @@ const db = require("../models/index");
 exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
   const student = req.student;
   const semester= req.currentSemester
+
+  //////////////////// Cash Keys ////////////////////
+  const studentCompletedKey = `student:${student.StudentID}:completed`; 
+  const catalogKey = `catalog:reg:${student.RegulationID}`; 
+
   //////////////////// STEP(1): All Queries ////////////////////
-  const [completedCourses, semesterCourses, currentEnrollments ] = await Promise.all([
-    // Query(1): Student Completed Courses
-    student.getCourses({
-      attributes: ['CourseID','CreditHours'],
+  //////////////////// STEP(1.1): Redis Multi-Get ////////////////////
+  const [cachedCompletedCourses, cachedsemesterCourses] = await redisClient.mGet([
+    studentCompletedKey,
+    catalogKey
+  ]);
+
+  let completedCourses = cachedCompletedCourses ? JSON.parse(cachedCompletedCourses) : null;
+  let semesterCourses = cachedsemesterCourses ? JSON.parse(cachedsemesterCourses) : null;
+
+  //////////////////// STEP(1.2): Smart DB Fetching (All in One) ////////////////////
+  const dbTasks = [];
+
+  let completedIdx = -1;
+  if (!completedCourses) {
+    completedIdx = dbTasks.push(student.getCourses({
+      attributes: ['CourseID', 'CreditHours'],
       include: [{ 
-        model: db.CourseCategory,
-        attributes: ['CourseCategoryID', 'RequiredCredits']
+        model: db.CourseCategory, 
+        attributes: ['CourseCategoryID', 'RequiredCredits'] 
       }]
-    }),
-    // Query(2): Student Semester Courses
-    db.Course.findAll({
+    })) - 1;
+  }
+
+  let catalogIdx = -1;
+  if (!semesterCourses) {
+    catalogIdx = dbTasks.push(db.Course.findAll({
       attributes: ['CourseID', 'CourseCode', 'CourseName', 'CreditHours', 'CourseCategoryID'],
-      where:{ RegulationID: student.RegulationID},
+      where: { RegulationID: student.RegulationID },
       include: [
-        { 
-          model: db.Course, 
-          as: 'Prerequisites',
-          attributes: ['CourseID', 'CourseName'] 
-        },
         {
-          model: db.CourseCategory,
+        model: db.Course,
+        as: 'Prerequisites', 
+        attributes: ['CourseID', 'CourseName'] 
+        },
+        { 
+          model: db.CourseCategory, 
           attributes: ['CourseCategoryID', 'RequiredCredits'] 
         },
         {
           model: db.CourseGroup,
           where: { SemesterID: semester.SemesterID },
-          attributes: ['GroupID', 'GroupNumber', 'Capacity', 'CurrentEnrolled'],
+          attributes: ['GroupID', 'GroupNumber', 'CourseID'], 
           include: [
-          {
-            model: db.Professor,
-            attributes: ['ProfessorName'], 
-          },
-          {
-            model: db.GroupSchedule,
-            attributes: ['DayOfWeek', 'Room'],
-            include:[{
-              model: db.TimePeriod,
-              attributes: ['PeriodName']
-            }]
-          }]
+            { 
+              model: db.Professor, 
+              attributes: ['ProfessorName'] 
+            },
+            { 
+              model: db.GroupSchedule, 
+              attributes: ['DayOfWeek', 'Room'],
+              include: [
+                { 
+                  model: db.TimePeriod, 
+                  attributes: ['PeriodName'] 
+                }
+              ]
+            }
+          ]
         }
       ]
-    }),
-    // Query(3): Student Current Enrollments
-    db.Enrollment.findAll({
-      where: {
-        StudentID: student.StudentID, 
-      },
-      attributes: ['GroupID'],
-      include: [{
-        model: db.CourseGroup,
-        attributes:[],
-        where: {SemesterID: req.currentSemester.SemesterID}
-      }]
-    })
-  ]);
+    })) - 1;
+  }
+
+  const groupsIdx = dbTasks.push(db.CourseGroup.findAll({
+    where: { SemesterID: semester.SemesterID },
+    attributes: ['GroupID', 'Capacity', 'CurrentEnrolled'], 
+  })) - 1;
+
+  const enrollmentsIdx = dbTasks.push(db.Enrollment.findAll({
+    where: { StudentID: student.StudentID },
+    attributes: ['GroupID'],
+    include: [
+      { 
+        model: db.CourseGroup, 
+        attributes: [], 
+        where: { SemesterID: semester.SemesterID } 
+      }
+    ]
+  })) - 1;
+
+  const dbResults = await Promise.all(dbTasks);
+
+  if (!completedCourses) {
+    completedCourses = dbResults[completedIdx];
+    await redisClient.setEx(studentCompletedKey, 60 , JSON.stringify(completedCourses));
+  }
+  if (!semesterCourses) {
+    semesterCourses = dbResults[catalogIdx];
+    await redisClient.setEx(catalogKey, 60 , JSON.stringify(semesterCourses));
+  }
+  const liveGroups = dbResults[groupsIdx];
+  const currentEnrollments = dbResults[enrollmentsIdx];
 
   if (!semesterCourses.length) {
     return res.status(200).json({ success: true, count: 0, data: [] });
   }
+
+  const liveGroupsMap = new Map(liveGroups.map(g => [g.GroupID, g]));
 
   //////////////////// STEP(2): All Filters ////////////////////
   // Filter(1): Completed CoursesIds
@@ -113,7 +158,8 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
     return course.CourseGroups
       .filter(group => !enrolledGroupIdsSet.has(group.GroupID))
       .map(group => {
-        const availableSeats = group.Capacity - group.CurrentEnrolled;
+        const liveData = liveGroupsMap.get(group.GroupID);
+        const availableSeats = liveData ? (liveData.Capacity - liveData.CurrentEnrolled) : 0;
         const scheduleObjects = group.GroupSchedules
           .map(schedule => {
             let timeString = '';
@@ -279,15 +325,12 @@ exports.registerSubject = asyncHandler (async (req, res, next) => {
     }, { transaction });
 
     await courseGroup.increment('CurrentEnrolled', { by: 1, transaction });
+    courseGroup.CurrentEnrolled += 1;
     await transaction.commit();
 
-    const availableSeats = courseGroup.Capacity - (courseGroup.CurrentEnrolled + 1);
-    if (req.io) {
-      req.io.emit('seats_update', {
-        groupId: courseGroupId,
-        availableSeats: availableSeats
-      });
-    }
+    const availableSeats = courseGroup.Capacity - courseGroup.CurrentEnrolled;
+
+    emitSeatsUpdate(courseGroupId, courseGroup.CurrentEnrolled, courseGroup.Capacity);
 
     //////////////////// STEP(4): Response ////////////////////
     res.status(201).json({

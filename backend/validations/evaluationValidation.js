@@ -17,7 +17,7 @@ exports.EvaluationAnswerValidator=[
     .isInt().withMessage('Enrollment ID must be a valid integer.'),
 
   body('answers')
-    .isArray({ min: 1 }).withMessage('Answers must be a non-empty array.')
+    .isArray({ min: 1, max:20 }).withMessage('Answers must be a non-empty array.')
     .withMessage('You must provide answers.'),
 
   body('answers.*.questionId')

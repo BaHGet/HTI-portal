@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "mysql2": "^3.14.5",
     "nodemailer": "^7.0.5",
     "nodemon": "^3.1.10",
+    "redis": "^5.10.0",
     "sequelize": "^6.37.7",
     "serverless": "^4.14.1",
     "serverless-http": "^3.2.0",

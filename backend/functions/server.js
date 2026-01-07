@@ -1,9 +1,16 @@
+// Core
 require("dotenv").config();
 const express = require("express");
-const serverless = require("serverless-http");
-const morgan = require("morgan");
-const logger = require("../utils/logger");
+const http = require('http');
+// Security & utils
+const helmet = require('helmet');
+const hpp = require('hpp');
+const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
+// App utils
+// const serverless = require("serverless-http");
+const logger = require("../utils/logger");
 const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
 const http = require("http");
@@ -12,7 +19,8 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 
 const app = express();
-const cors = require("cors");
+const server = http.createServer(app); 
+
 
 // ✅ CORS (لازم Origin محدد طالما withCredentials = true)
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
@@ -32,7 +40,7 @@ app.use(express.json({ limit: "5kb" }));
 app.use(helmet());
 app.use(hpp());
 
-// Custom Middleware instead of xss-clean
+// Custom XSS middleware
 app.use((req, res, next) => {
   const clean = (obj) => {
     for (const key in obj) {
@@ -85,8 +93,6 @@ app.use(
 
 app.use(cookieParser());
 
-const sql = require("../config/mysqlDB");
-sql.dbConnection();
 
 const { globalLimiter } = require("../utils/rateLimiter");
 // ✅ حط ال limiter بعد CORS + OPTIONS عشان ما يكسرش الـ preflight
@@ -120,10 +126,8 @@ app.use("/api/v1/evaluations", EvaluationRouter);
 const { PaymentRouter } = require("../routes/studentFinancialRoute");
 app.use("/api/v1/payment", PaymentRouter);
 
-// Test route (لازم قبل 404)
-app.get("/", (req, res) => {
-  res.send("hi");
-});
+const { professorsRouter } = require("../routes/professorRoute");
+app.use("/api/v1/professors", professorsRouter);
 
 // 404 handler (لازم قبل globalError)
 app.all(/.*/, (req, res, next) => {
