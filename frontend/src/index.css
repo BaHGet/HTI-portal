@@ -127,3 +127,15 @@
     --tw-shadow-color: rgb(67 97 238 / 0.6);
     --tw-shadow: var(--tw-shadow-colored);
 }
+
+/* إضافة تأثير الهوفر لتغيير شكل الماوس */
+.timetable-card {
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timetable-card:hover {
+  transform: scale(1.03);  /* تأثير تكبير الكارد قليلاً عند الهوفر */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* إضافة ظل خفيف عند الهوفر */
+  
+}

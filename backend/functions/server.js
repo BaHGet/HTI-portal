@@ -13,17 +13,29 @@ const morgan = require("morgan");
 const logger = require("../utils/logger");
 const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
-// Socket
-const { initSocket } = require("../utils/socket");
-// DB
-const sql = require("../config/mysqlDB");
-
+const http = require("http");
+const socketIo = require("socket.io");
+const helmet = require("helmet");
+const hpp = require("hpp");
 
 const app = express();
-const server = http.createServer(app); 
 
 
-app.use(express.json({limit:'5kb'}));
+// ✅ CORS (لازم Origin محدد طالما withCredentials = true)
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const corsOptions = {
+  origin: CLIENT_ORIGIN, // ❌ ممنوع "*"
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
+  exposedHeaders: ["token", "reset-token"],
+};
+
+app.use(cors(corsOptions));
+// ✅ رد سريع للـ preflight قبل أي middleware/limiter
+app.options(/.*/, cors(corsOptions));
+
+app.use(express.json({ limit: "5kb" }));
 app.use(helmet());
 app.use(hpp());
 
@@ -31,9 +43,9 @@ app.use(hpp());
 app.use((req, res, next) => {
   const clean = (obj) => {
     for (const key in obj) {
-      if (typeof obj[key] === 'string') {
-        obj[key] = obj[key].replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      if (typeof obj[key] === "string") {
+        obj[key] = obj[key].replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
         clean(obj[key]);
       }
     }
@@ -45,36 +57,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS Configuration
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "*",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
-    exposedHeaders: ["token", "reset-token"],
-  })
-);
-
 // Use morgan middleware to log HTTP requests
-// Custom token for req.params
 morgan.token("params", (req) => JSON.stringify(req.params));
 
-// Define custom morgan token to log body (with password redacted)
 morgan.token("body", (req) => {
   const clone = { ...req.body };
-
-  // Redact password fields
   for (const key in clone) {
     if (key.toLowerCase().includes("password")) {
       clone[key] = "[REDACTED]";
     }
   }
-
   return JSON.stringify(clone);
 });
 
-// Custom format string (you can remove or add fields as needed)
 const customFormat = (tokens, req, res) => {
   return [
     tokens.method(req, res),
@@ -86,6 +81,7 @@ const customFormat = (tokens, req, res) => {
     tokens.body(req, res),
   ].join(" ");
 };
+
 app.use(
   morgan(customFormat, {
     stream: {
@@ -97,14 +93,16 @@ app.use(
 app.use(cookieParser());
 
 
-const { globalLimiter } = require ("../utils/rateLimiter")
-app.use("/api/v1", globalLimiter);
+const { globalLimiter } = require("../utils/rateLimiter");
+// ✅ حط ال limiter بعد CORS + OPTIONS عشان ما يكسرش الـ preflight
+app.use("/api/v1/", globalLimiter);
 
+// Routes
 const { authRouter } = require("../routes/auth");
 app.use("/api/v1/auth", authRouter);
 
 const { registerSubRouter } = require("../routes/registerSubRouter");
-app.use("/api/v1/registration",registerSubRouter);
+app.use("/api/v1/registration", registerSubRouter);
 
 const { userRouter } = require("../routes/user");
 app.use("/api/v1/user", userRouter);
@@ -130,31 +128,35 @@ app.use("/api/v1/payment", PaymentRouter);
 const { professorsRouter } = require("../routes/professorRoute");
 app.use("/api/v1/professors", professorsRouter);
 
-app.get("/", (req, res) => {
-  res.send("HTI Portal Backend is Running... 🚀");
+// 404 handler (لازم قبل globalError)
+app.all(/.*/, (req, res, next) => {
+  next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 404));
 });
 
-app.all("/{*any}", (req, res, next) => {
-  next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 400));
-});
-
-
-// Global error handling middleware for express
+// Global error handling middleware (آخر حاجة)
 app.use(globalError);
 
-// Server Connection
-async function startServer() {
-  await sql.dbConnection();
-  await initSocket(server);
+// Server + Socket.io
+const server = http.createServer(app);
 
+const io = socketIo(server, {
+  cors: {
+    origin: CLIENT_ORIGIN,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
+  },
+});
 
-  server.listen(3000, () => {
-    console.log(`Server running on port 3000`);
-    console.log(`Socket.io is ready! 🚀`);
-  });
-}
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
-startServer();
+server.listen(3000, () => {
+  console.log(`Server running on port 3000`);
+  console.log(`Socket.io is ready! 🚀`);
+});
 
-
+// لو هتستخدم serverless:
 // module.exports.handler = serverless(app);
