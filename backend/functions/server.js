@@ -48,7 +48,7 @@ app.use((req, res, next) => {
 // CORS Configuration
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "*",
+    origin: process.env.CLIENT_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
@@ -148,8 +148,8 @@ async function startServer() {
   await initSocket(server);
 
 
-  server.listen(3000, () => {
-    console.log(`Server running on port 3000`);
+  server.listen(process.env.PORT, () => {
+    console.log(`Server running on port ${process.env.PORT}`);
     console.log(`Socket.io is ready! 🚀`);
   });
 }
