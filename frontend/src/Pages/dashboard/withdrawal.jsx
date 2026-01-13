@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Grid,
   Card,
@@ -13,7 +13,7 @@ import {
   Textarea,
   Loader,
   Flex,
-  ScrollArea, // تم إضافة ScrollArea
+  ScrollArea,
   Alert,
 } from "@mantine/core";
 import {
@@ -28,151 +28,77 @@ import {
   BookOpen,
   CircleCheck,
   X,
-  ClipboardList, // أيقونة لجدول المواد
+  ClipboardList,
 } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
-// يجب استبدال هذا بالمسار الصحيح لمكون جدول الطالب
+import { useQuery } from "@tanstack/react-query";
+import {
+  getRegisteredSubjects,
+  getMe,
+  withdrawSubject,
+  restoreSubject,
+} from "../../api/Users/usersApi"; // تعديل استيراد الـ API
 import StudentTimetable from "../../Components/StudentTimetable";
+import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule";
 
-// ** API Stubs (لأغراض العرض والمحاكاة)
-const fetchStudentData = () =>
-  Promise.resolve({
-    academicGPA: 3.45,
-    registeredHours: 9, // تم تعديلها لتتناسب مع المواد المسجلة
-    droppedHours: 6,
+// ** Main DropSubjectsPage Component
+const DropSubjectsPage = () => {
+  const { refetch } = useRegisteredSchedule();
+
+  const [studentInfo, setStudentInfo] = useState({
+    academicGPA: 0,
+    registeredHours: 0,
+    droppedHours: 0,
     maxDropHours: 12,
   });
-
-const fetchRegisteredSubjects = () =>
-  Promise.resolve([
-    {
-      id: 1,
-      code: "CS101",
-      name: "مقدمة في علوم الحاسوب",
-      hours: 3,
-      professor: "د. خالد فوزي",
-      status: "Registered", // Registered, Dropped
-      schedule: "أحد/ثلاثاء 10:00 - 11:30",
-    },
-    {
-      id: 2,
-      code: "MATH202",
-      name: "التفاضل والتكامل 2",
-      hours: 3,
-      professor: "أ.د. نجلاء علي",
-      status: "Dropped",
-      schedule: "إثنين/أربعاء 13:00 - 14:30",
-    },
-    {
-      id: 3,
-      code: "PHYS100",
-      name: "فيزياء عامة",
-      hours: 3,
-      professor: "د. مصطفى جابر",
-      status: "Registered",
-      schedule: "ثلاثاء/خميس 08:00 - 09:30",
-    },
-    {
-      id: 4,
-      code: "SE310",
-      name: "هندسة المتطلبات",
-      hours: 3,
-      professor: "د. ريم أحمد",
-      status: "Registered",
-      schedule: "إثنين/أربعاء 15:00 - 16:30",
-    },
-    {
-      id: 5,
-      code: "IS450",
-      name: "أمن المعلومات المتقدم",
-      hours: 3,
-      professor: "أ. سعيد حامد",
-      status: "Registered",
-      schedule: "أحد/ثلاثاء 16:00 - 17:30",
-    },
-    {
-      id: 6,
-      code: "AR100",
-      name: "مهارات اللغة العربية",
-      hours: 2,
-      professor: "د. وفاء علي",
-      status: "Registered",
-    },
-    {
-      id: 7,
-      code: "EN100",
-      name: "اللغة الإنجليزية 1",
-      hours: 3,
-      professor: "أ. ياسر خالد",
-      status: "Registered",
-    },
-    {
-      id: 8,
-      code: "ECO200",
-      name: "مبادئ الإقتصاد",
-      hours: 3,
-      professor: "د. علي محمد",
-      status: "Registered",
-    },
-  ]);
-
-const dropSubjectApi = (subjectId, reason) =>
-  Promise.resolve({ success: true, message: `تم سحب المادة بنجاح.` });
-
-const restoreSubjectApi = (subjectId) =>
-  Promise.resolve({ success: true, message: `تمت استعادة المادة بنجاح.` });
-
-const DropSubjectsPage = () => {
-  // حالة البيانات الأساسية
-  const [studentInfo, setStudentInfo] = useState({});
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // حالة المودال والعمليات
+  // Modal logic for dropping and restoring subjects
   const [dropModalOpened, { open: openDropModal, close: closeDropModal }] =
     useDisclosure(false);
   const [
     statusModalOpened,
     { open: openStatusModal, close: closeStatusModal },
   ] = useDisclosure(false);
-
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [dropReason, setDropReason] = useState("");
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
 
-  // -------------------------------
-  // جلب البيانات الأولية
-  // -------------------------------
+  // Fetch student data and registered subjects
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const [info, subs] = await Promise.all([
-        fetchStudentData(),
-        fetchRegisteredSubjects(),
+        getMe(),
+        getRegisteredSubjects(),
       ]);
-      setStudentInfo(info);
-      setSubjects(subs);
+      setStudentInfo({
+        academicGPA: info?.GPA,
+        maxDropHours: info?.maxDropHours || 12,  // Ensure to fetch maxDropHours from the response if available
+        registeredHours: subs.data.reduce(
+          (total, sub) => total + sub.CourseGroup.Course.CreditHours,
+          0
+        ),
+        droppedHours: subs.data.filter(sub => sub.status === "Withdrawn").reduce(
+          (total, sub) => total + sub.CourseGroup.Course.CreditHours,
+          0
+        ), 
+      });
+      setSubjects(subs.data);
       setLoading(false);
     };
     fetchData();
   }, []);
 
-  // -------------------------------
-  // بدء عملية السحب (فتح مودال التأكيد)
-  // -------------------------------
   const handleDropClick = (subject) => {
     setSelectedSubject(subject);
     setDropReason("");
     openDropModal();
   };
 
-  // -------------------------------
-  // تأكيد عملية السحب
-  // -------------------------------
   const confirmDrop = async () => {
-    // التحقق من إدخال السبب
     if (dropReason.trim() === "") {
-      // يمكن إظهار رسالة خطأ داخل مودال التأكيد نفسه
       return;
     }
     if (!selectedSubject) return;
@@ -181,23 +107,25 @@ const DropSubjectsPage = () => {
     setLoading(true);
 
     try {
-      const res = await dropSubjectApi(selectedSubject.id, dropReason);
-
-      // تحديث الحالة المحلية للمادة
+      const res = await withdrawSubject(selectedSubject.EnrollmentID);
       setSubjects((prev) =>
         prev.map((sub) =>
-          sub.id === selectedSubject.id ? { ...sub, status: "Dropped" } : sub
+          sub.EnrollmentID === selectedSubject.EnrollmentID
+            ? { ...sub, status: "Withdrawn" }
+            : sub
         )
       );
-
-      // تحديث عدد الساعات المسحوبة في بيانات الطالب
       setStudentInfo((prev) => ({
         ...prev,
-        registeredHours: prev.registeredHours - selectedSubject.hours,
-        droppedHours: prev.droppedHours + selectedSubject.hours,
+        registeredHours:
+          prev.registeredHours - selectedSubject.CourseGroup.Course.CreditHours,
+        droppedHours:
+          prev.droppedHours + selectedSubject.CourseGroup.Course.CreditHours,
       }));
-
       setStatusMessage({ type: "success", text: res.message });
+
+      // Refetch the data after withdrawal
+      refetch(); // This will trigger a refetch of the registered schedule.
     } catch (err) {
       setStatusMessage({
         type: "error",
@@ -205,65 +133,60 @@ const DropSubjectsPage = () => {
       });
     } finally {
       setLoading(false);
-      setSelectedSubject(null);
-      openStatusModal(); // فتح مودال الإشعار الجديد
+      openStatusModal();
     }
   };
 
-  // -------------------------------
-  // استعادة المادة المسحوبة
-  // -------------------------------
   const handleRestore = async (subject) => {
     setLoading(true);
     setStatusMessage({ type: "", text: "" });
-
     try {
-      const res = await restoreSubjectApi(subject.id);
-
-      // تحديث الحالة المحلية للمادة
+      const res = await restoreSubject(subject.EnrollmentID);
       setSubjects((prev) =>
         prev.map((sub) =>
-          sub.id === subject.id ? { ...sub, status: "Registered" } : sub
+          sub.EnrollmentID === subject.EnrollmentID
+            ? { ...sub, status: "Registered" }
+            : sub
         )
       );
-
-      // تحديث عدد الساعات المسجلة والمسحوبة في بيانات الطالب
       setStudentInfo((prev) => ({
         ...prev,
-        registeredHours: prev.registeredHours + subject.hours,
-        droppedHours: prev.droppedHours - subject.hours,
+        registeredHours:
+          prev.registeredHours + subject.CourseGroup.Course.CreditHours,
+        droppedHours:
+          prev.droppedHours - subject.CourseGroup.Course.CreditHours,
       }));
-
       setStatusMessage({ type: "success", text: res.message });
+      refetch(); // Refetch data after restoring the subject.
     } catch (err) {
       setStatusMessage({
         type: "error",
         text: "فشل استعادة المادة. حدث خطأ في النظام.",
       });
+      console.error(err);
     } finally {
       setLoading(false);
-      openStatusModal(); // فتح مودال الإشعار الجديد
+      openStatusModal();
     }
   };
 
-  // -------------------------------
-  // Rows for the subjects table
-  // -------------------------------
   const subjectRows = subjects.map((sub) => (
     <Table.Tr
-      key={sub.id}
-      // تطبيق الشطب والشفافية على المادة المسحوبة
+      key={sub.EnrollmentID} // استخدام EnrollmentID كـ key فريد
       style={{
-        textDecoration: sub.status === "Dropped" ? "line-through" : "none",
-        opacity: sub.status === "Dropped" ? 0.6 : 1,
+        textDecoration: sub.status === "Withdrawn" ? "line-through" : "none", // شطب المادة المسحوبة
+        opacity: sub.status === "Withdrawn" ? 0.6 : 1,
       }}
     >
-      <Table.Td style={{ textAlign: "center" }}>{sub.code}</Table.Td>
-      <Table.Td>{sub.name}</Table.Td>
-      <Table.Td style={{ textAlign: "center" }}>{sub.hours}</Table.Td>
-      <Table.Td>{sub.professor}</Table.Td>
       <Table.Td style={{ textAlign: "center" }}>
-        {sub.status === "Registered" ? (
+        {sub.CourseGroup?.Course?.CourseCode}
+      </Table.Td>
+      <Table.Td>{sub.CourseGroup?.Course?.CourseName}</Table.Td>
+      <Table.Td style={{ textAlign: "center" }}>
+        {sub.CourseGroup?.Course?.CreditHours}
+      </Table.Td>
+      <Table.Td style={{ textAlign: "center" }}>
+        {sub.Status === "Registered" ? (
           <Button
             size="xs"
             color="red"
@@ -271,7 +194,7 @@ const DropSubjectsPage = () => {
             leftSection={<Trash2 size={16} />}
             onClick={() => handleDropClick(sub)}
           >
-            سحب
+            انسحاب
           </Button>
         ) : (
           <Button
@@ -293,20 +216,19 @@ const DropSubjectsPage = () => {
       <h1 className="title">سحب المقررات</h1>
       {loading && <Loader />}
 
-      {/* 1. Modal: تأكيد السحب (يطلب السبب) */}
       <Modal
         opened={dropModalOpened}
         onClose={closeDropModal}
         title={
           <Group gap="xs">
             <AlertTriangle size={20} color="red" />
-            <Text fw={700} fz="lg" c="">
+            <Text fw={700} fz="lg">
               تأكيد سحب مقرر
             </Text>
           </Group>
         }
         centered
-        dir="rtl" // لضمان الاتجاه الصحيح داخل المودال
+        dir="rtl"
       >
         <Stack spacing="md">
           <Alert color="red" title="تنبيه هام">
@@ -317,15 +239,21 @@ const DropSubjectsPage = () => {
             <Card shadow="none" withBorder p="md" dir="rtl">
               <Group justify="space-between" mb={5}>
                 <Text fw={700}>المادة:</Text>
-                <Text c="blue">{selectedSubject.name}</Text>
+                <Text c="blue">
+                  {selectedSubject.CourseGroup?.Course?.CourseName}
+                </Text>
               </Group>
               <Group justify="space-between">
                 <Text fw={700}>كود المادة:</Text>
-                <Text c="blue">{selectedSubject.code}</Text>
+                <Text c="blue">
+                  {selectedSubject.CourseGroup?.Course?.CourseCode}
+                </Text>
               </Group>
               <Group justify="space-between">
                 <Text fw={700}>عدد الساعات:</Text>
-                <Badge color="red">{selectedSubject.hours} ساعة</Badge>
+                <Badge color="red">
+                  {selectedSubject.CourseGroup?.Course?.CreditHours} ساعة
+                </Badge>
               </Group>
             </Card>
           )}
@@ -356,7 +284,6 @@ const DropSubjectsPage = () => {
         </Stack>
       </Modal>
 
-      {/* 2. Modal: إشعار حالة العملية (نجاح/فشل) */}
       <Modal
         opened={statusModalOpened}
         onClose={closeStatusModal}
@@ -378,7 +305,6 @@ const DropSubjectsPage = () => {
             </Text>
           </Group>
         }
-        
         dir="rtl"
       >
         <Text c={statusMessage.type === "success" ? "black" : "red"}>
@@ -386,9 +312,7 @@ const DropSubjectsPage = () => {
         </Text>
       </Modal>
 
-      {/* Main Layout: Row 1 (Data & Timetable) */}
       <Grid gutter="lg">
-        {/* بيانات الطالب وملخص الساعات (Col 6) */}
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Card shadow="sm" radius="md" padding="lg" withBorder>
             <Group mb="md">
@@ -407,14 +331,6 @@ const DropSubjectsPage = () => {
               <Stack spacing="md">
                 <Group justify="space-between">
                   <Text fw={500} c="dimmed">
-                    المعدل الأكاديمي (GPA):
-                  </Text>
-                  <Badge size="lg" color="green">
-                    {studentInfo.academicGPA}
-                  </Badge>
-                </Group>
-                <Group justify="space-between">
-                  <Text fw={500} c="dimmed">
                     الساعات المسجلة حالياً:
                   </Text>
                   <Badge
@@ -427,7 +343,7 @@ const DropSubjectsPage = () => {
                 </Group>
                 <Group justify="space-between">
                   <Text fw={500} c="dimmed">
-                    الساعات المسحوبة (في هذا الفصل):
+                    الساعات المسحوبة:
                   </Text>
                   <Badge
                     size="lg"
@@ -449,13 +365,11 @@ const DropSubjectsPage = () => {
           </Card>
         </Grid.Col>
 
-        {/* جدول مواعيد الطالب (Col 6) */}
         <Grid.Col span={{ base: 12, md: 8 }}>
           <StudentTimetable />
         </Grid.Col>
       </Grid>
 
-      {/* Main Layout: Row 2 (Subjects Table) */}
       <Grid gutter="lg">
         <Grid.Col span={12}>
           <Card shadow="sm" radius="md" padding="lg" withBorder>
@@ -472,7 +386,6 @@ const DropSubjectsPage = () => {
                 <Loader />
               </Flex>
             ) : (
-              // استخدام ScrollArea لتحديد الارتفاع الأقصى
               <ScrollArea h={300}>
                 <Table withColumnBorders withTableBorder highlightOnHover>
                   <Table.Thead>
@@ -486,7 +399,6 @@ const DropSubjectsPage = () => {
                       <Table.Th style={{ width: "15%", textAlign: "center" }}>
                         ساعات
                       </Table.Th>
-                      <Table.Th style={{ width: "20%" }}>الأستاذ</Table.Th>
                       <Table.Th style={{ width: "15%", textAlign: "center" }}>
                         الإجراء
                       </Table.Th>

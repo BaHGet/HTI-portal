@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useDisclosure } from "@mantine/hooks";
-import { getMyGrades, createAppeal } from "../../Api/Users/usersApi";
+import { getMyGrades, createAppeal } from "../../api/Users/usersApi";
 
 const AppealsPage = () => {
   const [availableCourses, setAvailableCourses] = useState([]);
@@ -93,7 +93,6 @@ const AppealsPage = () => {
     fetchCourses();
   }, []);
 
-
   const currentCourse = availableCourses.find(
     (c) => c.value === selectedCourseCode
   );
@@ -146,8 +145,11 @@ const AppealsPage = () => {
   const confirmSubmission = async () => {
     close();
     try {
-      const appealData = {
-        gradeId: currentCourse.value.toString(),
+      if (!currentCourse) return;
+
+      const gradeId = currentCourse.value; // ده GradeID
+
+      const payload = {
         appealMidterm: checkedParts.includes("midterm") ? "true" : "false",
         appealFinal: checkedParts.includes("final") ? "true" : "false",
         appealActivities: checkedParts.includes("activities")
@@ -156,21 +158,24 @@ const AppealsPage = () => {
         studentNotes: appealNotes,
       };
 
-      const res = await createAppeal(appealData);
+      const res = await createAppeal(gradeId, payload);
 
       if (res.success) {
+        // بما إننا مش عارفين شكل ريسبونس createappeal لسه
+        // هنحط تاريخ النهاردة مؤقتًا
         const newAppeal = {
           code: currentCourse.value,
           name: currentCourse.details.name,
-          date: new Date(res.data.CreatedAt).toLocaleDateString("ar-EG"),
-          status: "UnderReview",
+          date: new Date().toLocaleDateString("ar-EG"),
+          status: "Pending", // عشان badge يشتغل صح
           adjustment: "قيد المراجعة",
         };
+
         setAppealHistory([newAppeal, ...appealHistory]);
         setSelectedCourseCode(null);
         setCheckedParts([]);
         setAppealNotes("");
-        alert(res.message);
+        alert(res.message || "تم تقديم الالتماس بنجاح");
       } else {
         alert(res.message || "حدث خطأ عند تقديم الالتماس.");
       }
@@ -179,6 +184,7 @@ const AppealsPage = () => {
       alert("حدث خطأ في الاتصال بالسيرفر.");
     }
   };
+
 
   const getStatusBadge = (status) => {
     switch (status) {
