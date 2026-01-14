@@ -16,9 +16,9 @@ const {setCurrentAcademicYear} = require('../middlewares/studentFinancialMiddlew
 const {
   getGrades,
   createAppeal
-} = require('../controller/GradeAppealController.js');
+} = require('../controller/gradeAppealController.js');
 
-const {createAppealValidator} = require('../validations/gradeAppealValidator.js');
+const {createAppealValidator} = require('../validations/GradeAppealValidator.js');
 
 const GradeAppealRouter = express.Router();
 

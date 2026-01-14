@@ -1,11 +1,14 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g serve
 
-COPY package*.json ./
-RUN npm install
+COPY package.json ./
+
+RUN npm install 
 
 COPY . .
 
