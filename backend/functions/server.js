@@ -2,6 +2,7 @@
 require("dotenv").config();
 const express = require("express");
 const http = require('http');
+const { initSocket } = require("../utils/socket");
 // Security & utils
 const helmet = require('helmet');
 const hpp = require('hpp');
@@ -13,11 +14,7 @@ const morgan = require("morgan");
 const logger = require("../utils/logger");
 const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
-const http = require("http");
 const socketIo = require("socket.io");
-const helmet = require("helmet");
-const hpp = require("hpp");
-
 const app = express();
 
 
@@ -139,19 +136,7 @@ app.use(globalError);
 // Server + Socket.io
 const server = http.createServer(app);
 
-const io = socketIo(server, {
-  cors: {
-    origin: CLIENT_ORIGIN,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
-  },
-});
-
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+initSocket(server);
 
 server.listen(3000, () => {
   console.log(`Server running on port 3000`);
