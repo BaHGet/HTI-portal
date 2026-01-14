@@ -11,6 +11,7 @@ import {
 import StudentTimetable from "../../Components/StudentTimetable"; // Import timetable component
 import { useMe } from "../../hooks/queries/useMe"; // Hook to get student data
 import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule.js";
+import { socket } from "../../api/Subjects/subjectsAPI";
 
 const Registration = () => {
   const { refetch } = useRegisteredSchedule();
@@ -36,6 +37,24 @@ const Registration = () => {
     seats: true,
     credit: true,
   });
+  
+  useEffect(() => {
+    // Listen for seat updates
+    function onSeatsUpdate({ groupId, availableSeats }) {
+      // Update the relevant group’s seat data
+      let newAvailableGroups = availableGroups.map(g =>
+        g.groupId == groupId ? { ...g, availableSeats } : g
+      );
+      setAvailableGroups(newAvailableGroups);
+    }
+  
+    socket.on("seats_update", onSeatsUpdate);
+  
+    // Cleanup on unmount
+    return () => {
+      socket.off("seats_update", onSeatsUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (meResponse) {
@@ -98,13 +117,17 @@ const Registration = () => {
   };
 
   // Filter available courses by search
-  const filteredGroups = availableGroups.filter(
-    (g) =>
-      g.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      g.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [filteredGroups, setFilteredGroups] = useState([]);
 
-  // Calculate total registered credits
+  useEffect(() => {
+    setFilteredGroups(
+      availableGroups.filter(
+        (g) =>
+          g.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          g.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [availableGroups, searchTerm]);
   const totalRegisteredCredits = registeredSchedule.reduce(
     (sum, c) => sum + c.creditHours,
     0
