@@ -18,7 +18,7 @@ const {
   createAppeal
 } = require('../controller/GradeAppealController.js');
 
-const {createAppealValidator} = require('../validations/GradeAppealValidator.js');
+const {createAppealValidator} = require('../validations/gradeAppealValidator.js');
 
 const GradeAppealRouter = express.Router();
 
