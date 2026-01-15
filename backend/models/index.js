@@ -159,6 +159,9 @@ CourseGroup.hasMany(EvaluationAnswers, { foreignKey: 'GroupID' });
 Student.hasMany(StudentFinancial, { foreignKey: 'StudentID' });
 StudentFinancial.belongsTo(Student, { foreignKey: 'StudentID' });
 
+StudentCompletedCourse.belongsTo(Course, { foreignKey: 'CourseID' });
+Course.hasMany(StudentCompletedCourse, { foreignKey: 'CourseID' });
+
 const db = {
   sequelize, 
   Sequelize,
