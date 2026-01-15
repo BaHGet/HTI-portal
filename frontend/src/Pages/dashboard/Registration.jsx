@@ -1,44 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { PlusCircle, Trash, RefreshCcw, Download } from "lucide-react";
-import { Table, Grid, Button, Modal, Loader } from "@mantine/core";
+import { Table, Button, Modal, Loader } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   getAvaliableSubjects,
   getRegisteredSchadule,
   registerSubject,
   dropSubject,
-} from "../../Api/Users/usersApi";
-import StudentTimetable from "../../Components/StudentTimetable";
+} from "../../api/Users/usersApi";
+import StudentTimetable from "../../Components/StudentTimetable"; // Import timetable component
+import { useMe } from "../../hooks/queries/useMe"; // Hook to get student data
+import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule.js";
+import { socket } from "../../api/Subjects/subjectsAPI";
 
 const Registration = () => {
-  const allowedCreditHours = 21;
+  const { refetch } = useRegisteredSchedule();
 
-  // -------------------------------
-  // Modal state
-  // -------------------------------
+  const { data: meResponse } = useMe(); // Get cached data for the student
+  const [allowedCreditHours, setAllowedCreditHours] = useState(0); // Default to 21 hours
+
+  // Modal state for showing timetable
   const [opened, { open, close }] = useDisclosure(false);
+  const [openedModal, setOpenedModal] = useState(false); // New modal state
   const [modalMessage, setModalMessage] = useState("");
-
-  // -------------------------------
-  // Search state
-  // -------------------------------
   const [searchTerm, setSearchTerm] = useState("");
-
-  // -------------------------------
-  // Data states
-  // -------------------------------
   const [availableGroups, setAvailableGroups] = useState([]);
   const [registeredSchedule, setRegisteredSchedule] = useState([]);
-
-  // -------------------------------
-  // Loading states
-  // -------------------------------
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(false);
   const [isLoadingRegistered, setIsLoadingRegistered] = useState(false);
-
-  // -------------------------------
-  // Column visibility toggles
-  // -------------------------------
   const [visibleColumns, setVisibleColumns] = useState({
     code: true,
     name: true,
@@ -48,32 +37,46 @@ const Registration = () => {
     seats: true,
     credit: true,
   });
+  
+  useEffect(() => {
+    // Listen for seat updates
+    function onSeatsUpdate({ groupId, availableSeats }) {
+      // Update the relevant group’s seat data
+      let newAvailableGroups = availableGroups.map(g =>
+        g.groupId == groupId ? { ...g, availableSeats } : g
+      );
+      setAvailableGroups(newAvailableGroups);
+    }
+  
+    socket.on("seats_update", onSeatsUpdate);
+  
+    // Cleanup on unmount
+    return () => {
+      socket.off("seats_update", onSeatsUpdate);
+    };
+  }, []);
 
-  // -------------------------------
-  // Timetable template
-  // -------------------------------
-  const slotsTemplate = Array.from({ length: 8 }, (_, idx) => ({
-    id: idx + 1,
-    label: "",
-    colour: "gray",
-  }));
+  useEffect(() => {
+    if (meResponse) {
+      const gpa = parseFloat(meResponse?.data?.gpa || 0);
+      if (gpa >= 3) {
+        setAllowedCreditHours(21);
+      } else if (gpa >= 2) {
+        setAllowedCreditHours(18);
+      } else {
+        setAllowedCreditHours(14);
+      }
+    }
+    handleRefreshButton();
+    fetchRegisteredSchedule();
+  }, [meResponse]);
 
-  const [days, setDays] = useState([
-    { id: 1, name: "السبت", slots: [...slotsTemplate] },
-    { id: 2, name: "الأحد", slots: [...slotsTemplate] },
-    { id: 3, name: "الإثنين", slots: [...slotsTemplate] },
-    { id: 4, name: "الثلاثاء", slots: [...slotsTemplate] },
-    { id: 5, name: "الأربعاء", slots: [...slotsTemplate] },
-  ]);
-
-  // -------------------------------
   // Fetch available subjects
-  // -------------------------------
   const handleRefreshButton = async () => {
     setIsLoadingAvailable(true);
     try {
       const response = await getAvaliableSubjects();
-      setAvailableGroups(response.data);
+      setAvailableGroups(response.data); // Set available groups (courses)
     } catch (error) {
       console.error("Error fetching available subjects:", error);
       setModalMessage("حدث خطأ أثناء جلب المواد المتاحة.");
@@ -83,14 +86,11 @@ const Registration = () => {
     }
   };
 
-  // -------------------------------
   // Fetch registered schedule
-  // -------------------------------
   const fetchRegisteredSchedule = async () => {
     setIsLoadingRegistered(true);
     try {
       const response = await getRegisteredSchadule();
-
       const formatted = response.data.map((subject) => {
         const group = subject.CourseGroup;
         return {
@@ -105,76 +105,71 @@ const Registration = () => {
             : [],
         };
       });
-
-      setRegisteredSchedule(formatted);
+      setRegisteredSchedule(formatted); // Set registered schedule (student's timetable)
     } catch (error) {
       console.error("Error fetching registered schedule:", error);
       setModalMessage("حدث خطأ أثناء جلب المواد المسجلة.");
-      open();
+      open(); // عرض رسالة خطأ بدلاً من فتح تبويب جديد
+      // **تأكد من عدم فتح أي تبويب جديد هنا**
     } finally {
       setIsLoadingRegistered(false);
     }
   };
 
-  // -------------------------------
-  // Initial data fetch
-  // -------------------------------
-  useEffect(() => {
-    handleRefreshButton();
-    fetchRegisteredSchedule();
-  }, []);
-
-  // -------------------------------
   // Filter available courses by search
-  // -------------------------------
-  const filteredGroups = availableGroups.filter(
-    (g) =>
-      g.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      g.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [filteredGroups, setFilteredGroups] = useState([]);
 
-  // -------------------------------
-  // Calculate total registered credits
-  // -------------------------------
+  useEffect(() => {
+    setFilteredGroups(
+      availableGroups.filter(
+        (g) =>
+          g.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          g.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [availableGroups, searchTerm]);
   const totalRegisteredCredits = registeredSchedule.reduce(
     (sum, c) => sum + c.creditHours,
     0
   );
 
-  // -------------------------------
   // Render schedule as string
-  // -------------------------------
   const renderSchedule = (schedule) => {
     if (!schedule || schedule.length === 0) return "-";
     return schedule.map((s) => `${s.day} ${s.time}`).join(" / ");
   };
 
-  // -------------------------------
   // Add (register subject)
-  // -------------------------------
   const handleAdd = async (group) => {
     if (totalRegisteredCredits + group.creditHours > allowedCreditHours) {
       setModalMessage("لقد تخطيت الحد الأقصى لعدد الساعات المسموح به للتسجيل");
-      open();
-      return;
+      open(); // عرض رسالة الخطأ
+      return; // لا داعي لإضافة مادة أو تغيير التبويب
     }
+
     try {
       await registerSubject(group.groupId);
+      refetch(); // تحديث الجدول بعد إضافة المادة
       await handleRefreshButton();
       await fetchRegisteredSchedule();
     } catch (error) {
       console.error("Error registering subject:", error);
       setModalMessage("حدث خطأ أثناء إضافة المادة.");
-      open();
+      open(); // عرض رسالة الخطأ بدلاً من فتح تبويب جديد
+      // **تأكد من أنك لا تحاول إعادة توجيه هنا**
+      const errorMessage =
+        error.response?.data?.message || error.message || "حدث خطأ غير متوقع";
+
+      setModalMessage(errorMessage); // نضع الرسالة القادمة من السيرفر هنا
+      opened(true); // نفتح المودال لعرض الرسالة
     }
   };
 
-  // -------------------------------
   // Remove (drop subject)
-  // -------------------------------
   const handleRemove = async (group) => {
     try {
       await dropSubject(group.groupId);
+      refetch(); // تحديث الجدول بعد إضافة المادة
       await handleRefreshButton();
       await fetchRegisteredSchedule();
     } catch (error) {
@@ -184,16 +179,7 @@ const Registration = () => {
     }
   };
 
-  // -------------------------------
-  // Toggle table column visibility
-  // -------------------------------
-  const toggleColumn = (col) => {
-    setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-  };
-
-  // -------------------------------
   // Table rows for available courses
-  // -------------------------------
   const registerTableRows = filteredGroups.map((element, idx) => (
     <Table.Tr key={idx}>
       <Table.Td className="text-center">
@@ -238,9 +224,7 @@ const Registration = () => {
     </Table.Tr>
   ));
 
-  // -------------------------------
   // Table rows for registered courses
-  // -------------------------------
   const registeredSubjectsRows = registeredSchedule.map((element, idx) => (
     <Table.Tr key={idx}>
       <Table.Td className="text-center">
@@ -259,54 +243,15 @@ const Registration = () => {
     </Table.Tr>
   ));
 
-  // -------------------------------
-  // Timetable component
-  // -------------------------------
-  const Timetable = () => (
-    <Table variant="vertical" layout="auto" withTableBorder>
-      <Table.Tbody>
-        <Table.Tr>
-          <Table.Th w={70}></Table.Th>
-          <Table.Td>
-            <Grid columns={32} align="flex-start">
-              {slotsTemplate.map((slot) => (
-                <Grid.Col key={slot.id} className="border-r border-b" span={4}>
-                  <div className="text-center text-xs">{`P${slot.id}`}</div>
-                </Grid.Col>
-              ))}
-            </Grid>
-          </Table.Td>
-        </Table.Tr>
-        {days.map((day) => (
-          <Table.Tr key={day.id}>
-            <Table.Th>{day.name}</Table.Th>
-            <Table.Td>
-              <Grid columns={32} align="flex-start">
-                {day.slots.map((slot) => (
-                  <Grid.Col
-                    key={slot.id}
-                    className="border-r border-b"
-                    span={4}
-                  >
-                    <div
-                      className="text-center text-xs"
-                      style={{ backgroundColor: slot.colour }}
-                    >
-                      {slot.label}
-                    </div>
-                  </Grid.Col>
-                ))}
-              </Grid>
-            </Table.Td>
-          </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
-  );
+  // Handle opening timetable modal
+  const handleOpenTimetableModal = () => {
+    setOpenedModal(true); // Open the modal when clicked
+  };
 
-  // -------------------------------
-  // Main render
-  // -------------------------------
+  const handleCloseModal = () => {
+    setOpenedModal(false); // Close the modal
+  };
+
   return (
     <>
       {/* Modal for errors or messages */}
@@ -314,13 +259,25 @@ const Registration = () => {
         <div className="text-center">{modalMessage}</div>
       </Modal>
 
+      {/* Modal for Timetable */}
+      <Modal
+        dir="rtl"
+        opened={openedModal}
+        onClose={handleCloseModal}
+        size="70%"
+      >
+        <div className="text-center">
+          <StudentTimetable timetableData={registeredSchedule} />
+        </div>
+      </Modal>
+
       {/* Page Header */}
       <div className="text-xl font-bold mb-1">تسجيل المقررات</div>
 
       {/* Main Content */}
-      <div className="flex flex-col gap-4 h-[85vh] overflow-hidden">
+      <div className="flex flex-col gap-4  overflow-auto">
         {/* Available Courses */}
-        <div className="card p-0 rounded-xl flex flex-col overflow-hidden">
+        <div className="card p-0 rounded-xl flex h-[45vh] flex-col overflow-hidden">
           <div className="flex flex-wrap pt-4 px-4 justify-between items-center gap-2">
             <div className="flex flex-wrap items-center gap-4">
               <Button
@@ -348,32 +305,6 @@ const Registration = () => {
                 Remaining Credits: {allowedCreditHours - totalRegisteredCredits}
               </div>
             </div>
-          </div>
-
-          {/* Column toggles */}
-          <div className="flex flex-wrap gap-3 px-4 py-1 border-t">
-            {Object.keys(visibleColumns).map((col) => (
-              <label key={col} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  checked={visibleColumns[col]}
-                  onChange={() => toggleColumn(col)}
-                />
-                {col === "code"
-                  ? "Course Code"
-                  : col === "name"
-                  ? "Course Name"
-                  : col === "group"
-                  ? "Group (Professor)"
-                  : col === "days"
-                  ? "Days"
-                  : col === "time"
-                  ? "Time"
-                  : col === "seats"
-                  ? "Seats"
-                  : "Credit Hours"}
-              </label>
-            ))}
           </div>
 
           {/* Courses Table */}
@@ -415,7 +346,7 @@ const Registration = () => {
         </div>
 
         {/* Registered Courses + Timetable */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto min-h-[300px] overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[40vh] overflow-hidden">
           {/* Registered Courses */}
           <div className="card p-0 rounded-xl flex flex-col overflow-auto">
             <div className="text-center align-middle p-1 font-bold border-b flex justify-between items-center">
@@ -461,9 +392,14 @@ const Registration = () => {
             </div>
           </div>
 
-          {/* Student Timetable */}
-          <div className="card p-0 rounded-xl flex flex-col overflow-auto">
-            <StudentTimetable/>
+          {/* Clickable Timetable */}
+          <div
+            className="card p-0 rounded-xl flex flex-col timetable-card"
+            onClick={handleOpenTimetableModal}
+          >
+            <div className=" w-full h-full ">
+              <StudentTimetable timetableData={registeredSchedule} />
+            </div>
           </div>
         </div>
       </div>

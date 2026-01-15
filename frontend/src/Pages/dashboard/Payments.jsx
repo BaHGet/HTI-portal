@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Grid,
   Card,
@@ -14,11 +14,15 @@ import {
   Textarea,
   Flex,
   Modal,
-  Radio, // تم إضافة Radio
-  FileButton, // تم إضافة FileButton
-  rem, // لأحجام الأيقونات
+  Radio,
+  FileButton,
+  rem,
+  Loader,
+  Skeleton, // استخدمنا Skeleton لعرض حالة التحميل
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { useMe } from "../../hooks/queries/useMe";
+
 import {
   User,
   DollarSign,
@@ -36,15 +40,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// ** البيانات الثابتة (Stubs)
-const FULL_YEAR_FEES = {
-  basicTuition: 40000,
-  additionalFees: 2000,
-  appealFees: 500,
-  idCardFees: 100,
-  failureFees: 1500,
-};
+import { getStudentPayment } from "../../api/Users/usersApi"; // استيراد دالة جلب بيانات الدفع من الـ API
 
+// ** البيانات الثابتة (Stubs) تم إخفائها
 const BANK_DETAILS = {
   bankDeposit: {
     accountName: "المعهد التكنولوجي العالي بالعاشر من رمضان",
@@ -57,40 +55,10 @@ const BANK_DETAILS = {
   },
 };
 
-const studentData = {
-  id: "20230123",
-  name: "محمد علي أحمد",
-  id: "20210741",
-  department: "علوم الحاسوب",
-  initialPaymentStatus: "NotPaid",
-};
-
 // ** القيود
 const MAX_FILE_SIZE_MB = 1;
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "application/pdf"];
 
-// ** دالة لحساب المصروفات بناءً على نوع الدورة
-const calculateFees = (termType) => {
-  const fees = { ...FULL_YEAR_FEES };
-  let basicTuition = fees.basicTuition;
-
-  if (termType === "semester") {
-    basicTuition = fees.basicTuition / 2;
-  }
-
-  const total =
-    basicTuition +
-    fees.additionalFees +
-    fees.appealFees +
-    fees.idCardFees +
-    fees.failureFees;
-
-  return {
-    ...fees,
-    basicTuition: basicTuition,
-    total: total,
-  };
-};
 
 // ** دالة لتحديد شكل حالة الدفع
 const getStatusBadge = (status) => {
@@ -118,11 +86,23 @@ const TuitionFeesPage = () => {
   const [termType, setTermType] = useState("full_year");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
-  const [receiptFile, setReceiptFile] = useState(null); // الآن يحمل كائن File
+  const [receiptFile, setReceiptFile] = useState(null);
   const [fileError, setFileError] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(
-    studentData.initialPaymentStatus
-  );
+  const [paymentStatus, setPaymentStatus] = useState("NotPaid");
+  const [loading, setLoading] = useState(true); // حالة التحميل
+  const [apiData, setApiData] = useState(null); // لتخزين بيانات الـ API بعد تحميلها
+
+  const { data: meResponse, isLoading: isMeLoading } = useMe();
+  const me = meResponse?.data;
+  const showStatic = !isMeLoading;
+
+
+  const studentData = {
+    id: isMeLoading ? "" : me?.StudentID ?? "",
+    name: isMeLoading ? "" : me?.StudentName || "",
+  };
+
+
   const [
     uploadModalOpened,
     { open: openUploadModal, close: closeUploadModal },
@@ -130,9 +110,51 @@ const TuitionFeesPage = () => {
 
   const fileInputRef = useRef(null);
 
+  // جلب البيانات من الـ API
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      try {
+        setLoading(true); // عند بدء التحميل نحدد أن البيانات في حالة تحميل
+        const response = await getStudentPayment(); // استدعاء الـ API
+        setApiData(response.data); // تخزين البيانات عند تحميلها
+        setLoading(false); // عند الانتهاء من التحميل نقوم بتعيين الـ loading إلى false
+      } catch (error) {
+        setLoading(false);
+        console.error("Error fetching payment data:", error);
+      }
+    };
+    fetchPaymentData();
+  }, []);
+
   // حساب المصروفات بناءً على اختيار المستخدم
-  const currentFees = useMemo(() => calculateFees(termType), [termType]);
-  const statusInfo = getStatusBadge(paymentStatus);
+  const currentFees = useMemo(() => {
+    if (loading || !apiData) {
+      return {
+        breakdown: {
+          basicFees: 0,
+          additionalFees: 0,
+          appealFees: 0,
+          idCardFees: 0,
+          retakeFees: 0,
+        },
+        status: {
+          isFirstInstallmentDone: false,
+          isFullPaid: false,
+        },
+        summary: {
+          remainingTotal: 0,
+          remainingFirstInstallment: 0,
+        },
+      }; // إرجاع قيم فارغة أثناء التحميل
+    }
+    return apiData; // إذا تم تحميل البيانات نستخدمها
+  }, [apiData, loading]);
+
+  const statusInfo = getStatusBadge(
+    apiData
+      ? (apiData.status.isFirstInstallmentDone || apiData.status.isFullPaid)?'Paid':'NotPaid'
+      : paymentStatus
+  );
 
   // ---------------------------------
   // معالجة اختيار الملف
@@ -196,32 +218,55 @@ const TuitionFeesPage = () => {
           المصروفات الدراسية الأساسية:
         </Text>
         <Text fw={700} c="blue">
-          {fees.basicTuition.toLocaleString()} ج.م
+          {fees.breakdown.basicFees
+            ? (termType == 'full_year'? fees.breakdown.basicFees.toLocaleString(): (fees.breakdown.basicFees /2 ).toLocaleString())
+            : 0}{" "}
+          ج.م
         </Text>
       </Group>
       <Group justify="space-between">
         <Text fw={500} c="dimmed">
           مصاريف إضافية (خدمات):
         </Text>
-        <Text>{fees.additionalFees.toLocaleString()} ج.م</Text>
+        <Text>
+          {fees.breakdown.additionalFees
+            ? fees.breakdown.additionalFees.toLocaleString()
+            : 0}{" "}
+          ج.م
+        </Text>
       </Group>
       <Group justify="space-between">
         <Text fw={500} c="dimmed">
           مصاريف التماس:
         </Text>
-        <Text>{fees.appealFees.toLocaleString()} ج.م</Text>
+        <Text>
+          {fees.breakdown.appealFees
+            ? fees.breakdown.appealFees.toLocaleString()
+            : 0}{" "}
+          ج.م
+        </Text>
       </Group>
       <Group justify="space-between">
         <Text fw={500} c="dimmed">
           مصاريف كارنيه الطالب:
         </Text>
-        <Text>{fees.idCardFees.toLocaleString()} ج.م</Text>
+        <Text>
+          {fees.breakdown.idCardFees
+            ? fees.breakdown.idCardFees.toLocaleString()
+            : 0}{" "}
+          ج.م
+        </Text>
       </Group>
       <Group justify="space-between">
         <Text fw={500} c="dimmed">
           مصاريف رسوب (إن وجدت):
         </Text>
-        <Text>{fees.failureFees.toLocaleString()} ج.م</Text>
+        <Text>
+          {fees.breakdown.retakeFees
+            ? fees.breakdown.retakeFees.toLocaleString()
+            : 0}{" "}
+          ج.م
+        </Text>
       </Group>
       <Divider my="sm" />
       <Group justify="space-between">
@@ -229,7 +274,10 @@ const TuitionFeesPage = () => {
           المبلغ الإجمالي المطلوب:
         </Text>
         <Badge size="xl" color="teal" variant="filled">
-          {fees.total.toLocaleString()} ج.م
+          {fees.summary.remainingTotal
+            ? (termType == 'full_year'? fees.summary.remainingTotal.toLocaleString(): fees.summary.remainingFirstInstallment.toLocaleString())
+            : 0}{" "}
+          ج.م
         </Badge>
       </Group>
     </Stack>
@@ -254,14 +302,18 @@ const TuitionFeesPage = () => {
             سيتم تحويلك إلى بوابة الدفع الآمنة فور الضغط على زر "دفع الآن"
             لإتمام العملية.
           </Text>
-          <Flex justify="center" >
+          <Flex justify="center">
             <Button
               rightSection={<Send size={16} />}
               color="blue"
               mt="md"
               onClick={handleSubmitPayment}
             >
-              دفع الآن ({currentFees.total.toLocaleString()} ج.م)
+              دفع الآن (
+              {termType == "full_year"
+                ? apiData.summary.remainingTotal.toLocaleString()
+                : apiData.summary.remainingFirstInstallment.toLocaleString()}{" "}
+              ج.م)
             </Button>
           </Flex>
         </Alert>
@@ -312,8 +364,6 @@ const TuitionFeesPage = () => {
               <Text fw={500} size="sm" mb={rem(4)}>
                 إيصال الدفع (صورة أو PDF)
               </Text>
-
-              {/* حقل القراءة فقط يعرض اسم الملف أو رسالة التحميل */}
               <TextInput
                 placeholder={`الحد الأقصى ${MAX_FILE_SIZE_MB}MB. الصيغ: JPG, PNG, PDF`}
                 value={receiptFile ? receiptFile.name : ""}
@@ -417,8 +467,7 @@ const TuitionFeesPage = () => {
       >
         <Stack gap="md">
           <Text>
-            تم إرسال إيصال الدفع الخاص بك بنجاح. سيتم الآن تحويل حالة الدفع إلى
-            **قيد المراجعة** لحين تأكيد التحصيل من الإدارة المالية.
+            تم إرسال إيصال الدفع الخاص بك بنجاح. الرجاء الأنتظار حتي يتم مراجعة الإيصال
           </Text>
           <Flex justify="flex-end">
             <Button onClick={closeUploadModal}>حسناً</Button>
@@ -504,14 +553,16 @@ const TuitionFeesPage = () => {
               </Grid.Col>
             </Grid>
 
-            <Divider
-              label="تفاصيل المصروفات المطلوبة"
-              my="xl"
-            />
+            <Divider label="تفاصيل المصروفات المطلوبة" my="xl" />
 
-            <FeeDetailsTable fees={currentFees} />
+            {/* إضافة Skeleton أثناء تحميل البيانات */}
+            {loading ? (
+              <Skeleton height={200} />
+            ) : (
+              <FeeDetailsTable fees={currentFees} />
+            )}
 
-            <Divider label="طرق الدفع المتاحة"  my="xl" />
+            <Divider label="طرق الدفع المتاحة" my="xl" />
 
             {/* 2. اختيار طريقة الدفع (Radio Group) */}
             <Radio.Group
@@ -548,7 +599,7 @@ const TuitionFeesPage = () => {
               </Group>
             </Radio.Group>
 
-            <Divider label="واجهة الدفع"  my="xl" />
+            <Divider label="واجهة الدفع" my="xl" />
 
             <PaymentInterface />
           </Card>
