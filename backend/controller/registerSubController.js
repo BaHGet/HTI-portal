@@ -36,11 +36,16 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
 
   let completedIdx = -1;
   if (!completedCourses) {
-    completedIdx = dbTasks.push(student.getCourses({
-      attributes: ['CourseID', 'CreditHours'],
-      include: [{ 
-        model: db.CourseCategory, 
-        attributes: ['CourseCategoryID', 'RequiredCredits'] 
+    completedIdx = dbTasks.push(db.StudentCompletedCourse.findAll({
+      where: { StudentID: student.StudentID },
+      attributes: ['CourseID', 'GradeID', 'CompletionDate'],
+      include: [{
+        model: db.Course,
+        attributes: ['CreditHours'],
+        include: [{ 
+          model: db.CourseCategory, 
+          attributes: ['CourseCategoryID', 'RequiredCredits'] 
+        }]
       }]
     })) - 1;
   }
@@ -383,12 +388,7 @@ exports.dropEnrollment = asyncHandler(async (req, res, next) => {
     });
 
     const newAvailableSeats = enrollment.CourseGroup.Capacity - (enrollment.CourseGroup.CurrentEnrolled - 1);
-    if (req.io) {
-      req.io.emit('seats_update', {
-        groupId: groupId,
-        availableSeats: newAvailableSeats
-      });
-    }
+    emitSeatsUpdate(groupId,  enrollment.CourseGroup.CurrentEnrolled - 1, enrollment.CourseGroup.Capacity);
 
     res.status(200).json({
       Success: true,
