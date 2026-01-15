@@ -54,17 +54,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS Configuration
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
-    exposedHeaders: ["token", "reset-token"],
-  })
-);
-
 // Use morgan middleware to log HTTP requests
 morgan.token("params", (req) => JSON.stringify(req.params));
 
@@ -144,16 +133,19 @@ app.all(/.*/, (req, res, next) => {
 // Global error handling middleware (آخر حاجة)
 app.use(globalError);
 
-// Server + Socket.io
-const server = http.createServer(app);
+// Server Connection
+async function startServer() {
+  await sql.dbConnection();
+  await initSocket(server);
 
-initSocket(server);
 
   server.listen(process.env.PORT, () => {
     console.log(`Server running on port ${process.env.PORT}`);
     console.log(`Socket.io is ready! 🚀`);
   });
 }
+
+startServer();
 
 // لو هتستخدم serverless:
 // module.exports.handler = serverless(app);
