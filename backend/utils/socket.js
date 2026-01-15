@@ -7,15 +7,16 @@ let io;
 const initSocket = async (server) => {
   if (io) return io;
   
-  const pubClient = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
+  const pubClient = createClient({ url: process.env.REDIS_URL});
   const subClient = pubClient.duplicate();
 
   await Promise.all([pubClient.connect(), subClient.connect()]);
 
   io = new Server(server, {
     cors: {
-      origin: "*", 
-      methods: ["GET", "POST"]
+      origin: process.env.CLIENT_URL, 
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
 

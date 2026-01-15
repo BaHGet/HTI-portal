@@ -105,7 +105,7 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
     }, { transaction: t });
 
     const APPEAL_COST = 100;
-    const updatedFinance = await db.StudentFinancial.increment(
+    const [updatedFinance] = await db.StudentFinancial.increment(
       { AppealFees: APPEAL_COST }, 
       { 
         where: { 
@@ -115,19 +115,16 @@ exports.createAppeal = asyncHandler(async(req,res,next)=>{
         transaction: t 
       }
     );
-    if (!updatedFinance || updatedFinance[0][1] === 0) {
-      throw new ApiError (`No financial record found`,400)
+    if (updatedFinance === 0) {
+      throw new ApiError(`Student financial record for ${currentAcademicYear} not found.`, 400);
     }
 
     await t.commit();
-    
-    const appealResponse = newAppeal.toJSON();
-    delete appealResponse.StudentID;
 
     res.status(201).json({
       success: true,
       message: 'Grade appeal submitted successfully.',
-      data: appealResponse
+      data: newAppeal.AppealID
     });
 
   } catch (error) {

@@ -46,6 +46,8 @@ Student.belongsTo(Department, { foreignKey: 'DepartmentID' });
 Department.hasMany(Professor, { foreignKey: 'DepartmentID' });
 Professor.belongsTo(Department, { foreignKey: 'DepartmentID' });
 
+Student.belongsTo(Professor, { foreignKey: 'AcademicAdvisorID'});
+
 // Relation between Department and ( CourseCategories & Courses )
 Department.hasMany(CourseCategory, { foreignKey: 'DepartmentID' });
 CourseCategory.belongsTo(Department, { foreignKey: 'DepartmentID' });
