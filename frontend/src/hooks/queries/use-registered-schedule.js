@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getRegisteredSchadule } from "../../api/Users/usersApi";
+import { getRegisteredSchadule } from "../../Api/Users/usersApi";
 
 /**
  * يحوّل response بتاع /registration/registered-schedule

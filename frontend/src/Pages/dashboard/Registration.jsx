@@ -7,11 +7,11 @@ import {
   getRegisteredSchadule,
   registerSubject,
   dropSubject,
-} from "../../api/Users/usersApi";
-import StudentTimetable from "../../Components/StudentTimetable"; // Import timetable component
+} from "../../Api/Users/usersApi";
+import StudentTimetable from "../../Components/studentTimetable.jsx"; // Import timetable component
 import { useMe } from "../../hooks/queries/useMe"; // Hook to get student data
 import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule.js";
-import { socket } from "../../api/Subjects/subjectsAPI";
+import { socket } from "../../Api/Subjects/subjectsAPI";
 
 const Registration = () => {
   const { refetch } = useRegisteredSchedule();

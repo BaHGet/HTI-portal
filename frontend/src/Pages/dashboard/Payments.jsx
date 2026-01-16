@@ -40,7 +40,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import { getStudentPayment } from "../../api/Users/usersApi"; // استيراد دالة جلب بيانات الدفع من الـ API
+import { getStudentPayment } from "../../Api/Users/usersApi"; // استيراد دالة جلب بيانات الدفع من الـ API
 
 // ** البيانات الثابتة (Stubs) تم إخفائها
 const BANK_DETAILS = {

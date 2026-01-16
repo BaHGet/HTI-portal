@@ -16,12 +16,11 @@ const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
 const socketIo = require("socket.io");
 const app = express();
-
+const sql = require('../config/mysqlDB');
 
 // ✅ CORS (لازم Origin محدد طالما withCredentials = true)
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const corsOptions = {
-  origin: CLIENT_ORIGIN, // ❌ ممنوع "*"
+  origin: process.env.CLIENT_URL, // ❌ ممنوع "*"
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],

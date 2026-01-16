@@ -15,7 +15,7 @@ import {
   Card,
   Flex,
 } from "@mantine/core";
-import { getSubjects, getSurveyQuestions, submitSurveyAnswers } from "../../api/Users/usersApi";
+import { getSubjects, getSurveyQuestions, submitSurveyAnswers } from "../../Api/Users/usersApi";
 
 const SurveyPage = () => {
   const [surveys, setSurveys] = useState([]);
