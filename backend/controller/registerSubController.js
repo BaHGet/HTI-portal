@@ -111,11 +111,11 @@ exports.getAvailableSubjects = asyncHandler (async (req, res, next) => {
 
   if (!completedCourses) {
     completedCourses = dbResults[completedIdx];
-    await redisClient.setEx(studentCompletedKey, 60 , JSON.stringify(completedCourses));
+    await redisClient.setEx(studentCompletedKey, 60*60  , JSON.stringify(completedCourses));
   }
   if (!semesterCourses) {
     semesterCourses = dbResults[catalogIdx];
-    await redisClient.setEx(catalogKey, 60 , JSON.stringify(semesterCourses));
+    await redisClient.setEx(catalogKey, 60*60  , JSON.stringify(semesterCourses));
   }
   const liveGroups = dbResults[groupsIdx];
   const currentEnrollments = dbResults[enrollmentsIdx];
