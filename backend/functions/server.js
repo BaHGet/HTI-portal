@@ -131,7 +131,7 @@ app.all(/.*/, (req, res, next) => {
 
 // Global error handling middleware (آخر حاجة)
 app.use(globalError);
-
+const server = http.createServer(app);
 // Server Connection
 async function startServer() {
   await sql.dbConnection();
