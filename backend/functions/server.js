@@ -126,6 +126,10 @@ app.use("/api/v1/payment", PaymentRouter);
 const { professorsRouter } = require("../routes/professorRoute");
 app.use("/api/v1/professors", professorsRouter);
 
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json({ status: "UP" });
+});
+
 // 404 handler (لازم قبل globalError)
 app.all(/.*/, (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 404));
@@ -140,7 +144,7 @@ async function startServer() {
   await initSocket(server);
 
 
-  server.listen(process.env.PORT, () => {
+  server.listen(process.env.PORT, '0.0.0.0' , () => {
     console.log(`Server running on port ${process.env.PORT}`);
     console.log(`Socket.io is ready! 🚀`);
   });
