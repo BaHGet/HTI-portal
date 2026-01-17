@@ -18,6 +18,8 @@ const socketIo = require("socket.io");
 const app = express();
 const sql = require('../config/mysqlDB');
 
+
+app.set('trust proxy', 1);
 // ✅ CORS (لازم Origin محدد طالما withCredentials = true)
 const corsOptions = {
   origin: process.env.CLIENT_URL, // ❌ ممنوع "*"
