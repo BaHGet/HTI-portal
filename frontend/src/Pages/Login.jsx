@@ -29,7 +29,7 @@ import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 
 export default function Login() {
   useEffect(() => {
-    const token = localStorage.getItem("Api_token");
+    const token = Cookies.get("jwt")
     if (token) {
       navigate("/", { replace: true });
     }

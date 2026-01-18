@@ -37,8 +37,8 @@ import {
   getMe,
   withdrawSubject,
   restoreSubject,
-} from "../../api/Users/usersApi"; // تعديل استيراد الـ API
-import StudentTimetable from "../../Components/StudentTimetable";
+} from "../../Api/Users/usersApi"; // تعديل استيراد الـ API
+import StudentTimetable from "../../Components/studentTimetable.jsx";
 import { useRegisteredSchedule } from "../../hooks/queries/use-registered-schedule";
 
 // ** Main DropSubjectsPage Component

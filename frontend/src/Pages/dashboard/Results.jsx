@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import { BookOpenText, CalendarSearch, GraduationCap } from "lucide-react";
 
-import { getSemestersList, getSemesterResults } from "../../api/Users/usersApi";
+import { getSemestersList, getSemesterResults } from "../../Api/Users/usersApi";
 
 // GPA Color
 const getGpaColor = (gpa) => {

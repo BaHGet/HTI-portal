@@ -33,11 +33,11 @@ import { Footer } from "../../layouts/footer";
 import profileImage from "../../assets/user_img.jpg";
 import { useState, useRef, useEffect } from "react";
 import * as htmlToImage from "html-to-image";
-import StudentTimetable from "../../Components/StudentTimetable";
+import StudentTimetable from "../../Components/studentTimetable";
 
 // ✅ عدّل المسار ده حسب مكان hook عندك
 import { useMe } from "../../hooks/queries/useMe";
-import { getSemesterResults } from "../../api/Users/usersApi";
+import { getSemesterResults } from "../../Api/Users/usersApi";
 
 const initialNotifications = [
   {

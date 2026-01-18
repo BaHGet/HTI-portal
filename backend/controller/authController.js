@@ -11,6 +11,7 @@ const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
 
+
 const login = async (req, res, next) => {
   logger.info(`the endpoint ${req.route.path} was called from user with email ${req.body.Email}`);
   

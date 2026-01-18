@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useDisclosure } from "@mantine/hooks";
-import { getMyGrades, createAppeal } from "../../api/Users/usersApi";
+import { getMyGrades, createAppeal } from "../../Api/Users/usersApi";
 
 const AppealsPage = () => {
   const [availableCourses, setAvailableCourses] = useState([]);

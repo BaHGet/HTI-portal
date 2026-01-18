@@ -16,12 +16,13 @@ const globalError = require("../middlewares/apiMiddleware");
 const ApiError = require("../utils/apiError");
 const socketIo = require("socket.io");
 const app = express();
+const sql = require('../config/mysqlDB');
 
 
+app.set('trust proxy', 1);
 // ✅ CORS (لازم Origin محدد طالما withCredentials = true)
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 const corsOptions = {
-  origin: CLIENT_ORIGIN, // ❌ ممنوع "*"
+  origin: process.env.CLIENT_URL, // ❌ ممنوع "*"
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
@@ -53,17 +54,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// CORS Configuration
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token", "reset-token"],
-    exposedHeaders: ["token", "reset-token"],
-  })
-);
 
 // Use morgan middleware to log HTTP requests
 morgan.token("params", (req) => JSON.stringify(req.params));
@@ -136,6 +126,10 @@ app.use("/api/v1/payment", PaymentRouter);
 const { professorsRouter } = require("../routes/professorRoute");
 app.use("/api/v1/professors", professorsRouter);
 
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json({ status: "UP" });
+});
+
 // 404 handler (لازم قبل globalError)
 app.all(/.*/, (req, res, next) => {
   next(new ApiError(`Can't find this URL: ${req.originalUrl}`, 404));
@@ -143,17 +137,20 @@ app.all(/.*/, (req, res, next) => {
 
 // Global error handling middleware (آخر حاجة)
 app.use(globalError);
-
-// Server + Socket.io
 const server = http.createServer(app);
+// Server Connection
+async function startServer() {
+  await sql.dbConnection();
+  await initSocket(server);
 
-initSocket(server);
 
-  server.listen(process.env.PORT, () => {
+  server.listen(process.env.PORT, '0.0.0.0' , () => {
     console.log(`Server running on port ${process.env.PORT}`);
     console.log(`Socket.io is ready! 🚀`);
   });
 }
+
+startServer();
 
 // لو هتستخدم serverless:
 // module.exports.handler = serverless(app);

@@ -32,7 +32,7 @@ exports.setCurrentSemester = asyncHandler(async (req, res, next) => {
     return next(new ApiError('No active semester found. Registration might be closed.', 400));
   }
 
-  await redisClient.setEx(cacheKey, 60 , JSON.stringify(currentSemester));
+  await redisClient.setEx(cacheKey, 60*60 , JSON.stringify(currentSemester));
   req.currentSemester = currentSemester;
   next();
 });
@@ -53,7 +53,7 @@ exports.getStudent = asyncHandler(async(req,res,next)=>{
     return next(new ApiError('Forbidden: This user does not have a student profile.', 403));
   }
 
-  await redisClient.setEx(studentCacheKey, 60 , JSON.stringify(student));
+  await redisClient.setEx(studentCacheKey, 60*60 , JSON.stringify(student));
   req.student = student;
   next();
 })

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMe } from "../../api/Users/usersApi"; 
+import { getMe } from "../../Api/Users/usersApi"; 
 export const ME_QUERY_KEY = ["me"];
 
 export function useMe(options = {}) {
