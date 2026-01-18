@@ -93,29 +93,29 @@ exports.getStudentResults = asyncHandler(async(req,res,next)=>{
       LetterGrade: g.LetterGrade
     }));
   }else {
-    const mergedTranscript = {};
+    const grouped = {};
 
     grades.forEach(g => {
-      const course = g.Enrollment.CourseGroup.Course;
-      const code = course.CourseCode;
+      const semName = g.Semester.SemesterName;
+      const semID = g.Semester.SemesterID;
 
-      if (!mergedTranscript[code]) {
-        mergedTranscript[code] = {
-          CourseName: course.CourseName,
-          CourseCode: code,
-          CreditHours: course.CreditHours,
-          Total: g.Total.toString(),
-          LetterGrade: g.LetterGrade,
-          Attempts: 1 
+      if (!grouped[semID]) {
+        grouped[semID] = {
+          SemesterName: semName,
+          Results: []  
         };
-      } else {
-        mergedTranscript[code].LetterGrade += ` ➔ ${g.LetterGrade}`;
-        mergedTranscript[code].Total += ` | ${g.Total}`;
-        mergedTranscript[code].Attempts += 1;
       }
+
+      grouped[semID].Results.push({
+        CourseName: g.Enrollment.CourseGroup.Course.CourseName,
+        CourseCode: g.Enrollment.CourseGroup.Course.CourseCode,
+        CreditHours: g.Enrollment.CourseGroup.Course.CreditHours,
+        Total: g.Total,
+        LetterGrade: g.LetterGrade
+      });
     });
 
-    responseData = Object.values(mergedTranscript);
+    responseData = Object.values(grouped);
   }
 
 
