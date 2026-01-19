@@ -95,6 +95,13 @@ const { globalLimiter } = require("../utils/rateLimiter");
 // ✅ حط ال limiter بعد CORS + OPTIONS عشان ما يكسرش الـ preflight
 app.use("/api/v1/", globalLimiter);
 
+app.use("/api/v1/", (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/socket.io')) {
+    return next(); // عديهم من غير ما يتحسبوا في الـ 300 ريكويست
+  }
+  globalLimiter(req, res, next);
+});
+
 // Routes
 const { authRouter } = require("../routes/auth");
 app.use("/api/v1/auth", authRouter);
