@@ -92,17 +92,21 @@ const useTermData = () => {
 
   // دالة لحساب الـ GPA بناءً على الدرجات
   const calculateGPA = (courses) => {
-    const totalCreditHours = courses.reduce(
-      (acc, course) => acc + course.CreditHours,
-      0
-    );
-    const totalPoints = courses.reduce(
-      (acc, course) =>
-        acc + getGpaPoints(course.LetterGrade) * course.CreditHours,
-      0
-    );
+    if(courses){
+      const totalCreditHours = courses.reduce(
+        (acc, course) => acc + course.CreditHours,
+        0,
+      );
+      const totalPoints = courses.reduce(
+        (acc, course) =>
+          acc + getGpaPoints(course.LetterGrade) * course.CreditHours,
+        0,
+      );
 
-    return totalCreditHours === 0 ? 0 : totalPoints / totalCreditHours;
+      return totalCreditHours === 0 ? 0 : totalPoints / totalCreditHours;
+    }else{
+      return 0;
+    }
   };
 
   const getGpaPoints = (letterGrade) => {

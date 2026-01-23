@@ -38,23 +38,39 @@ const Registration = () => {
     credit: true,
   });
   
+  // useEffect(() => {
+  //   // Listen for seat updates
+  //   function onSeatsUpdate({ groupId, availableSeats }) {
+  //     // Update the relevant group’s seat data
+  //     let newAvailableGroups = availableGroups.map(g =>
+  //       g.groupId == groupId ? { ...g, availableSeats } : g
+  //     );
+  //     setAvailableGroups(newAvailableGroups);
+  //   }
+  
+  //   socket.on("seats_update", onSeatsUpdate);
+  
+  //   // Cleanup on unmount
+  //   return () => {
+  //     socket.off("seats_update", onSeatsUpdate);
+  //   };
+  // }, []);
+
   useEffect(() => {
-    // Listen for seat updates
-    function onSeatsUpdate({ groupId, availableSeats }) {
-      // Update the relevant group’s seat data
-      let newAvailableGroups = availableGroups.map(g =>
+  function onSeatsUpdate({ groupId, availableSeats }) {
+    setAvailableGroups((prevGroups) =>
+      prevGroups.map((g) =>
         g.groupId == groupId ? { ...g, availableSeats } : g
-      );
-      setAvailableGroups(newAvailableGroups);
-    }
-  
-    socket.on("seats_update", onSeatsUpdate);
-  
-    // Cleanup on unmount
-    return () => {
-      socket.off("seats_update", onSeatsUpdate);
-    };
-  }, []);
+      )
+    );
+  }
+
+  socket.on("seats_update", onSeatsUpdate);
+
+  return () => {
+    socket.off("seats_update", onSeatsUpdate);
+  };
+}, []);
 
   useEffect(() => {
     if (meResponse) {
