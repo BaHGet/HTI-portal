@@ -1,4 +1,4 @@
-# 🎓 HTI Academic Student Portal Design and Development of a Comprehensive Digital Transformation Solution for HTI.
+# 🎓 HTI Student Portal - Application.
 
 Comprehensive monorepo for the HTI-portal application. This repository contains two main packages:
 
