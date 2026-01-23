@@ -2,15 +2,10 @@
 
 Comprehensive monorepo for the HTI-portal application. This repository contains two main packages:
 
-- `backend/` — Node.js + Express API server (MySQL)
+- `backend/` — Node.js + Express API server (MySQL - Redis)
 - `frontend/` — React app built with Vite
 
 This README gives clear, actionable steps to run, build, and deploy both parts locally and with Docker.
-
-## Quick links
-
-- Backend: `./backend`
-- Frontend: `./frontend`
 
 ## Table of contents
 
@@ -30,7 +25,7 @@ This README gives clear, actionable steps to run, build, and deploy both parts l
 
 ## Overview
 
-The backend exposes REST endpoints and uses MySQL for persistence. The frontend is a single-page React app that consumes the backend API. Redis is optionally used for caching and socket adapter (see `backend/utils/redisClient.js`).
+The backend exposes REST endpoints and uses MySQL for persistence. The frontend is a single-page React app that consumes the backend API. Redis is optionally used for caching and socket adapter (see `backend/utils/redisClient.js` and `backend/utils/socket.js`).
 
 ## Project layout
 
@@ -54,31 +49,43 @@ node --version; npm --version
 
 ## Environment variables
 
-Create `.env` files in `backend/` (and in `frontend/` if you use env variables for build). Example `backend/.env`:
+Create `.env` files in `backend/`:
 
 ```text
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=yourpassword
-DB_DATABASE=hti_portal
+### Server Config ###
+NODE_ENV=
+port=
+CLIENT_URL=
 
-# JWT
-JWT_SECRET=supersecret
-JWT_EXPIRES_IN=7d
+### Tokent Secret Used to Assign JTW Tokens ###
+TOKEN_SECRET=
 
-# Email (optional)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=you@example.com
-SMTP_PASS=yourpassword
+### DataBases ###
 
-# Redis (optional)
-REDIS_URL=redis://localhost:6379
+# MYSQL
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+
+# Redis
+REDIS_URL=
+
+### Send-Email ###
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_SECURE=
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_USERNAME=
 ```
+Create `.env` files in `frontend/`
 
-I can add `.env.example` files automatically if you want.
+```text
+VITE_BASE_API_URL=
+VITE_BASE_API_SOCKET_URL=
+```
 
 ## Backend — install & run
 
@@ -112,8 +119,8 @@ npm run dev
 
 ```powershell
 cd frontend
+npm install
 npm run build
-npm run preview
 ```
 
 By default Vite serves on port 5173. If the app needs to call the backend running on a different host/port, update the API base URL in `frontend/src/Api` or use environment variables (e.g., `VITE_API_BASE_URL`).
@@ -127,7 +134,7 @@ Terminal A — backend:
 ```powershell
 cd backend
 npm install
-npm run dev
+npm run start
 ```
 
 Terminal B — frontend:
@@ -196,13 +203,3 @@ This repository is licensed under the Apache License, Version 2.0.
 See the full license text in `LICENSE` or `LICENSE_APACHE_2.0.txt` in the repository root.
 
 ---
-
-If you'd like, I can add a short license badge to the top of this README or create a `NOTICE` file with project attributions.
-
-Need any adjustments? I can:
-
-- Add `.env.example` files to `backend/` and `frontend/`.
-- Create a `docker-compose.yml` for local development.
-- Add a short license badge to the top of this README.
-
-Tell me which and I'll implement it.
